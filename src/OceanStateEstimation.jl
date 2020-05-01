@@ -28,7 +28,7 @@ function get_ecco_files(γ::gcmgrid,v="oceQnet",t=1)
 end
 
 function get_from_dataverse(nam::String,pth::String)
-    tmp = CSV.File("nctiles_climatology.csv") |> DataFrame!
+    tmp = CSV.File("../examples/nctiles_climatology.csv") |> DataFrame!
     ii = findall([occursin("$nam", tmp[i,:name]) for i=1:size(tmp,1)])
     !isdir("$pth"*"$nam") ? mkdir("$pth"*"$nam") : nothing
     for i in ii
