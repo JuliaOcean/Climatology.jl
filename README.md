@@ -8,3 +8,12 @@
 [![Coveralls](https://coveralls.io/repos/github/gaelforget/OceanStateEstimation.jl/badge.svg?branch=master)](https://coveralls.io/github/gaelforget/OceanStateEstimation.jl?branch=master)
 
 _This package is in early developement stage when breaking changes can be expected._
+
+```
+using MeshArrays, OceanStateEstimation
+get_grid_if_needed()
+pth="../examples/GRID_LLC90/"
+γ=GridSpec("LatLonCap",pth)
+Γ=GridLoad(γ)
+tmp=get_ecco_files(γ)
+```
