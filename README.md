@@ -7,6 +7,8 @@
 [![Codecov](https://codecov.io/gh/gaelforget/OceanStateEstimation.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gaelforget/OceanStateEstimation.jl)
 [![Coveralls](https://coveralls.io/repos/github/gaelforget/OceanStateEstimation.jl/badge.svg?branch=master)](https://coveralls.io/github/gaelforget/OceanStateEstimation.jl?branch=master)
 
+[![DOI](https://zenodo.org/badge/260376633.svg)](https://zenodo.org/badge/latestdoi/260376633)
+
 _This package is in early developement stage when breaking changes can be expected._
 
 ```
