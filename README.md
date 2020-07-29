@@ -9,13 +9,24 @@
 
 [![DOI](https://zenodo.org/badge/260376633.svg)](https://zenodo.org/badge/latestdoi/260376633)
 
-_This package is in early developement stage when breaking changes can be expected._
+Use examples:
 
 ```
-using MeshArrays, OceanStateEstimation
-get_grid_if_needed()
-pth="../examples/GRID_LLC90/"
-γ=GridSpec("LatLonCap",pth)
-Γ=GridLoad(γ)
-tmp=get_ecco_files(γ)
+using OceanStateEstimation
+
+p=dirname(pathof(OceanStateEstimation))
+lst=joinpath(p,"../examples/OCCA_climatology.csv")
+pth=joinpath(p,"../examples/OCCA_climatology/")
+get_from_dataverse(lst,"DFOtflux",pth)
 ```
+
+or 
+
+```
+using OceanStateEstimation, MeshArrays
+
+γ=GridSpec("LatLonCap","./")
+tmp=get_ecco_files(γ,"oceQnet")
+```
+
+_This package is in early developement stage when breaking changes can be expected._
