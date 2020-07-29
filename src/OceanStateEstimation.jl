@@ -34,7 +34,7 @@ end
 get_from_dataverse(nam::String,pth::String) = get_from_dataverse("../examples/nctiles_climatology.csv",nam,pth)
 
 """
-    get_ecco_files(v="oceQnet",t)
+    get_ecco_files(γ::gcmgrid,v::String,t=1)
 
 ```
 using MeshArrays, OceanStateEstimation
