@@ -1,6 +1,6 @@
 module OceanStateEstimation
 
-using CSV, DataFrames, Statistics
+using Statistics
 using FortranFiles, MeshArrays, MITgcmTools
 export get_from_dataverse, get_ecco_files
 
@@ -19,14 +19,16 @@ nams = nams.name[:]
 ```
 """
 function get_from_dataverse(lst::String,nam::String,pth::String)
-    tmp = CSV.File(lst) |> DataFrame!
-    ii = findall([occursin("$nam", tmp[i,:name]) for i=1:size(tmp,1)])
+    tmp=readlines(lst)
+    ID=[parse(Int,tmp[j][1:findfirst(isequal(','),tmp[j])-1]) for j=2:length(tmp)]
+    name=[tmp[j][findfirst(isequal(','),tmp[j])+1:end] for j=2:length(tmp)]
+    ii = findall([occursin("$nam", name[i]) for i=1:length(ID)])
     !isdir("$pth"*"$nam") ? mkdir("$pth"*"$nam") : nothing
     for i in ii
-        ID=tmp[i,:ID]
-        nam1=tmp[i,:name]
+        id1=ID[i]
+        nam1=name[i]
         nam2=joinpath("$pth"*"$nam/",nam1)
-        run(`wget --content-disposition https://dataverse.harvard.edu/api/access/datafile/$ID`);
+        run(`wget --content-disposition https://dataverse.harvard.edu/api/access/datafile/$id1`);
         run(`mv $nam1 $nam2`);
     end
 end
