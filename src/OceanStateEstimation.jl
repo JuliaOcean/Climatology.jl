@@ -26,9 +26,8 @@ function get_from_dataverse(lst::String,nam::String,pth::String)
     !isdir("$pth"*"$nam") ? mkdir("$pth"*"$nam") : nothing
     for i in ii
         id1=ID[i]
-        nam1=name[i]
-        nam2=joinpath("$pth"*"$nam/",nam1)
-        run(`wget --content-disposition https://dataverse.harvard.edu/api/access/datafile/$id1`);
+        nam1=download("https://dataverse.harvard.edu/api/access/datafile/$id1");
+        nam2=joinpath("$pth"*"$nam/",name[i])
         run(`mv $nam1 $nam2`);
     end
 end
