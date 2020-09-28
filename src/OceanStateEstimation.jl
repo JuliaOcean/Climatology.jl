@@ -2,7 +2,7 @@ module OceanStateEstimation
 
 using Statistics
 using FortranFiles, MeshArrays, MITgcmTools
-export get_from_dataverse, get_ecco_files
+export dataverse_lists, get_from_dataverse, get_ecco_files
 
 ##
 
@@ -19,20 +19,34 @@ nams = nams.name[:]
 ```
 """
 function get_from_dataverse(lst::String,nam::String,pth::String)
-    tmp=readlines(lst)
-    ID=[parse(Int,tmp[j][1:findfirst(isequal(','),tmp[j])-1]) for j=2:length(tmp)]
-    name=[tmp[j][findfirst(isequal(','),tmp[j])+1:end] for j=2:length(tmp)]
-    ii = findall([occursin("$nam", name[i]) for i=1:length(ID)])
+    lists=dataverse_lists(lst)
+    ii = findall([occursin("$nam", lists.name[i]) for i=1:length(lists.ID)])
     !isdir("$pth"*"$nam") ? mkdir("$pth"*"$nam") : nothing
     for i in ii
-        id1=ID[i]
-        nam1=download("https://dataverse.harvard.edu/api/access/datafile/$id1");
-        nam2=joinpath("$pth"*"$nam/",name[i])
+        nam1=download(lists.URL[i]);
+        nam2=joinpath("$pth"*"$nam/",lists.name[i])
         run(`mv $nam1 $nam2`);
     end
 end
 
 get_from_dataverse(nam::String,pth::String) = get_from_dataverse("../examples/nctiles_climatology.csv",nam,pth)
+
+"""
+    dataverse_lists(lst::String)
+
+Read and derive lists (ID,name,URL) from csv file (ID,name) and return as tuple
+```
+lists=dataverse_lists(lst)
+```
+"""
+function dataverse_lists(lst::String)
+    tmp=readlines(lst)
+    ID=[parse(Int,tmp[j][1:findfirst(isequal(','),tmp[j])-1]) for j=2:length(tmp)]
+    name=[tmp[j][findfirst(isequal(','),tmp[j])+1:end] for j=2:length(tmp)]
+    tmp="https://dataverse.harvard.edu/api/access/datafile/"
+    URL=[tmp*"$(ID[j])" for j=1:length(ID)]
+    return (ID=ID,name=name,URL=URL)
+end
 
 """
     get_ecco_files(γ::gcmgrid,v::String,t=1)
