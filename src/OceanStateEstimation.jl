@@ -4,10 +4,20 @@ using Statistics, Pkg.Artifacts
 using FortranFiles, MeshArrays, MITgcmTools
 export dataverse_lists, get_from_dataverse, get_ecco_files
 
+##
+
 p=dirname(pathof(OceanStateEstimation))
 artifact_toml = joinpath(p, "../Artifacts.toml")
 ECCOclim_hash = artifact_hash("ECCOclim", artifact_toml)
 OCCAclim_hash = artifact_hash("OCCAclim", artifact_toml)
+
+fil1=joinpath(p,"../examples/OCCA_climatology.csv")
+fil2=joinpath(artifact_path(OCCAclim_hash)*"/", "OCCA_climatology.csv")
+!isfile(fil2) ? cp(fil1,fil2) : nothing
+
+fil1=joinpath(p,"../examples/nctiles_climatology.csv")
+fil2=joinpath(artifact_path(ECCOclim_hash)*"/", "nctiles_climatology.csv")
+!isfile(fil2) ? cp(fil1,fil2) : nothing
 
 ##
 
