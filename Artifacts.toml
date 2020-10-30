@@ -1,5 +1,12 @@
 [ECCOclim]
 git-tree-sha1 = "1c9cce82ffda2997e8f8ddcaf0a6b8c72d42b36e"
 
+    [[ECCOclim.download]]
+    url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.5.tar.gz"
+
 [OCCAclim]
 git-tree-sha1 = "a3ce454f7c63bf578265452999b627706ad6973b"
+
+    [[OCCAclim.download]]
+    url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.5.tar.gz"
+
