@@ -2,13 +2,13 @@
 git-tree-sha1 = "1c9cce82ffda2997e8f8ddcaf0a6b8c72d42b36e"
 
     [[ECCOclim.download]]
-    sha256 = "539467298495c6a5ecdfc2bdcbb39e99cf9e92dc7ade94daae3cd40d78bb1a70"
+    sha256 = "485e5fc588bd36c755039f2d42120fca6964b80382c05276b0472faae356c4c1"
     url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.5.tar.gz"
 
 [OCCAclim]
 git-tree-sha1 = "a3ce454f7c63bf578265452999b627706ad6973b"
 
     [[OCCAclim.download]]
-    sha256 = "6197328498135681ec681afa88485b0204d3c12d0a5406a197aac23e822eb1eb"
+    sha256 = "485e5fc588bd36c755039f2d42120fca6964b80382c05276b0472faae356c4c1"
     url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.5.tar.gz"
 
