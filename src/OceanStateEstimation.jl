@@ -11,13 +11,13 @@ artifact_toml = joinpath(p, "../Artifacts.toml")
 ECCOclim_hash = artifact_hash("ECCOclim", artifact_toml)
 OCCAclim_hash = artifact_hash("OCCAclim", artifact_toml)
 
-fil1=joinpath(p,"../examples/OCCA_climatology.csv")
-fil2=joinpath(artifact_path(OCCAclim_hash)*"/", "OCCA_climatology.csv")
-!isfile(fil2) ? cp(fil1,fil2) : nothing
+#fil1=joinpath(p,"../examples/OCCA_climatology.csv")
+#fil2=joinpath(artifact_path(OCCAclim_hash)*"/", "OCCA_climatology.csv")
+#!isfile(fil2) ? cp(fil1,fil2) : nothing
 
-fil1=joinpath(p,"../examples/nctiles_climatology.csv")
-fil2=joinpath(artifact_path(ECCOclim_hash)*"/", "nctiles_climatology.csv")
-!isfile(fil2) ? cp(fil1,fil2) : nothing
+#fil1=joinpath(p,"../examples/nctiles_climatology.csv")
+#fil2=joinpath(artifact_path(ECCOclim_hash)*"/", "nctiles_climatology.csv")
+#!isfile(fil2) ? cp(fil1,fil2) : nothing
 
 ##
 
@@ -27,7 +27,8 @@ fil2=joinpath(artifact_path(ECCOclim_hash)*"/", "nctiles_climatology.csv")
 ```
 using OceanStateEstimation, CSV, DataFrames, Pkg.Artifacts
 pth=artifact_path(OceanStateEstimation.OCCAclim_hash)*"/"
-lst=joinpath(pth,"OCCA_climatology.csv")
+lst=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/OCCA_climatology.csv")
+#lst=joinpath(pth_ex,"OCCA_climatology.csv")
 nams = CSV.File(lst) |> DataFrame!
 nams = nams.name[:]
 [get_from_dataverse(lst,nam,pth) for nam in nams]
@@ -74,7 +75,8 @@ tmp=get_ecco_files(γ,"oceQnet")
 """
 function get_ecco_files(γ::gcmgrid,v::String,t=1)
     pth=artifact_path(ECCOclim_hash)*"/"
-    lst=joinpath(pth,"nctiles_climatology.csv")
+    lst=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/nctiles_climatology.csv")
+#    lst=joinpath(pth,"nctiles_climatology.csv")
     !isdir("$pth"*v) ? get_from_dataverse(lst,v,pth) : nothing
     #return read_nctiles("$pth"*"$v/$v","$v",γ,I=(:,:,:,t))
     return read_nctiles("$pth"*"$v/$v","$v",γ,I=(:,:,t))
