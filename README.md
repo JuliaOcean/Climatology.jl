@@ -14,10 +14,9 @@ Use examples:
 ```
 using OceanStateEstimation
 
-p=dirname(pathof(OceanStateEstimation))
-lst=joinpath(p,"../examples/OCCA_climatology.csv")
-pth=joinpath(p,"../examples/OCCA_climatology/")
-get_from_dataverse(lst,"DFOtflux",pth)
+pth=dirname(pathof(OceanStateEstimation))
+lst=joinpath(pth,"../examples/OCCA_climatology.csv")
+get_from_dataverse(lst,"DFOsflux",OCCAclim_path)
 ```
 
 or 
@@ -26,7 +25,7 @@ or
 using OceanStateEstimation, MeshArrays
 
 γ=GridSpec("LatLonCap","./")
-tmp=get_ecco_files(γ,"oceQnet")
+tmp=get_ecco_files(γ,"ETAN")
 ```
 
 _This package is in early developement stage when breaking changes can be expected._
