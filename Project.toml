@@ -1,7 +1,7 @@
 name = "OceanStateEstimation"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.1.7"
+version = "0.1.6"
 
 [deps]
 FortranFiles = "c58ffaec-ab22-586d-bfc5-781a99fd0b10"
