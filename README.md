@@ -12,13 +12,11 @@
 Use examples:
 
 ```
-using OceanStateEstimation, Pkg.Artifacts
+using OceanStateEstimation
 
-pth=artifact_path(OceanStateEstimation.OCCAclim_hash)*"/"
-lst=joinpath(dirname(pathof(OceanStateEstimation)),
-    "../examples/OCCA_climatology.csv")
-
-get_from_dataverse(lst,"DFOtflux",pth)
+pth=dirname(pathof(OceanStateEstimation))
+lst=joinpath(pth,"../examples/OCCA_climatology.csv")
+get_from_dataverse(lst,"DFOsflux",OCCAclim_path)
 ```
 
 or 
