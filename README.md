@@ -12,11 +12,12 @@
 Use examples:
 
 ```
-using OceanStateEstimation
+using OceanStateEstimation, Pkg.Artifacts
 
-p=dirname(pathof(OceanStateEstimation))
-lst=joinpath(p,"../examples/OCCA_climatology.csv")
-pth=joinpath(p,"../examples/OCCA_climatology/")
+pth=artifact_path(OceanStateEstimation.OCCAclim_hash)*"/"
+lst=joinpath(dirname(pathof(OceanStateEstimation)),
+    "../examples/OCCA_climatology.csv")
+
 get_from_dataverse(lst,"DFOtflux",pth)
 ```
 
@@ -26,7 +27,7 @@ or
 using OceanStateEstimation, MeshArrays
 
 γ=GridSpec("LatLonCap","./")
-tmp=get_ecco_files(γ,"oceQnet")
+tmp=get_ecco_files(γ,"ETAN")
 ```
 
 _This package is in early developement stage when breaking changes can be expected._
