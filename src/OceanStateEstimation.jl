@@ -1,8 +1,15 @@
 module OceanStateEstimation
 
-using Statistics
+using Statistics, Pkg.Artifacts
 using FortranFiles, MeshArrays, MITgcmTools
 export dataverse_lists, get_from_dataverse, get_ecco_files
+
+##
+
+p=dirname(pathof(OceanStateEstimation))
+artifact_toml = joinpath(p, "../Artifacts.toml")
+ECCOclim_hash = artifact_hash("ECCOclim", artifact_toml)
+OCCAclim_hash = artifact_hash("OCCAclim", artifact_toml)
 
 ##
 
@@ -10,9 +17,9 @@ export dataverse_lists, get_from_dataverse, get_ecco_files
     get_from_dataverse(lst::String,nam::String,pth::String)
 
 ```
-using OceanStateEstimation, CSV, DataFrames
+using OceanStateEstimation, CSV, DataFrames, Pkg.Artifacts
+pth=artifact_path(OceanStateEstimation.OCCAclim_hash)*"/"
 lst=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/OCCA_climatology.csv")
-pth=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/OCCA_climatology/")
 nams = CSV.File(lst) |> DataFrame!
 nams = nams.name[:]
 [get_from_dataverse(lst,nam,pth) for nam in nams]
@@ -58,9 +65,8 @@ tmp=get_ecco_files(γ,"oceQnet")
 ```
 """
 function get_ecco_files(γ::gcmgrid,v::String,t=1)
+    pth=artifact_path(ECCOclim_hash)*"/"    
     lst=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/nctiles_climatology.csv")
-    pth=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/nctiles_climatology/")
-    !isdir("$pth") ? mkdir("$pth") : nothing
     !isdir("$pth"*v) ? get_from_dataverse(lst,v,pth) : nothing
     #return read_nctiles("$pth"*"$v/$v","$v",γ,I=(:,:,:,t))
     return read_nctiles("$pth"*"$v/$v","$v",γ,I=(:,:,t))
