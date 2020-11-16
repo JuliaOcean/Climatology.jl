@@ -32,9 +32,9 @@ function get_from_dataverse(lst::String,nam::String,pth::String)
     ii = findall([occursin("$nam", lists.name[i]) for i=1:length(lists.ID)])
     !isdir("$pth"*"$nam") ? mkdir("$pth"*"$nam") : nothing
     for i in ii
-        nam1=download(lists.URL[i]);
+        nam1=download(lists.URL[i])
         nam2=joinpath("$pth"*"$nam/",lists.name[i])
-        run(`mv $nam1 $nam2`);
+        mv(nam1,nam2)
     end
 end
 
