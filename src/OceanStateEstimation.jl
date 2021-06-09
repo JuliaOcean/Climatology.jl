@@ -1,6 +1,6 @@
 module OceanStateEstimation
 
-using Statistics, Pkg.Artifacts
+using Statistics, Pkg.Artifacts, Downloads
 using FortranFiles, MeshArrays, MITgcmTools
 export dataverse_lists, get_from_dataverse, get_ecco_files
 export ECCOclim_path, OCCAclim_path
@@ -32,7 +32,7 @@ function get_from_dataverse(lst::String,nam::String,pth::String)
     ii = findall([occursin("$nam", lists.name[i]) for i=1:length(lists.ID)])
     !isdir("$pth"*"$nam") ? mkdir("$pth"*"$nam") : nothing
     for i in ii
-        nam1=download(lists.URL[i])
+        nam1=Downloads.download(lists.URL[i])
         nam2=joinpath("$pth"*"$nam/",lists.name[i])
         mv(nam1,nam2)
     end
