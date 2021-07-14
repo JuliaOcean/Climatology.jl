@@ -11,3 +11,10 @@ git-tree-sha1 = "2a81eeb195756e04bb3bd78139dbff6f6767f670"
     [[OCCAclim.download]]
     sha256 = "bb774f35caf9bc53dd01954b7d856e85543183a1e736f7fcab2e657cd968e002"
     url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.4.tar.gz"
+
+[MITPROFclim]
+git-tree-sha1 = "45cd2fe179cf6dcdaa7e963b7b8eb19ba3444be8"
+
+    [[MITPROFclim.download]]
+    sha256 = "ae1f6a598f458a8d2b084206140c977b174b0611021283b8cda257596b1bde0c"
+    url = "https://zenodo.org/record/5101243/files/gcmfaces_climatologies.tar.gz?download=1"
