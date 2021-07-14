@@ -3,7 +3,7 @@ module OceanStateEstimation
 using Statistics, Pkg.Artifacts, Downloads
 using FortranFiles, MeshArrays, MITgcmTools
 export dataverse_lists, get_from_dataverse, get_ecco_files
-export ECCOclim_path, OCCAclim_path
+export ECCOclim_path, OCCAclim_path, MITPROFclim_path
 
 ##
 
@@ -13,6 +13,8 @@ ECCOclim_hash = artifact_hash("ECCOclim", artifact_toml)
 ECCOclim_path = artifact_path(ECCOclim_hash)*"/"
 OCCAclim_hash = artifact_hash("OCCAclim", artifact_toml)
 OCCAclim_path = artifact_path(OCCAclim_hash)*"/"
+MITPROFclim_hash = artifact_hash("MITPROFclim", artifact_toml)
+MITPROFclim_path = artifact_path(MITPROFclim_hash)*"/"
 
 ##
 
