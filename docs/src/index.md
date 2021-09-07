@@ -1,6 +1,6 @@
 # OceanStateEstimation.jl
 
-This package is at a very early stage of development. Stay tuned ...
+This package is still at a very early stage of development. Currently it just provides the following functions and path variables.
 
 ```@index
 ```
