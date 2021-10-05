@@ -3,6 +3,8 @@ module OceanStateEstimation
 using Statistics, Pkg.Artifacts, Downloads
 using FortranFiles, MeshArrays, MITgcmTools
 export dataverse_lists, get_from_dataverse, get_ecco_files
+export get_occa_velocity_if_needed, get_ecco_velocity_if_needed
+export get_ecco_variable_if_needed
 export ECCOclim_path, OCCAclim_path, MITPROFclim_path
 
 ##
@@ -74,6 +76,47 @@ function get_ecco_files(γ::gcmgrid,v::String,t=1)
     !isdir("$pth"*v) ? get_from_dataverse(lst,v,ECCOclim_path) : nothing
     #return read_nctiles(ECCOclim_path*"$v/$v","$v",γ,I=(:,:,:,t))
     return read_nctiles(ECCOclim_path*"$v/$v","$v",γ,I=(:,:,t))
+end
+
+"""
+    get_ecco_variable_if_needed(v::String)
+
+Download ECCO output for variable `v` to `ECCOclim_path` if needed
+"""
+function get_ecco_variable_if_needed(v::String)
+    p=dirname(pathof(OceanStateEstimation))
+    lst=joinpath(p,"../examples/nctiles_climatology.csv")
+    pth=ECCOclim_path
+    !isdir(pth*v) ? get_from_dataverse(lst,v,pth) : nothing
+end
+
+"""
+    get_ecco_velocity_if_needed()
+
+Download ECCO output for `u,v,w` to `ECCOclim_path` if needed
+"""
+function get_ecco_velocity_if_needed()
+    get_ecco_variable_if_needed("UVELMASS")
+    get_ecco_variable_if_needed("VVELMASS")
+    get_ecco_variable_if_needed("WVELMASS")
+end
+
+"""
+    get_occa_velocity_if_needed()
+
+Download `MITgcm` transport output to `OCCAclim_path` if needed
+"""
+function get_occa_velocity_if_needed()
+    p=dirname(pathof(OceanStateEstimation))
+    lst=joinpath(p,"../examples/OCCA_climatology.csv")
+    pth=OCCAclim_path
+    nams = ("DDuvel.0406clim.nc","DDvvel.0406clim.nc","DDwvel.0406clim.nc","DDtheta.0406clim.nc","DDsalt.0406clim.nc")
+    if !isfile("$pth"*"DDuvel.0406clim.nc") 
+        tmp=joinpath(pth,"tmp/")
+        !isdir(tmp) ? mkdir(tmp) : nothing
+        [get_from_dataverse(lst,nam,tmp) for nam in nams]
+        [mv(joinpath(tmp,nam,nam),joinpath(pth,nam)) for nam in nams]
+    end
 end
 
 end # module
