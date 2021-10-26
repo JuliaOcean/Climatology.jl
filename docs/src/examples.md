@@ -33,6 +33,5 @@ tmp=OceanStateEstimation.get_ecco_files(γ,"ETAN")
 
 CBIOMES-global (alpha version) is a global ocean state estimate that covers the period from 1992 to 2011. It is based on Forget et al 2015 for ocean physics MIT general circulation model and on Dutkiewicz et al 2015 for marine biogeochemistry and ecosystems Darwin Project model.
 
-[See this page](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html)
-
-and [See this page](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html)
+The climatology maps can be visualized using [this notebook](examples/CBIOMES_climatology_plot.html). The climatology file wcreated by [that notebook](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) is archived [
+here in zenodo](https://doi.org/10.5281/zenodo.5598417).

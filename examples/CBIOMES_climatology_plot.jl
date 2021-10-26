@@ -22,7 +22,7 @@ begin
 end
 
 # ╔═╡ e9cfa41e-366e-11ec-01b1-ef17b83e87ba
-md"""# Interpolated Climatology Workflow
+md"""# CBIOMES Climatology Visualization
 
 In this notebook we illustrate how `Makie.jl` can be used to plot ocean climatologies interactively.
 
