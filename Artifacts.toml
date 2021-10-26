@@ -1,3 +1,11 @@
+[CBIOMESclim]
+git-tree-sha1 = "20d7965cb9a336ea3e96ffb6fd026c4ec5a67859"
+lazy = true
+
+    [[CBIOMESclim.download]]
+    sha256 = "91b882197cc70809147e0609fe0ea5cdb825c2d5bced187b15b9c13a6c11208e"
+    url = "https://zenodo.org/record/5598417/files/CBIOMES-global-alpha-climatology.nc.tar.gz?download=1"
+
 [ECCOclim]
 git-tree-sha1 = "ec3707d05425e2b371b5cb619383db1a3a9ab3de"
 
