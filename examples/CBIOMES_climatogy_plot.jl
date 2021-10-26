@@ -39,6 +39,17 @@ begin
 	nc=NCTiles.NCDataset(fil_out,"r")
 	lon=nc["lon"][:]
 	lat=nc["lat"][:]
+	
+	levels=Dict("SST" => 1.0*[-2:4:34], "land" => 1.0*[0.0:0.1:1.0], 
+	"Chl"  => 0.8*[0.0:0.1:1.0], "EuphoticDepth" => 400.0*[0.0:0.1:1.0], 
+	"MLD" => 2000.0*[0.0:0.05:1.0], "OceanDepth" => 5000.0*[0.0:0.1:1.0], 
+	"PAR" => 80.0*[0.0:0.1:1.0], "land" => [0.0:0.1:1.0], 
+	"Rrs412" => 0.025*[0.0:0.1:1.0], "Rrs443" => 0.02*[0.0:0.1:1.0], 
+	"Rrs490" => 0.01*[0.0:0.1:1.0], "Rrs510" => 0.008*[0.0:0.1:1.0], 
+	"Rrs555" => 0.008*[0.0:0.1:1.0], "Rrs670" => 0.002*[0.0:0.1:1.0], 
+	"SSS" => 32.0 .+ 5.0*(0.0:0.1:1.0), "TKE" => 0.002*[0.0:0.1:1.0],
+	"WindSpeed" => 20.0*[0.0:0.1:1.0])
+	
 	"done"
 end
 
@@ -69,8 +80,14 @@ end
 # ╔═╡ 1969ef9a-eec7-48b0-a93d-c0ff2586c9cd
 begin
 	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
-	ax = Mkie.Axis(fig[1,1], title=nam,xlabel="longitude",ylabel="latitude")
-	hm1=Mkie.contourf!(ax,lon,lat,val, tickfont = (4, :black)) #levels = -2.0:2.0:34.0,
+	ax = Mkie.Axis(fig[1,1], title=nam*" (units: $(uni) ; month: $(m))",xlabel="longitude",ylabel="latitude")
+	if haskey(levels,v)
+		lev=levels[v][1]
+		isa(lev,Number) ? lev=levels[v] : nothing
+	else
+		lev=10
+	end
+	hm1=Mkie.contourf!(ax,lon,lat,val, tickfont = (4, :black), levels = lev)
 	xlims!(ax, (-180.0, 180.0)); ylims!(ax, (-90.0, 90.0))
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	md"""### Interative Map
