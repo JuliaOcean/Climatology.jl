@@ -5,7 +5,7 @@ using FortranFiles, MeshArrays, MITgcmTools
 export dataverse_lists, get_from_dataverse, get_ecco_files
 export get_occa_velocity_if_needed, get_ecco_velocity_if_needed
 export get_ecco_variable_if_needed
-export ECCOclim_path, OCCAclim_path, MITPROFclim_path
+export ECCOclim_path, OCCAclim_path, MITPROFclim_path, CBIOMESclim_path
 
 ##
 
@@ -17,6 +17,10 @@ OCCAclim_hash = artifact_hash("OCCAclim", artifact_toml)
 OCCAclim_path = artifact_path(OCCAclim_hash)*"/"
 MITPROFclim_hash = artifact_hash("MITPROFclim", artifact_toml)
 MITPROFclim_path = artifact_path(MITPROFclim_hash)*"/"
+
+CBIOMESclim_hash = artifact_hash("CBIOMESclim", artifact_toml)
+CBIOMESclim_path = artifact_path(CBIOMESclim_hash)*"/"
+CBIOMESclim_download() = artifact"CBIOMESclim"
 
 ##
 
