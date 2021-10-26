@@ -29,7 +29,7 @@ using OceanStateEstimation, MeshArrays
 tmp=OceanStateEstimation.get_ecco_files(γ,"ETAN")
 ```
 
-## Bio-Geo-Chemical Climatologies
+## Bio-Geo-Chemical Climatology
 
 CBIOMES-global (alpha version) is a global ocean state estimate that covers the period from 1992 to 2011. It is based on Forget et al 2015 for ocean physics MIT general circulation model and on Dutkiewicz et al 2015 for marine biogeochemistry and ecosystems Darwin Project model.
 
