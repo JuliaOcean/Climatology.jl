@@ -1,32 +1,18 @@
 # OceanStateEstimation
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gaelforget.github.io/OceanStateEstimation.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gaelforget.github.io/OceanStateEstimation.jl/dev)
 [![CI](https://github.com/gaelforget/OceanStateEstimation.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/gaelforget/OceanStateEstimation.jl/actions/workflows/ci.yml)
-
 [![Codecov](https://codecov.io/gh/gaelforget/OceanStateEstimation.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gaelforget/OceanStateEstimation.jl)
-[![Coveralls](https://coveralls.io/repos/github/gaelforget/OceanStateEstimation.jl/badge.svg?branch=master)](https://coveralls.io/github/gaelforget/OceanStateEstimation.jl?branch=master)
 
 [![DOI](https://zenodo.org/badge/260376633.svg)](https://zenodo.org/badge/latestdoi/260376633)
 
-Use examples:
+This package is currently focused on serving and deriving climatologies from [ocean state estimates](http://dx.doi.org/10.5194/gmd-8-3071-2015). _It is in early development stage; breaking changes remain likely._
+
+### Use example
 
 ```
 using OceanStateEstimation
-
-pth=dirname(pathof(OceanStateEstimation))
-lst=joinpath(pth,"../examples/OCCA_climatology.csv")
-get_from_dataverse(lst,"DFOsflux",OCCAclim_path)
+get_occa_variable_if_needed("SIarea")
+#get_ecco_variable_if_needed("ETAN")
 ```
-
-or 
-
-```
-using OceanStateEstimation, MeshArrays
-
-γ=GridSpec("LatLonCap","./")
-tmp=get_ecco_files(γ,"ETAN")
-```
-
-_This package is in early developement stage when breaking changes can be expected._
 
