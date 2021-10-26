@@ -37,6 +37,7 @@ More information about this monthly, 1992-2011, climatology state estimate can b
 
 # ╔═╡ d350d874-ff94-4be1-a68c-7237a4ab492c
 begin
+	OceanStateEstimation.CBIOMESclim_download()
 	fil_out=joinpath(CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
 	nc=NCTiles.NCDataset(fil_out,"r")
 	lon=nc["lon"][:]
