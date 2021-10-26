@@ -20,7 +20,8 @@ In this notebook we illustrate how `MeshArrays.jl` and `NCTiles.jl` can be used 
 - start from native-grid output from the [CBIOMES-global](https://cbiomes.readthedocs.io/en/latest/)
 - read from file, derive, and interapolate new variables
 - write results to CF-compliant NetCDF files
-- plot result maps interactively (TBD)
+
+The final product is the `CBIOMES-global-alpha-climatology.nc` file which is available from [this zenodo archive](https://doi.org/10.5281/zenodo.5598417). The companion notebook, `CBIOMES_climatogy_plot.jl`, let's you visualize the climatology maps interactively.
 
 `Author: Gaël Forget`
 
