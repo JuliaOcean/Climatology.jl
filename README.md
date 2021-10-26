@@ -8,11 +8,7 @@
 
 This package is currently focused on serving and deriving climatologies from [ocean state estimates](http://dx.doi.org/10.5194/gmd-8-3071-2015). _It is in early development stage; breaking changes remain likely._
 
-### Use example
+### Use Examples
 
-```
-using OceanStateEstimation
-get_occa_variable_if_needed("SIarea")
-#get_ecco_variable_if_needed("ETAN")
-```
+See [Physical Oceanography](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/#Physical-Oceanography), [Bio-Geo-Chemical Climatology](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/#Bio-Geo-Chemical-Climatology), etc. in the [docs](https://gaelforget.github.io/OceanStateEstimation.jl/dev).
 
