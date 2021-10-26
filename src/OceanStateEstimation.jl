@@ -2,47 +2,59 @@ module OceanStateEstimation
 
 using Statistics, Pkg.Artifacts, Downloads
 using FortranFiles, MeshArrays, MITgcmTools
-export dataverse_lists, get_from_dataverse, get_ecco_files
-export get_occa_velocity_if_needed, get_ecco_velocity_if_needed
-export get_ecco_variable_if_needed
-export ECCOclim_path, OCCAclim_path, MITPROFclim_path, CBIOMESclim_path
+
+export dataverse_lists, get_from_dataverse
+export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
+export get_occa_variable_if_needed, get_occa_velocity_if_needed
+export ECCOclim_path, OCCAclim_path
+export MITPROFclim_path, CBIOMESclim_path
 
 ##
 
 p=dirname(pathof(OceanStateEstimation))
+
 artifact_toml = joinpath(p, "../Artifacts.toml")
+
 ECCOclim_hash = artifact_hash("ECCOclim", artifact_toml)
 ECCOclim_path = artifact_path(ECCOclim_hash)*"/"
+
 OCCAclim_hash = artifact_hash("OCCAclim", artifact_toml)
 OCCAclim_path = artifact_path(OCCAclim_hash)*"/"
+
 MITPROFclim_hash = artifact_hash("MITPROFclim", artifact_toml)
 MITPROFclim_path = artifact_path(MITPROFclim_hash)*"/"
+MITPROFclim_download() = artifact"MITPROFclim"
 
 CBIOMESclim_hash = artifact_hash("CBIOMESclim", artifact_toml)
 CBIOMESclim_path = artifact_path(CBIOMESclim_hash)*"/"
 CBIOMESclim_download() = artifact"CBIOMESclim"
 
-##
+## Dataverse Donwloads
 
 """
     get_from_dataverse(lst::String,nam::String,pth::String)
 
 ```
 using OceanStateEstimation, CSV, DataFrames
-lst=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/OCCA_climatology.csv")
-nams = CSV.File(lst) |> DataFrame!
-nams = nams.name[:]
-[get_from_dataverse(lst,nam,OCCAclim_path) for nam in nams]
+pth=dirname(pathof(OceanStateEstimation))
+lst=joinpath(pth,"../examples/OCCA_climatology.csv")
+nams=CSV.read(lst,DataFrame)
+[get_from_dataverse(lst,nam,OCCAclim_path) for nam in nams.name[:]]
 ```
 """
 function get_from_dataverse(lst::String,nam::String,pth::String)
     lists=dataverse_lists(lst)
     ii = findall([occursin("$nam", lists.name[i]) for i=1:length(lists.ID)])
-    !isdir("$pth"*"$nam") ? mkdir("$pth"*"$nam") : nothing
     for i in ii
         nam1=Downloads.download(lists.URL[i])
-        nam2=joinpath("$pth"*"$nam/",lists.name[i])
-        mv(nam1,nam2)
+        if length(ii)>1
+            !isdir(joinpath(pth,nam)) ? mkdir(joinpath(pth,nam)) : nothing
+            nam2=joinpath(pth,nam,lists.name[i])
+            mv(nam1,nam2)
+        else
+            nam2=joinpath(pth,lists.name[i])
+            mv(nam1,nam2)
+        end
     end
 end
 
@@ -70,14 +82,12 @@ end
 
 ```
 using MeshArrays, OceanStateEstimation
-γ=GridSpec("LatLonCap","./")
+γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
 tmp=get_ecco_files(γ,"oceQnet")
 ```
 """
 function get_ecco_files(γ::gcmgrid,v::String,t=1)
-    pth=artifact_path(ECCOclim_hash)*"/"    
-    lst=joinpath(dirname(pathof(OceanStateEstimation)),"../examples/nctiles_climatology.csv")
-    !isdir("$pth"*v) ? get_from_dataverse(lst,v,ECCOclim_path) : nothing
+    get_ecco_variable_if_needed(v)
     #return read_nctiles(ECCOclim_path*"$v/$v","$v",γ,I=(:,:,:,t))
     return read_nctiles(ECCOclim_path*"$v/$v","$v",γ,I=(:,:,t))
 end
@@ -106,21 +116,26 @@ function get_ecco_velocity_if_needed()
 end
 
 """
-    get_occa_velocity_if_needed()
+    get_occa_variable_if_needed(v::String)
 
-Download `MITgcm` transport output to `OCCAclim_path` if needed
+Download OCCA output for variable `v` to `OCCAclim_path` if needed
 """
-function get_occa_velocity_if_needed()
+function get_occa_variable_if_needed(v::String)
     p=dirname(pathof(OceanStateEstimation))
     lst=joinpath(p,"../examples/OCCA_climatology.csv")
-    pth=OCCAclim_path
-    nams = ("DDuvel.0406clim.nc","DDvvel.0406clim.nc","DDwvel.0406clim.nc","DDtheta.0406clim.nc","DDsalt.0406clim.nc")
-    if !isfile("$pth"*"DDuvel.0406clim.nc") 
-        tmp=joinpath(pth,"tmp/")
-        !isdir(tmp) ? mkdir(tmp) : nothing
-        [get_from_dataverse(lst,nam,tmp) for nam in nams]
-        [mv(joinpath(tmp,nam,nam),joinpath(pth,nam)) for nam in nams]
-    end
+    fil=joinpath(OCCAclim_path,v*".0406clim.nc")
+    !isfile(fil) ? get_from_dataverse(lst,v,OCCAclim_path) : nothing
+end
+
+"""
+    get_occa_velocity_if_needed()
+
+Download OCCA output for `u,v,w` to `OCCAclim_path` if needed
+"""
+function get_occa_velocity_if_needed()
+    nams = ("DDuvel","DDvvel","DDwvel","DDtheta","DDsalt")
+    [get_occa_variable_if_needed(nam) for nam in nams]
+    "done"
 end
 
 end # module
