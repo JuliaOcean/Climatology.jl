@@ -11,7 +11,7 @@ They can be relatively large files, compared to the package codes, so they are t
 |:----------------|:----------------:|-----------------:|
 | ECCOclim_path             | NetCDF              | lazy, by variable, [dataverse](https://dataverse.harvard.edu/dataverse/ECCO?q=&types=dataverses&sort=dateSort&order=desc&page=1) |
 | OCCAclim_path             | NetCDF              |lazy, by variable, [dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RNXA2A) |
-| MITPROFclim_path             | binary    | lazy, whole, [zenodo]() |
+| MITPROFclim_path             | binary    | lazy, whole, [zenodo](https://zenodo.org/record/5101243#.YXiEci1h1qs) |
 
 Use examples:
 
@@ -33,9 +33,8 @@ tmp=OceanStateEstimation.get_ecco_files(γ,"ETAN")
 
 CBIOMES-global (alpha version) is a global ocean state estimate that covers the period from 1992 to 2011. It is based on Forget et al 2015 for ocean physics MIT general circulation model and on Dutkiewicz et al 2015 for marine biogeochemistry and ecosystems Darwin Project model.
 
-- [CBIOMES\_climatology\_plot](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES_climatology_plot.jl)) : visualize the climatology maps interactively using `Pluto.jl`
-- [CBIOMES\_climatology\_create](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES_climatology_create.jl)) : recreate the climatology file. The original is archived [
-here in zenodo](https://doi.org/10.5281/zenodo.5598417).
+- [CBIOMES\_climatology\_plot](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES_climatology_plot.jl)) : visualize the climatology maps interactively using [Pluto.jl](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto)
+- [CBIOMES\_climatology\_create](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES_climatology_create.jl)) : recreate the climatology file. The original is archived [here in zenodo](https://doi.org/10.5281/zenodo.5598417).
 
 Or in the `julia REPL`, for example :
 
