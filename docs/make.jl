@@ -9,6 +9,8 @@ makedocs(;
     format=Documenter.HTML(),
     pages=[
         "Home" => "index.md",
+        "Examples" => "examples.md",
+        "Functionalities" => "API.md",
     ],
     repo="https://github.com/gaelforget/OceanStateEstimation.jl/blob/{commit}{path}#L{line}",
     sitename="OceanStateEstimation.jl",
