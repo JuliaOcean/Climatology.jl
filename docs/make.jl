@@ -2,9 +2,6 @@ using Documenter, OceanStateEstimation, Pkg
 import PlutoSliderServer, CairoMakie
 Pkg.precompile()
 
-#lst=("CBIOMES_climatogy_create.jl",)
-lst=("CBIOMES_climatology_plot.jl",)
-
 makedocs(;
     modules=[OceanStateEstimation],
     format=Documenter.HTML(),
@@ -19,8 +16,13 @@ makedocs(;
     assets=String[],
 )
 
+OceanStateEstimation.CBIOMESclim_download()
+#lst=("CBIOMES_climatogy_create.jl",)
+lst=("CBIOMES_climatology_plot.jl",)
+
 pth_out=joinpath(@__DIR__,"build", "examples")
 !isdir(pth_out) ? mkdir(pth_out) : nothing
+
 if true #skip generating file automatically 
     for i in lst
     println("PlutoSliderServer($i) started")
