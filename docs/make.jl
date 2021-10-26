@@ -3,7 +3,7 @@ import PlutoSliderServer, CairoMakie
 Pkg.precompile()
 
 #lst=("CBIOMES_climatogy_create.jl",)
-lst=("CBIOMES_climatogy_plot.jl",)
+lst=("CBIOMES_climatology_plot.jl",)
 
 makedocs(;
     modules=[OceanStateEstimation],
