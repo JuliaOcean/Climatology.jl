@@ -33,5 +33,15 @@ tmp=OceanStateEstimation.get_ecco_files(γ,"ETAN")
 
 CBIOMES-global (alpha version) is a global ocean state estimate that covers the period from 1992 to 2011. It is based on Forget et al 2015 for ocean physics MIT general circulation model and on Dutkiewicz et al 2015 for marine biogeochemistry and ecosystems Darwin Project model.
 
-The climatology maps can be visualized using [this notebook](CBIOMES_climatology_plot.html). The climatology file wcreated by [that notebook](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) is archived [
+- [CBIOMES\_climatology\_plot](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES_climatology_plot.jl)) : visualize the climatology maps interactively using `Pluto.jl`
+- [CBIOMES\_climatology\_create](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES_climatology_create.jl)) : recreate the climatology file. The original is archived [
 here in zenodo](https://doi.org/10.5281/zenodo.5598417).
+
+Or in the `julia REPL`, for example :
+
+```julia
+using OceanStateEstimation, NCTiles
+OceanStateEstimation.CBIOMESclim_download()
+fil_out=joinpath(CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
+nc=NCTiles.NCDataset(fil_out,"r")
+```
