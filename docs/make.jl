@@ -16,7 +16,7 @@ makedocs(;
     assets=String[],
 )
 
-OceanStateEstimation.CBIOMESclim_download()
+#OceanStateEstimation.CBIOMESclim_download()
 #lst=("CBIOMES_climatogy_create.jl",)
 lst=("CBIOMES_climatology_plot.jl",)
 
