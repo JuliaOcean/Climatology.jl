@@ -85,6 +85,14 @@ begin
 	"""
 end
 
+# ╔═╡ c01ccb8b-1079-4673-8d6c-ce14aa3814c6
+	md"""## Select Variable
+	
+	Variable : $(vv)
+	
+	Month :    $(mm)
+	"""
+
 # ╔═╡ fcbec6d7-68cc-4821-8c7f-2d35734985c9
 begin
 	uni=nc[v].attrib["units"]
@@ -114,6 +122,24 @@ let
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	md"""## Interative Map
 	
+	$(fig)
+	"""
+end
+
+# ╔═╡ afba5bf1-17f8-4f45-8845-f094497a216c
+let
+	i2=Int(lon0+180)
+	j2=findall( (lat.>lat0-10.0).*(lat.<=lat0+10.0) )
+	tmp=nc[v][i2,j2,:]
+	
+	fig = Mkie.Figure(resolution = (600,300), backgroundcolor = :grey95, fontsize=12)
+
+	ax = Mkie.Axis(fig[1,1], title=nam*" (units: $(uni) ; month: $(m))",xlabel="month",ylabel="latitude")
+	hm2=Mkie.contourf!(ax,0.5:35.5,lat[j2], transpose([tmp tmp tmp]),levels=10)
+	Mkie.Colorbar(fig[1,2], hm2, height = Mkie.Relative(0.65))
+
+	md"""## Time-Latitude Slice
+
 	$(fig)
 	"""
 end
@@ -1596,6 +1622,8 @@ version = "3.0.0+3"
 # ╟─1969ef9a-eec7-48b0-a93d-c0ff2586c9cd
 # ╟─6fc5e769-b17f-4916-a536-6c32531f648d
 # ╟─c1a5e876-7d8b-4f0b-aef5-253d5e3cd3a5
+# ╟─afba5bf1-17f8-4f45-8845-f094497a216c
+# ╟─c01ccb8b-1079-4673-8d6c-ce14aa3814c6
 # ╟─d9d739aa-88ce-4bf3-a1d8-b15efec1df2b
 # ╟─d350d874-ff94-4be1-a68c-7237a4ab492c
 # ╟─00000000-0000-0000-0000-000000000001
