@@ -7,24 +7,28 @@ author: Gaël Forget
 - examples/CBIOMES_climatology_compare.jl
 """
 
+import OceanStateEstimation, NCTiles
 using OptimalTransport, Statistics, LinearAlgebra, JLD2
 
 ## load files
 
-fil_out=joinpath(CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
+fil_out=joinpath(OceanStateEstimation.CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
 nc=NCTiles.NCDataset(fil_out,"r")
 lon=nc["lon"][:]
 lat=nc["lat"][:]
 uni=nc["Chl"].attrib["units"]
-Chl_from_Mod=nc["Chl"][:]
-
-fil_sat="examples/gridded_geospatial_montly_clim_360_720_ver_0_2.nc"
-Chl_from_Sat=NCTiles.NCDataset(fil_sat,"r")["Chl"][:]
 
 ## region and base distance (Cost) definition
 
 i1=findall( (lon.>-180.0).*(lon.<-120.0) )
 j1=findall( (lat.>-20.0).*(lat.<50.0) )
+
+## main arrays
+Chl_from_Mod=nc["Chl"][i1,j1,:]
+fil_sat="examples/gridded_geospatial_montly_clim_360_720_ver_0_2.nc"
+Chl_from_Sat=NCTiles.NCDataset(fil_sat,"r")["Chl"][i1,j1,:]
+
+## cost matrix
 
 if !isfile("examples/example_Cost.jld2")
     #this only needs to be done one
@@ -70,23 +74,24 @@ end
 
 ## 
 
-a=mean(Chl_from_Sat[i1,j1,:],dims=3)[:]
-b=mean(Chl_from_Mod[i1,j1,:],dims=3)[:]
-a,b=preprocess_Chl(a,b)
+if false
+    in1=(a=mean(Chl_from_Sat,dims=3)[:], b=mean(Chl_from_Mod,dims=3)[:])
+    out1=preprocess_Chl(in1.a,in1.b)
+    in2=(a=out1[2],b=out1[2],ε=0.1)
 
-ε=0.1
-G=sinkhorn(a,b, Cost, ε)
-#
-bb=G'*a #predict b, step1
-bb=bb[:]*sum(b)/sum(bb) #predict b, step2
-#
-OptCost=sinkhorn2(a,b, Cost, ε, plan=G) #compute optimal cost
-#
-cc=dot(G, Cost) #compute optimal cost, directly
+    G=sinkhorn(in2.a,in2.b, Cost, in2.ε)
+    #
+    bb=G'*in2.a #predict b, step1
+    bb=bb[:]*sum(in2.b)/sum(bb) #predict b, step2
+    #
+    OptCost=sinkhorn2(in2.a, in2.b, Cost, in2.ε, plan=G) #compute optimal cost
+    #
+    cc=dot(G, Cost) #compute optimal cost, directly
 
-#@time sinkhorn2(a,b, Cost, ε);
-#@time sinkhorn(a,b, Cost, ε);
-#@time sinkhorn_divergence(a,b, Cost, ε);
+    #@time sinkhorn2(a,b, Cost, ε);
+    #@time sinkhorn(a,b, Cost, ε);
+    #@time sinkhorn_divergence(a,b, Cost, ε);
+end
 
 ## loop over months
 
@@ -95,8 +100,8 @@ d=zeros(12,12)
 t=[time()]
 for i in 1:12, j in 1:12
     if j!==i
-        a=Chl_from_Mod[i1,j1,i][:];
-        b=Chl_from_Sat[i1,j1,j][:];
+        a=Chl_from_Mod[:,:,i]
+        b=Chl_from_Sat[:,:,j]
         a,b=preprocess_Chl(a,b)
 
         ε = 0.1
