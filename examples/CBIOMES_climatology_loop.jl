@@ -25,8 +25,8 @@ end
 end
 
 @everywhere function SatToSat(i,j)
-    a=Chl_from_Mod[:,:,i][:]
-    b=Chl_from_Mod[:,:,j][:]
+    a=Chl_from_Sat[:,:,i][:]
+    b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
     ε = 0.05
     sinkhorn2(a,b, Cost, ε)
@@ -61,18 +61,34 @@ end
 end
 
 if calc_SatToSat
-dd = SharedArray{Float64}(12,12)
+d = SharedArray{Float64}(12,12)
 t0=[time()]
 for kk in 1:36
     @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
      i=JJ[k][1]
      j=JJ[k][2]
-     dd[i,j]=SatToSat(i,j)
+     d[i,j]=SatToSat(i,j)
     end
     dt=time()-t0[1]
     println("SatToSat $(kk) $(dt)")
     t0[1]=time()
-    @save "SatToSat_v0.jld2" dd;
+    @save "SatToSat_v0.jld2" d;
 end
 end
 
+if calc_ModToSat
+    d = SharedArray{Float64}(12,12)
+    t0=[time()]
+    for kk in 1:36
+        @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
+         i=JJ[k][1]
+         j=JJ[k][2]
+         d[i,j]=ModToSat(i,j)
+        end
+        dt=time()-t0[1]
+        println("ModToSat $(kk) $(dt)")
+        t0[1]=time()
+        @save "ModToSat_v0.jld2" d;
+    end
+end
+    
