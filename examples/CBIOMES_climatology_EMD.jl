@@ -54,15 +54,15 @@ println("reusing Cost matrix computed previously\n")
 ## helper functions
 
 function preprocess_Chl(a,b)
-    k=findall(xor.(ismissing.(a),ismissing.(b)));
+    k=findall(ismissing.(a).|ismissing.(b));
     a[k].=0.0; b[k].=0.0;
-    k=findall(xor.(a.<0,b.<0));
+    k=findall((a.<0).|(b.<0));
     a[k].=0.0; b[k].=0.0;
-    k=findall(xor.(isnan.(a),isnan.(b)));
+    k=findall(isnan.(a).|isnan.(b));
     a[k].=0.0; b[k].=0.0;
 
     M=0.1
-    k=findall(xor.(a.>M,b.>M));
+    k=findall((a.>M).|(b.>M));
     a[findall(a.>M)].=M;
     b[findall(b.>M)].=M;
 
