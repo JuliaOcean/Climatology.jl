@@ -1,6 +1,6 @@
 
-calc_SatToSat=true
-calc_ModToMod=false
+calc_SatToSat=false
+calc_ModToMod=true
 
 println(calc_SatToSat)
 println(calc_ModToMod)
