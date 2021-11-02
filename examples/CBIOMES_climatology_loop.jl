@@ -1,8 +1,8 @@
 using Distributed
 
 calc_SatToSat=false
-calc_ModToMod=false
-calc_ModToSat=true
+calc_ModToMod=true
+calc_ModToSat=false
 test_methods=false
 
 println(calc_SatToSat)
@@ -15,6 +15,36 @@ println(test_methods)
 @everywhere using Tulip, Distances, JLD2
 
 @everywhere Cost=load("examples/example_Cost.jld2")["Cost"]
+@everywhere M=load("examples/zm_mod.jld2")["M"]
+@everywhere S=load("examples/zm_sat.jld2")["S"]
+
+function export_zm()
+    M=NaN*zeros(140,12)
+    S=NaN*zeros(140,12)
+    for t in 1:12
+        a=Chl_from_Mod[:,:,t][:]
+        b=Chl_from_Sat[:,:,t][:]
+        a,b=preprocess_Chl(a,b)
+        M[:,t]=sum(reshape(a,(120,140)),dims=1)[:]
+        S[:,t]=sum(reshape(b,(120,140)),dims=1)[:]
+    end
+    (M,S)
+end
+
+@everywhere function ModToMod_MS(i,j)
+    Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    emd2(M[:,i],M[:,j], Cost, Tulip.Optimizer())
+end
+
+@everywhere function SatToSat_MS(i,j)
+    Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    emd2(S[:,i],S[:,j], Cost, Tulip.Optimizer())
+end
+
+@everywhere function ModToSat_MS(i,j)
+    Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    emd2(M[:,i],S[:,j], Cost, Tulip.Optimizer())
+end
 
 @everywhere function ModToSat(i,j)
     a=Chl_from_Mod[:,:,i][:]
@@ -127,7 +157,8 @@ for kk in 1:36
     @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
      i=JJ[k][1]
      j=JJ[k][2]
-     d[i,j]=ModToMod(i,j)
+#     d[i,j]=ModToMod(i,j)
+     d[i,j]=ModToMod_MS(i,j)
     end
     dt=time()-t0[1]
     println("ModToMod $(kk) $(dt)")
@@ -143,7 +174,8 @@ for kk in 1:36
     @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
      i=JJ[k][1]
      j=JJ[k][2]
-     d[i,j]=SatToSat(i,j)
+#     d[i,j]=SatToSat(i,j)
+     d[i,j]=SatToSat_MS(i,j)
     end
     dt=time()-t0[1]
     println("SatToSat $(kk) $(dt)")
@@ -159,7 +191,8 @@ if calc_ModToSat
         @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
          i=JJ[k][1]
          j=JJ[k][2]
-         d[i,j]=ModToSat(i,j)
+         #d[i,j]=ModToSat(i,j)
+         d[i,j]=ModToSat_MS(i,j)
         end
         dt=time()-t0[1]
         println("ModToSat $(kk) $(dt)")
