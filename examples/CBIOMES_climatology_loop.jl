@@ -1,8 +1,9 @@
+using Distributed
 
 calc_SatToSat=false
-calc_ModToMod=false
+calc_ModToMod=true
 calc_ModToSat=false
-test_methods=true
+test_methods=false
 
 println(calc_SatToSat)
 println(calc_ModToMod)
@@ -17,16 +18,46 @@ println(test_methods)
     a=Chl_from_Mod[:,:,i][:]
     b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
-    ε = 0.05
-    sinkhorn2(a,b, Cost, ε)
+
+    if false #reduce problem size
+        a=sum(reshape(a,(120,140)),dims=1)[:]
+        b=sum(reshape(b,(120,140)),dims=1)[:]
+        Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    end
+
+    #ε = 0.05
+    #sinkhorn2(a,b, Cost, ε)
+    
+    #emd2(a,b, Cost, Tulip.Optimizer())
+
+    ε = 0.01
+    ##γ = sinkhorn_stabilized(a,b, Cost, ε; maxiter=5_000)
+    γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+    dot(γ, Cost) #compute optimal cost, directly
 end
 
 @everywhere function ModToMod(i,j)
     a=Chl_from_Mod[:,:,i][:]
     b=Chl_from_Mod[:,:,j][:]
     a,b=preprocess_Chl(a,b)
-    ε = 0.05
-    sinkhorn2(a,b, Cost, ε)
+
+    if false #reduce problem size
+        a=sum(reshape(a,(120,140)),dims=1)[:]
+        b=sum(reshape(b,(120,140)),dims=1)[:]
+        Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    end
+
+    Cost=load("examples/example_Cost.jld2")["Cost"]
+
+    #ε = 0.05
+    #sinkhorn2(a,b, Cost, ε)
+
+    #emd2(a,b, Cost, Tulip.Optimizer())
+
+    ε = 0.01
+    ##γ = sinkhorn_stabilized(a,b, Cost, ε; maxiter=5_000)
+    γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+    dot(γ, Cost) #compute optimal cost, directly
 end
 
 @everywhere function SatToSat(i,j)
@@ -41,27 +72,29 @@ end
     a=Chl_from_Mod[:,:,i][:]
     b=Chl_from_Mod[:,:,j][:]
     a,b=preprocess_Chl(a,b)
+    
+    a=sum(reshape(a,(120,140)),dims=1)[:]
+    b=sum(reshape(b,(120,140)),dims=1)[:]
+    Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+
     if mthd==1
-        ε = 0.01
+        ε = 0.05
         sinkhorn2(a,b, Cost, ε)
     elseif mthd==2
-        ε = 0.01
-        sinkhorn2(a,b, Cost, ε; maxiter=2_000)
-    elseif mthd==3
         emd2(a,b, Cost, Tulip.Optimizer())
-    elseif mthd==4
-        ε = 0.01
-        γ = quadreg(a,b, Cost, ε; maxiter=100)
-        dot(γ, Cost) #compute optimal cost, directly
-    elseif mthd==5
+    elseif mthd==3
         ε = 0.005
         γ = sinkhorn_stabilized(a,b, Cost, ε; maxiter=5_000)
         dot(γ, Cost) #compute optimal cost, directly
-    elseif mthd==6
+    elseif mthd==4
         ε = 0.005
         γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
         dot(γ, Cost) #compute optimal cost, directly
-    end
+#    elseif mthd==5
+#        ε = 0.05
+#        γ = quadreg(a,b, Cost, ε; maxiter=100)
+#        dot(γ, Cost) #compute optimal cost, directly
+end
 end
 
 @everywhere include("CBIOMES_climatology_EMD.jl")
@@ -126,11 +159,12 @@ end
     
 
 if test_methods
-    KK=([1,1],[1,2],[1,9])
+    #KK=([1,1],[1,2],[1,9])
+    KK=[[1,j] for j in 1:12]
     d = SharedArray{Float64}(6,length(KK))
     t0=[time()]
-    for k in 4:6
-        @sync @distributed for kk in 1:3
+    for k in 1:4
+        for kk in 1:12
          i=KK[kk][1]
          j=KK[kk][2]
          try
