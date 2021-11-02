@@ -14,9 +14,9 @@ function EMD_plot(fil)
 end
 
 function EMD_plot_all(pth="./")
-    fil1=pth*"ModToMod_v0.jld2"
-    fil2=pth*"SatToSat_v0.jld2"
-    fil3=pth*"ModToSat_v0.jld2"
+    fil1=pth*"ModToMod.jld2"
+    fil2=pth*"SatToSat.jld2"
+    fil3=pth*"ModToSat.jld2"
 
     d1=load(fil1)["d"]; d1[findall(d1.==0.0)].=NaN;
     d2=load(fil2)["d"]; d2[findall(d2.==0.0)].=NaN;

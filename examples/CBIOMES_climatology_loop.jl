@@ -1,8 +1,8 @@
 using Distributed
 
 calc_SatToSat=false
-calc_ModToMod=true
-calc_ModToSat=false
+calc_ModToMod=false
+calc_ModToSat=true
 test_methods=false
 
 println(calc_SatToSat)
@@ -12,11 +12,13 @@ println(test_methods)
 
 @everywhere using Distributed, DistributedArrays, SharedArrays
 @everywhere using OptimalTransport, Statistics, LinearAlgebra
-@everywhere using Tulip, Distances, JLD2
+@everywhere using Tulip, Distances, JLD2, Tables, CSV, DataFrames
 
 @everywhere Cost=load("examples/example_Cost.jld2")["Cost"]
-@everywhere M=load("examples/zm_mod.jld2")["M"]
-@everywhere S=load("examples/zm_sat.jld2")["S"]
+#@everywhere M=load("examples/zm_mod.jld2")["M"]
+#@everywhere S=load("examples/zm_sat.jld2")["S"]
+@everywhere M=Tables.matrix(CSV.read("examples/M.csv",DataFrame))
+@everywhere S=Tables.matrix(CSV.read("examples/S.csv",DataFrame))
 
 function export_zm()
     M=NaN*zeros(140,12)
@@ -51,12 +53,6 @@ end
     b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
 
-    if true #reduce problem size
-        a=sum(reshape(a,(120,140)),dims=1)[:]
-        b=sum(reshape(b,(120,140)),dims=1)[:]
-        Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
-    end
-
     #ε = 0.05
     #sinkhorn2(a,b, Cost, ε)
     
@@ -71,12 +67,6 @@ end
     a=Chl_from_Mod[:,:,i][:]
     b=Chl_from_Mod[:,:,j][:]
     a,b=preprocess_Chl(a,b)
-
-    if true #reduce problem size
-        a=sum(reshape(a,(120,140)),dims=1)[:]
-        b=sum(reshape(b,(120,140)),dims=1)[:]
-        Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
-    end
 
     #ε = 0.05
     #sinkhorn2(a,b, Cost, ε)
@@ -93,12 +83,6 @@ end
     b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
 
-    if true #reduce problem size
-        a=sum(reshape(a,(120,140)),dims=1)[:]
-        b=sum(reshape(b,(120,140)),dims=1)[:]
-        Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
-    end
-
     #ε = 0.05
     #sinkhorn2(a,b, Cost, ε)
 
@@ -108,6 +92,67 @@ end
     #γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
     #dot(γ, Cost) #compute optimal cost, directly
 end
+
+##
+
+@everywhere include("CBIOMES_climatology_EMD.jl")
+
+II=[[i,j] for i in 1:12, j in 1:12][:];
+
+using Random; JJ=shuffle(II);
+
+if calc_ModToMod
+d = SharedArray{Float64}(12,12)
+t0=[time()]
+for kk in 1:36
+    @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
+     i=JJ[k][1]
+     j=JJ[k][2]
+#     d[i,j]=ModToMod(i,j)
+     d[i,j]=ModToMod_MS(i,j)
+    end
+    dt=time()-t0[1]
+    println("ModToMod $(kk) $(dt)")
+    t0[1]=time()
+    @save "ModToMod.jld2" d;
+end
+end
+
+if calc_SatToSat
+d = SharedArray{Float64}(12,12)
+t0=[time()]
+for kk in 1:36
+    @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
+     i=JJ[k][1]
+     j=JJ[k][2]
+#     d[i,j]=SatToSat(i,j)
+     d[i,j]=SatToSat_MS(i,j)
+    end
+    dt=time()-t0[1]
+    println("SatToSat $(kk) $(dt)")
+    t0[1]=time()
+    @save "SatToSat.jld2" d;
+end
+end
+
+if calc_ModToSat
+    d = SharedArray{Float64}(12,12)
+    t0=[time()]
+    for kk in 1:36
+        @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
+         i=JJ[k][1]
+         j=JJ[k][2]
+         #d[i,j]=ModToSat(i,j)
+         d[i,j]=ModToSat_MS(i,j)
+        end
+        dt=time()-t0[1]
+        println("ModToSat $(kk) $(dt)")
+        t0[1]=time()
+        @save "ModToSat.jld2" d;
+    end
+end
+    
+## function used only for testing several methods at once
 
 @everywhere function ModToMod_methods(i,j,mthd=1)
     a=Chl_from_Mod[:,:,i][:]
@@ -138,70 +183,6 @@ end
 end
 end
 
-@everywhere include("CBIOMES_climatology_EMD.jl")
-
-II=[[i,j] for i in 1:12, j in 1:12][:];
-
-using Random; JJ=shuffle(II);
-
-#@sync @distributed for k in 
-#    i=II[k][1]
-#    j=II[k][2]
-#    d[i,j]=f1(i,j)
-#end
-
-if calc_ModToMod
-d = SharedArray{Float64}(12,12)
-t0=[time()]
-for kk in 1:36
-    @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
-     i=JJ[k][1]
-     j=JJ[k][2]
-#     d[i,j]=ModToMod(i,j)
-     d[i,j]=ModToMod_MS(i,j)
-    end
-    dt=time()-t0[1]
-    println("ModToMod $(kk) $(dt)")
-    t0[1]=time()
-    @save "ModToMod_v0.jld2" d;
-end
-end
-
-if calc_SatToSat
-d = SharedArray{Float64}(12,12)
-t0=[time()]
-for kk in 1:36
-    @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
-     i=JJ[k][1]
-     j=JJ[k][2]
-#     d[i,j]=SatToSat(i,j)
-     d[i,j]=SatToSat_MS(i,j)
-    end
-    dt=time()-t0[1]
-    println("SatToSat $(kk) $(dt)")
-    t0[1]=time()
-    @save "SatToSat_v0.jld2" d;
-end
-end
-
-if calc_ModToSat
-    d = SharedArray{Float64}(12,12)
-    t0=[time()]
-    for kk in 1:36
-        @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
-         i=JJ[k][1]
-         j=JJ[k][2]
-         #d[i,j]=ModToSat(i,j)
-         d[i,j]=ModToSat_MS(i,j)
-        end
-        dt=time()-t0[1]
-        println("ModToSat $(kk) $(dt)")
-        t0[1]=time()
-        @save "ModToSat_v0.jld2" d;
-    end
-end
-    
-
 if test_methods
     #KK=([1,1],[1,2],[1,9])
     KK=[[1,j] for j in 1:12]
@@ -221,6 +202,6 @@ if test_methods
         dt=time()-t0[1]
         println("ModToMod_methods $(k) $(dt)")
         t0[1]=time()
-        @save "ModToMod_methods_v0.jld2" d;
+        @save "ModToMod_methods.jld2" d;
     end
 end
