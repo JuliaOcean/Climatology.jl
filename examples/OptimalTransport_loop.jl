@@ -4,6 +4,7 @@ calc_SatToSat=false
 calc_ModToMod=false
 calc_ModToSat=true
 test_methods=false
+choice_method="emd2" #only for 2D case
 
 println(calc_SatToSat)
 println(calc_ModToMod)
@@ -14,24 +15,11 @@ println(test_methods)
 @everywhere using OptimalTransport, Statistics, LinearAlgebra
 @everywhere using Tulip, Distances, JLD2, Tables, CSV, DataFrames
 
-@everywhere Cost=load("examples/example_Cost.jld2")["Cost"]
-#@everywhere M=load("examples/zm_mod.jld2")["M"]
-#@everywhere S=load("examples/zm_sat.jld2")["S"]
+#@everywhere Cost=load("examples/example_Cost.jld2")["Cost"]
 @everywhere M=Tables.matrix(CSV.read("examples/M.csv",DataFrame))
 @everywhere S=Tables.matrix(CSV.read("examples/S.csv",DataFrame))
 
-function export_zm()
-    M=NaN*zeros(140,12)
-    S=NaN*zeros(140,12)
-    for t in 1:12
-        a=Chl_from_Mod[:,:,t][:]
-        b=Chl_from_Sat[:,:,t][:]
-        a,b=preprocess_Chl(a,b)
-        M[:,t]=sum(reshape(a,(120,140)),dims=1)[:]
-        S[:,t]=sum(reshape(b,(120,140)),dims=1)[:]
-    end
-    (M,S)
-end
+## functions that use the "zonal sum" test case
 
 @everywhere function ModToMod_MS(i,j)
     Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
@@ -48,19 +36,23 @@ end
     emd2(M[:,i],S[:,j], Cost, Tulip.Optimizer())
 end
 
+## functions that use the full 2D case
+
 @everywhere function ModToSat(i,j)
     a=Chl_from_Mod[:,:,i][:]
     b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
 
-    #ε = 0.05
-    #sinkhorn2(a,b, Cost, ε)
-    
-    emd2(a,b, Cost, Tulip.Optimizer())
-
-    #ε = 0.01
-    #γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
-    #dot(γ, Cost) #compute optimal cost, directly
+    if choice_method=="sinkhorn2"
+        ε = 0.05
+        sinkhorn2(a,b, Cost, ε)
+    elseif choice_method=="emd2"
+        emd2(a,b, Cost, Tulip.Optimizer())
+    elseif choice_method=="epsscaling"
+        ε = 0.01
+        γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+        dot(γ, Cost) #compute optimal cost, directly
+    end
 end
 
 @everywhere function ModToMod(i,j)
@@ -68,14 +60,16 @@ end
     b=Chl_from_Mod[:,:,j][:]
     a,b=preprocess_Chl(a,b)
 
-    #ε = 0.05
-    #sinkhorn2(a,b, Cost, ε)
-
-    emd2(a,b, Cost, Tulip.Optimizer())
-
-    #ε = 0.01
-    #γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
-    #dot(γ, Cost) #compute optimal cost, directly
+    if choice_method=="sinkhorn2"
+        ε = 0.05
+        sinkhorn2(a,b, Cost, ε)
+    elseif choice_method=="emd2"
+        emd2(a,b, Cost, Tulip.Optimizer())
+    elseif choice_method=="epsscaling"
+        ε = 0.01
+        γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+        dot(γ, Cost) #compute optimal cost, directly
+    end
 end
 
 @everywhere function SatToSat(i,j)
@@ -83,56 +77,58 @@ end
     b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
 
-    #ε = 0.05
-    #sinkhorn2(a,b, Cost, ε)
-
-    emd2(a,b, Cost, Tulip.Optimizer())
-
-    #ε = 0.01
-    #γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
-    #dot(γ, Cost) #compute optimal cost, directly
+    if choice_method=="sinkhorn2"
+        ε = 0.05
+        sinkhorn2(a,b, Cost, ε)
+    elseif choice_method=="emd2"
+        emd2(a,b, Cost, Tulip.Optimizer())
+    elseif choice_method=="epsscaling"
+        ε = 0.01
+        γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+        dot(γ, Cost) #compute optimal cost, directly
+    end
 end
 
 ##
 
-@everywhere include("CBIOMES_climatology_EMD.jl")
+@everywhere include("OptimalTransport_setup.jl")
 
 II=[[i,j] for i in 1:12, j in 1:12][:];
 
 using Random; JJ=shuffle(II);
 
 if calc_ModToMod
-d = SharedArray{Float64}(12,12)
-t0=[time()]
-for kk in 1:36
-    @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
-     i=JJ[k][1]
-     j=JJ[k][2]
-#     d[i,j]=ModToMod(i,j)
-     d[i,j]=ModToMod_MS(i,j)
+    d = SharedArray{Float64}(12,12)
+    t0=[time()]
+    for kk in 1:36
+        @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
+        i=JJ[k][1]
+        j=JJ[k][2]
+    #     d[i,j]=ModToMod(i,j)
+        d[i,j]=ModToMod_MS(i,j)
+        end
+        dt=time()-t0[1]
+        println("ModToMod $(kk) $(dt)")
+        t0[1]=time()
+        @save "ModToMod.jld2" d;
     end
-    dt=time()-t0[1]
-    println("ModToMod $(kk) $(dt)")
-    t0[1]=time()
-    @save "ModToMod.jld2" d;
-end
 end
 
 if calc_SatToSat
-d = SharedArray{Float64}(12,12)
-t0=[time()]
-for kk in 1:36
-    @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
-     i=JJ[k][1]
-     j=JJ[k][2]
-#     d[i,j]=SatToSat(i,j)
-     d[i,j]=SatToSat_MS(i,j)
+    d = SharedArray{Float64}(12,12)
+    t0=[time()]
+    for kk in 1:36
+        @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
+        i=JJ[k][1]
+        j=JJ[k][2]
+    #     d[i,j]=SatToSat(i,j)
+        d[i,j]=SatToSat_MS(i,j)
+        end
+        dt=time()-t0[1]
+        println("SatToSat $(kk) $(dt)")
+        t0[1]=time()
+        @save "SatToSat.jld2" d;
     end
-    dt=time()-t0[1]
-    println("SatToSat $(kk) $(dt)")
-    t0[1]=time()
-    @save "SatToSat.jld2" d;
-end
 end
 
 if calc_ModToSat
