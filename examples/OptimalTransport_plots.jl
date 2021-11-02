@@ -3,6 +3,8 @@
 using JLD2
 import CairoMakie as Mkie
 
+pth_output=joinpath(tempdir(),"OptimalTransport_example")
+
 function EMD_plot(fil)
     d=load(fil)["d"];
     d[findall(d.==0.0)].=NaN;
@@ -13,10 +15,10 @@ function EMD_plot(fil)
     fig
 end
 
-function EMD_plot_all(pth="./")
-    fil1=pth*"ModToMod.jld2"
-    fil2=pth*"SatToSat.jld2"
-    fil3=pth*"ModToSat.jld2"
+function EMD_plot_all(pth=pth_output)
+    fil1=joinpath(pth,"ModToMod.jld2")
+    fil2=joinpath(pth,"SatToSat.jld2")
+    fil3=joinpath(pth,"ModToSat.jld2")
 
     d1=load(fil1)["d"]; d1[findall(d1.==0.0)].=NaN;
     d2=load(fil2)["d"]; d2[findall(d2.==0.0)].=NaN;

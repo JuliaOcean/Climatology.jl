@@ -1,15 +1,24 @@
 using Distributed
 
-calc_SatToSat=false
+calc_SatToSat=true
 calc_ModToMod=false
-calc_ModToSat=true
-test_methods=false
+calc_ModToSat=false
+
+zm_test_case=true
 choice_method="emd2" #only for 2D case
+
+test_methods=false
 
 println(calc_SatToSat)
 println(calc_ModToMod)
 println(calc_ModToSat)
-println(test_methods)
+println(choice_method)
+println(zm_test_case)
+
+##
+
+pth_output=joinpath(tempdir(),"OptimalTransport_example")
+!isdir(pth_output) ? mkdir(pth_output) : nothing
 
 @everywhere using Distributed, DistributedArrays, SharedArrays
 @everywhere using OptimalTransport, Statistics, LinearAlgebra
@@ -102,15 +111,14 @@ if calc_ModToMod
     t0=[time()]
     for kk in 1:36
         @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
-        i=JJ[k][1]
-        j=JJ[k][2]
-    #     d[i,j]=ModToMod(i,j)
-        d[i,j]=ModToMod_MS(i,j)
+         i=JJ[k][1]
+         j=JJ[k][2]
+         zm_test_case ? d[i,j]=ModToMod_MS(i,j) : d[i,j]=ModToMod(i,j)
         end
         dt=time()-t0[1]
         println("ModToMod $(kk) $(dt)")
         t0[1]=time()
-        @save "ModToMod.jld2" d;
+        @save joinpath(pth_output,"ModToMod.jld2") d;
     end
 end
 
@@ -119,15 +127,14 @@ if calc_SatToSat
     t0=[time()]
     for kk in 1:36
         @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
-        i=JJ[k][1]
-        j=JJ[k][2]
-    #     d[i,j]=SatToSat(i,j)
-        d[i,j]=SatToSat_MS(i,j)
+         i=JJ[k][1]
+         j=JJ[k][2]
+         zm_test_case ? d[i,j]=SatToSat_MS(i,j) : d[i,j]=SatToSat(i,j)
         end
         dt=time()-t0[1]
         println("SatToSat $(kk) $(dt)")
         t0[1]=time()
-        @save "SatToSat.jld2" d;
+        @save joinpath(pth_output,"SatToSat.jld2") d;
     end
 end
 
@@ -138,13 +145,12 @@ if calc_ModToSat
         @sync @distributed for k in (kk-1)*4 .+ collect(1:4)
          i=JJ[k][1]
          j=JJ[k][2]
-         #d[i,j]=ModToSat(i,j)
-         d[i,j]=ModToSat_MS(i,j)
+         zm_test_case ? d[i,j]=ModToSat_MS(i,j) : d[i,j]=ModToSat(i,j)
         end
         dt=time()-t0[1]
         println("ModToSat $(kk) $(dt)")
         t0[1]=time()
-        @save "ModToSat.jld2" d;
+        @save joinpath(pth_output,"ModToSat.jld2") d;
     end
 end
     
