@@ -1,8 +1,8 @@
 using Distributed
 
 calc_SatToSat=false
-calc_ModToMod=true
-calc_ModToSat=false
+calc_ModToMod=false
+calc_ModToSat=true
 test_methods=false
 
 println(calc_SatToSat)
@@ -12,14 +12,16 @@ println(test_methods)
 
 @everywhere using Distributed, DistributedArrays, SharedArrays
 @everywhere using OptimalTransport, Statistics, LinearAlgebra
-@everywhere using Tulip, Distances
+@everywhere using Tulip, Distances, JLD2
+
+@everywhere Cost=load("examples/example_Cost.jld2")["Cost"]
 
 @everywhere function ModToSat(i,j)
     a=Chl_from_Mod[:,:,i][:]
     b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
 
-    if false #reduce problem size
+    if true #reduce problem size
         a=sum(reshape(a,(120,140)),dims=1)[:]
         b=sum(reshape(b,(120,140)),dims=1)[:]
         Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
@@ -28,12 +30,11 @@ println(test_methods)
     #ε = 0.05
     #sinkhorn2(a,b, Cost, ε)
     
-    #emd2(a,b, Cost, Tulip.Optimizer())
+    emd2(a,b, Cost, Tulip.Optimizer())
 
-    ε = 0.01
-    ##γ = sinkhorn_stabilized(a,b, Cost, ε; maxiter=5_000)
-    γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
-    dot(γ, Cost) #compute optimal cost, directly
+    #ε = 0.01
+    #γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+    #dot(γ, Cost) #compute optimal cost, directly
 end
 
 @everywhere function ModToMod(i,j)
@@ -41,31 +42,41 @@ end
     b=Chl_from_Mod[:,:,j][:]
     a,b=preprocess_Chl(a,b)
 
-    if false #reduce problem size
+    if true #reduce problem size
         a=sum(reshape(a,(120,140)),dims=1)[:]
         b=sum(reshape(b,(120,140)),dims=1)[:]
         Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
     end
 
-    Cost=load("examples/example_Cost.jld2")["Cost"]
-
     #ε = 0.05
     #sinkhorn2(a,b, Cost, ε)
 
-    #emd2(a,b, Cost, Tulip.Optimizer())
+    emd2(a,b, Cost, Tulip.Optimizer())
 
-    ε = 0.01
-    ##γ = sinkhorn_stabilized(a,b, Cost, ε; maxiter=5_000)
-    γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
-    dot(γ, Cost) #compute optimal cost, directly
+    #ε = 0.01
+    #γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+    #dot(γ, Cost) #compute optimal cost, directly
 end
 
 @everywhere function SatToSat(i,j)
     a=Chl_from_Sat[:,:,i][:]
     b=Chl_from_Sat[:,:,j][:]
     a,b=preprocess_Chl(a,b)
-    ε = 0.05
-    sinkhorn2(a,b, Cost, ε)
+
+    if true #reduce problem size
+        a=sum(reshape(a,(120,140)),dims=1)[:]
+        b=sum(reshape(b,(120,140)),dims=1)[:]
+        Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    end
+
+    #ε = 0.05
+    #sinkhorn2(a,b, Cost, ε)
+
+    emd2(a,b, Cost, Tulip.Optimizer())
+
+    #ε = 0.01
+    #γ = sinkhorn_stabilized_epsscaling(a,b, Cost, ε; maxiter=5_000)
+    #dot(γ, Cost) #compute optimal cost, directly
 end
 
 @everywhere function ModToMod_methods(i,j,mthd=1)
