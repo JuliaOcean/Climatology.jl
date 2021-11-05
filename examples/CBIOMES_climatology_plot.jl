@@ -35,6 +35,21 @@ More information about this monthly, 1992-2011, climatology state estimate can b
 `Date: 2021/10/26`
 """
 
+# ╔═╡ 6fc5e769-b17f-4916-a536-6c32531f648d
+begin
+	lon0_slider = @bind lon0 PlutoUI.Slider(-175.0:10:175.0, show_value=true, default=-155.0)
+	lat0_slider = @bind lat0 PlutoUI.Slider(-85.0:10:85.0, show_value=true, default=25.0)
+	#lat0_slider = @bind lat0 PlutoUI.NumberField(-85.0:10:85.0, default=25.0)
+	
+	md"""## Select Region
+	
+	Longitude : $(lon0_slider) deg E
+	
+	Latitude  : $(lat0_slider) deg N
+
+	"""
+end
+
 # ╔═╡ d350d874-ff94-4be1-a68c-7237a4ab492c
 begin
 	OceanStateEstimation.CBIOMESclim_download()
@@ -52,8 +67,6 @@ begin
 	"Rrs555" => 0.008*[0.0:0.1:1.0], "Rrs670" => 0.002*[0.0:0.1:1.0], 
 	"SSS" => 32.0 .+ 5.0*(0.0:0.1:1.0), "TKE" => 0.002*[0.0:0.1:1.0],
 	"WindSpeed" => 20.0*[0.0:0.1:1.0])
-	
-	"done"
 end
 
 # ╔═╡ 2c7e170d-aaa2-4641-992f-09731ad9650b
@@ -72,6 +85,14 @@ begin
 	"""
 end
 
+# ╔═╡ c01ccb8b-1079-4673-8d6c-ce14aa3814c6
+	md"""## Select Variable
+	
+	Variable : $(vv)
+	
+	Month :    $(mm)
+	"""
+
 # ╔═╡ fcbec6d7-68cc-4821-8c7f-2d35734985c9
 begin
 	uni=nc[v].attrib["units"]
@@ -81,8 +102,9 @@ begin
 end
 
 # ╔═╡ 1969ef9a-eec7-48b0-a93d-c0ff2586c9cd
-begin
-	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
+let
+	fig = Mkie.Figure(resolution = (600,400), backgroundcolor = :grey95, fontsize=12)
+	
 	ax = Mkie.Axis(fig[1,1], title=nam*" (units: $(uni) ; month: $(m))",xlabel="longitude",ylabel="latitude")
 	if haskey(levels,v)
 		lev=levels[v][1]
@@ -91,10 +113,85 @@ begin
 		lev=10
 	end
 	hm1=Mkie.contourf!(ax,lon,lat,val, tickfont = (4, :black), levels = lev)
+	#
+	lon1=[lon0-5 lon0+5 lon0+5 lon0-5 lon0-5]
+	lat1=[lat0-5 lat0-5 lat0+5 lat0+5 lat0-5]
+	Mkie.lines!(ax,lon1[:],lat1[:],color=:red,linewidth=3.0)
+	#
 	xlims!(ax, (-180.0, 180.0)); ylims!(ax, (-90.0, 90.0))
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	md"""## Interative Map
 	
+	$(fig)
+	"""
+end
+
+# ╔═╡ afba5bf1-17f8-4f45-8845-f094497a216c
+let
+	i2=Int(lon0+180)
+	j2=findall( (lat.>lat0-10.0).*(lat.<=lat0+10.0) )
+	tmp=nc[v][i2,j2,:]
+	
+	fig = Mkie.Figure(resolution = (600,300), backgroundcolor = :grey95, fontsize=12)
+
+	ax = Mkie.Axis(fig[1,1], title=nam*" (units: $(uni) ; month: $(m))",xlabel="month",ylabel="latitude")
+	hm2=Mkie.contourf!(ax,0.5:35.5,lat[j2], transpose([tmp tmp tmp]),levels=10)
+	Mkie.Colorbar(fig[1,2], hm2, height = Mkie.Relative(0.65))
+
+	md"""## Time-Latitude Slice
+
+	$(fig)
+	"""
+end
+
+# ╔═╡ d9d739aa-88ce-4bf3-a1d8-b15efec1df2b
+function regional_mean(lon0,lat0,v)
+	i1=findall( (lon.>lon0-5.0).*(lon.<=lon0+5.0) )
+	j1=findall( (lat.>lat0-5.0).*(lat.<=lat0+5.0) )
+
+	val_region=nc[v][i1,j1,:]
+	msk_region=1.0 .+ 0.0*val_region
+	val_region[findall(isnan.(val_region))].=0.0
+	msk_region[findall(isnan.(msk_region))].=0.0
+
+	y=sum(val_region,dims=(1,2))[:]./sum(msk_region,dims=(1,2))[:]
+	y0=(y[1]+y[end])/2.0
+	y=[y0;y;y0]
+
+	x=[0;0.5:11.5;12]
+	uni=nc[v].attrib["units"]
+	nam=nc[v].attrib["long_name"]
+
+	(x=x,y=y,u=uni,n=nam)
+end
+
+# ╔═╡ c1a5e876-7d8b-4f0b-aef5-253d5e3cd3a5
+let
+	lon0_slider
+	
+	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95, title="lon0,lat0=$(lon0),$(lat0)" , fontsize=12)
+	
+	w_lst=vec(["Chl" "MLD" "SST" "SSS" "PAR" "TKE" "EuphoticDepth" "WindSpeed" ])
+
+	for w in vec(w_lst[:])
+		ii=findall(w_lst.==w)[1]
+		jj=div(ii+1,2)
+		ii=ii+2-2*jj
+		M=regional_mean(lon0,lat0,w)
+		ax = Mkie.Axis(fig[jj,ii], title=M.n,xlabel="month",ylabel="$(M.u)")
+		Mkie.lines!(ax,M.x,M.y,color=:blue,linewidth=2.0); xlims!(ax, (0.0, 12.0))
+	end
+	
+	md"""## Interative Time Series
+	
+	####
+	
+	Longitude range : $(lon0-5.0) to $(lon0+5.0) deg E
+
+	Latitude range  : $(lat0-5.0) to $(lat0+5.0) deg N
+
+	####
+
 	$(fig)
 	"""
 end
@@ -1521,8 +1618,13 @@ version = "3.0.0+3"
 # ╟─e9cfa41e-366e-11ec-01b1-ef17b83e87ba
 # ╟─e69f2810-f48e-4b16-8c7d-de93ad2f04a4
 # ╟─2c7e170d-aaa2-4641-992f-09731ad9650b
-# ╟─1969ef9a-eec7-48b0-a93d-c0ff2586c9cd
-# ╟─d350d874-ff94-4be1-a68c-7237a4ab492c
 # ╟─fcbec6d7-68cc-4821-8c7f-2d35734985c9
+# ╟─1969ef9a-eec7-48b0-a93d-c0ff2586c9cd
+# ╟─6fc5e769-b17f-4916-a536-6c32531f648d
+# ╟─c1a5e876-7d8b-4f0b-aef5-253d5e3cd3a5
+# ╟─afba5bf1-17f8-4f45-8845-f094497a216c
+# ╟─c01ccb8b-1079-4673-8d6c-ce14aa3814c6
+# ╟─d9d739aa-88ce-4bf3-a1d8-b15efec1df2b
+# ╟─d350d874-ff94-4be1-a68c-7237a4ab492c
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
