@@ -1,6 +1,6 @@
 module OceanStateEstimation
 
-using Statistics, Pkg.Artifacts, Downloads
+using Statistics, LazyArtifacts, Downloads
 using FortranFiles, MeshArrays, MITgcmTools
 
 export dataverse_lists, get_from_dataverse
