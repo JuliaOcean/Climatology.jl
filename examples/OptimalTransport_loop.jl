@@ -28,21 +28,26 @@ pth_output=joinpath(tempdir(),"OptimalTransport_example")
 @everywhere M=Tables.matrix(CSV.read("examples/M.csv",DataFrame))
 @everywhere S=Tables.matrix(CSV.read("examples/S.csv",DataFrame))
 
+@everywhere nx=size(M,1)
+
 ## functions that use the "zonal sum" test case
 
 @everywhere function ModToMod_MS(i,j)
-    Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    Cost=Float64.([abs(i-j) for i in 1:nx, j in 1:nx])
     emd2(M[:,i],M[:,j], Cost, Tulip.Optimizer())
 end
 
 @everywhere function SatToSat_MS(i,j)
-    Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    Cost=Float64.([abs(i-j) for i in 1:nx, j in 1:nx])
     emd2(S[:,i],S[:,j], Cost, Tulip.Optimizer())
 end
 
 @everywhere function ModToSat_MS(i,j)
-    Cost=Float64.([abs(i-j) for i in 1:140, j in 1:140])
+    Cost=Float64.([abs(i-j) for i in 1:nx, j in 1:nx])
     emd2(M[:,i],S[:,j], Cost, Tulip.Optimizer())
+    #ε = 0.01
+    #γ = sinkhorn_stabilized_epsscaling(M[:,i],S[:,j], Cost, ε; maxiter=5_000)
+    #dot(γ, Cost) #compute optimal cost, directly
 end
 
 ## functions that use the full 2D case
