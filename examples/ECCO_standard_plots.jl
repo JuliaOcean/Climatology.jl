@@ -18,26 +18,28 @@ end
 begin
 	using JLD2, MeshArrays, OceanStateEstimation, PlutoUI, Statistics
 	import CairoMakie as Mkie
+	"Done with packages"
 end
 
-# ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
-begin
-	pth=MeshArrays.GRID_LLC90
-	γ=GridSpec("LatLonCap",pth)
-	Γ=GridLoad(γ;option="full")
-	#LC=LatitudeCircles(-89.0:89.0,Γ)
-	"Done with grid"
-end
+# ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
+md"""# ECCO.v4 Standard Analysis
+
+Explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) framework ([release 1 to 5](https://ecco-group.org/products.htm), currently) using [Julia](https://julialang.org). 
+"""
+
+# ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
+PlutoUI.TableOfContents()
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
 	sol_select = @bind sol Select(["ECCOv4r2_analysis","ECCOv4r3_analysis","ECCOv4r4_analysis","ECCOv4r5_analysis"])
-	md"""select a solution : $(sol_select)
+	md"""## Zonal Means 
+	
+	Here we select a quantity and plot it vs time and latitude.
+	
+	select a solution : $(sol_select)
 	"""
 end
-
-# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
-pth_out=joinpath(tempdir(),"ECCO_diags",sol)
 
 # ╔═╡ 038bb114-3949-4a2a-8bdf-fd6eddf34f28
 begin
@@ -51,54 +53,8 @@ begin
 	k_zm_select = @bind k_zm Slider(1:50)
 	md"""select a level for zonal mean vs time : $(k_zm_select)
 	
-	_note : this only has an effect if $(namzm) is 3D_
+	_note : choosing level only has an effect if $(namzm) is a three-dimensional variable._
 	"""
-end
-
-# ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
-begin
-	if namzm=="MXLDEPTH"
-		levs=(0.0:50.0:400.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="SIarea"
-		levs=(0.0:0.1:1.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="THETA"
-		levs=(-2.0:2.0:34.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif namzm=="SALT"
-		levs=(32.0:0.2:36.2); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=10*(-0.15:0.02:0.15); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	else
-		levs=missing
-	end
-
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	if !ismissing(levs)
-		tmp=load(fil,"single_stored_object")
-		if length(size(tmp))==3
-			z=fn(tmp[:,k_zm,:])
-			x=vec(0.5:size(tmp,3)); 
-		else
-			z=fn(tmp[:,:])
-			x=vec(0.5:size(tmp,2)); 
-		end
-		
-		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)")
-		hm1 = Mkie.contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs),colormap=cm)
-		Mkie.xlims!(ax1,0.0,336.0)
-		Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	end
-	
-	fig1
 end
 
 # ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
@@ -107,7 +63,9 @@ md"""select a solution : $(sol_select)"""
 # ╔═╡ 5c51b678-b537-4086-bce7-3b433cb5bdb2
 begin
 	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","ETAN","THETA","SALT"])
-	md"""select a variable for zonal mean vs time : $(namzmanom2d_select)
+	md"""## Zonal Mean Anomalies
+	
+	Select a variable for zonal mean vs time : $(namzmanom2d_select)
 	"""
 end
 
@@ -115,62 +73,9 @@ end
 begin
 	k_zm2d_select = @bind k_zm2d Slider(1:50)
 	md"""select a level for zonal mean vs time : $(k_zm2d_select)
-	
-	_note : this only has an effect if $(namzmanom2d) is 3D_
+
+	_note : choosing level only has an effect if $(namzmanom2d) is a three-dimensional variable._
 	"""
-end
-
-# ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
-let
-	fn(x)=transpose(x)
-
-	namzm=namzmanom2d
-	if namzm=="MXLDEPTH"
-		levs=(-100.0:25.0:100.0)/2.0; fn(x)=transpose(x); cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="SIarea"
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="THETA"
-		levs=(-2.0:0.25:2.0)/5.0; fn(x)=transpose(x); cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif namzm=="SALT"
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	else
-		levs=missing
-	end
-
-	tmp=load(fil,"single_stored_object")
-	if length(size(tmp))==3
-		z=fn(tmp[:,k_zm2d,:])
-		x=vec(0.5:size(tmp,3)); 
-	else
-		z=fn(tmp[:,:])
-		x=vec(0.5:size(tmp,2)); 
-	end
-
-	dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-	nt=size(z,1)
-	
-	#a. subtract monthly mean
-	for m in 1:12
-		zmean=vec(mean(z[m:12:240,:],dims=1))
-		[z[t,:]=z[t,:]-zmean for t in m:12:nt]
-	end
-	#b. subtract time mean
-	#zmean=vec(mean(z[1:240,:],dims=1))
-	#[z[t,:]=z[t,:]-zmean for t in 1:nt]
-	
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="$(namzm) Anomaly from 1992-2011 mean")
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
-	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	Mkie.xlims!(ax1,0.0,336.0)
-	fig1
 end
 
 # ╔═╡ 302c84ce-c39d-456b-b748-e3f5ddec0eda
@@ -187,48 +92,29 @@ begin
 	"""
 end
 
-# ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
-let
-	fn(x)=transpose(x);
-	if namzmanom=="THETA"
-		levs=(-2.0:0.25:2.0)/10.0; fn(x)=transpose(x); cm=:turbo
-		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
-	elseif namzmanom=="SALT"
-		levs=(-0.5:0.1:0.5)/10.0; fn(x)=transpose(x); cm=:turbo
-		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
-	else
-		levs=missing
-	end
-
-	tmp=load(fil,"single_stored_object")
-	z=fn(tmp[l_Tzm,:,:])
-	x=vec(0.5:size(tmp,3)); 
-	y=vec(Γ.RC)
-	nt=size(tmp,3)
-	
-	dlat=2.0
-	lats=(-90+dlat/2:dlat:90-dlat/2)
-
-	#a. subtract monthly mean
-	for m in 1:12
-		zmean=vec(mean(z[m:12:240,:],dims=1))
-		[z[t,:]=z[t,:]-zmean for t in m:12:nt]
-	end
-	#b. subtract time mean
-	#zmean=vec(mean(z[1:240,:],dims=1))
-	#[z[t,:]=z[t,:]-zmean for t in 1:nt]
-	
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="$(namzmanom) Anomaly at $(lats[l_Tzm]) N, from 1992-2011 mean")
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
-	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	Mkie.xlims!(ax1,0.0,336.0)
-	Mkie.ylims!(ax1,-3000.0,0.0)
-	fig1
-end
+# ╔═╡ 92d1fc2f-9bdc-41dc-af49-9412f931d882
+md"""## Global Means"""
 
 # ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 md"""select a solution : $(sol_select)"""
+
+# ╔═╡ d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
+md"""## Transports"""
+
+# ╔═╡ 48463682-0ac0-4d7d-a83a-ee88b8984122
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ ee8f5f40-a72f-4947-8ab1-4b452087aedc
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 430d77e7-c906-47f9-9428-3ca98f1e6f05
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
+md"""## Appendices"""
+
+# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
+pth_out=joinpath("ECCO_diags",sol)
 
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
 let
@@ -255,32 +141,6 @@ let
 	fig1
 end
 
-# ╔═╡ 48463682-0ac0-4d7d-a83a-ee88b8984122
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 12790dfb-5806-498b-8a08-3bfea0dac6a6
-let
-	fil=joinpath(pth_out,"THETA_overturn/overturn.jld2")
-	tmp=load(fil,"single_stored_object")
-	
-	ovmean=1e-6*dropdims(mean(tmp,dims=3),dims=3)
-	#ov1=1e-6*dropdims(mean(tmp[:,:,1:12],dims=3),dims=3)
-	#ovN=1e-6*dropdims(mean(tmp[:,:,end-11:end],dims=3),dims=3);
-		
-	x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
-	z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
-
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv)")
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=(-40.0:5.0:40.0),clims=(-40,40))
-	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	fig1
-
-end
-
-# ╔═╡ ee8f5f40-a72f-4947-8ab1-4b452087aedc
-md"""select a solution : $(sol_select)"""
-
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
 let
 	fil=joinpath(pth_out,"THETA_MHT/MHT.jld2")
@@ -295,9 +155,6 @@ let
 	Mkie.ylims!(ax1,(-2.0,2.0))
 	fig1
 end
-
-# ╔═╡ 430d77e7-c906-47f9-9428-3ca98f1e6f05
-md"""select a solution : $(sol_select)"""
 
 # ╔═╡ c9c4a700-32da-4f3d-b6d0-6a19ff3bb380
 begin
@@ -331,17 +188,185 @@ let
 	fig1
 end
 
-# ╔═╡ ccf2ec61-edde-4924-9c9e-32f8d5d1ee61
-let
-	fil=joinpath(pth_out,"THETA_glo2d/glo2d.jld2")
-	tmp=vec(load(fil,"single_stored_object"))
-	z=reshape(tmp,(Int(length(tmp)/50),50))
-	Mkie.heatmap(z)
-	"dev"
+# ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
+begin
+	pth=MeshArrays.GRID_LLC90
+	γ=GridSpec("LatLonCap",pth)
+	Γ=GridLoad(γ;option="full")
+	#LC=LatitudeCircles(-89.0:89.0,Γ)
+	"Done with grid"
 end
 
-# ╔═╡ 40774700-6cf2-4ee9-b57e-6178eafc7592
-readdir(pth_out)
+# ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
+begin
+	if namzm=="MXLDEPTH"
+		levs=(0.0:50.0:400.0); fn(x)=transpose(x); cm=:turbo
+		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+	elseif namzm=="SIarea"
+		levs=(0.0:0.1:1.0); fn(x)=transpose(x); cm=:turbo
+		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+	elseif namzm=="THETA"
+		levs=(-2.0:2.0:34.0); fn(x)=transpose(x); cm=:turbo
+		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+	elseif namzm=="SALT"
+		levs=(32.0:0.2:36.2); fn(x)=transpose(x); cm=:turbo
+		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+	elseif (namzm=="ETAN")||(namzm=="SSH")
+		levs=10*(-0.15:0.02:0.15); fn(x)=transpose(x); cm=:turbo
+		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+	else
+		levs=missing
+	end
+
+	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+	if !ismissing(levs)
+		tmp=load(fil,"single_stored_object")
+		if length(size(tmp))==3
+			z=fn(tmp[:,k_zm,:])
+			x=vec(0.5:size(tmp,3))
+			addon1=" at $(Int(round(Γ.RC[k_zm])))m "
+		else
+			z=fn(tmp[:,:])
+			x=vec(0.5:size(tmp,2))
+			addon1=""
+		end
+		
+		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)$(addon1)")
+		hm1 = Mkie.contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs),colormap=cm)
+		Mkie.xlims!(ax1,0.0,336.0)
+		Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
+	end
+	
+	fig1
+end
+
+# ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
+let
+	fn(x)=transpose(x)
+
+	namzm=namzmanom2d
+	if namzm=="MXLDEPTH"
+		levs=(-100.0:25.0:100.0)/2.0; fn(x)=transpose(x); cm=:turbo
+		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+	elseif namzm=="SIarea"
+		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+	elseif namzm=="THETA"
+		levs=(-2.0:0.25:2.0)/5.0; fn(x)=transpose(x); cm=:turbo
+		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+	elseif namzm=="SALT"
+		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+	elseif (namzm=="ETAN")||(namzm=="SSH")
+		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+	else
+		levs=missing
+	end
+
+	tmp=load(fil,"single_stored_object")
+	if length(size(tmp))==3
+		z=fn(tmp[:,k_zm2d,:])
+		x=vec(0.5:size(tmp,3)); 
+		addon1=" at $(Int(round(Γ.RC[k_zm2d])))m "
+	else
+		z=fn(tmp[:,:])
+		x=vec(0.5:size(tmp,2)); 
+		addon1=""
+	end
+
+	dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+	nt=size(z,1)
+
+	if true
+		#a. subtract monthly mean
+		ref1="1992-2011 monthy mean"
+		for m in 1:12
+			zmean=vec(mean(z[m:12:240,:],dims=1))
+			[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+		end
+	else
+		#b. subtract time mean
+		ref1="1992-2011 annual mean"
+		zmean=vec(mean(z[1:240,:],dims=1))
+		[z[t,:]=z[t,:]-zmean for t in 1:nt]
+	end
+	
+	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzm)$(addon1) ; deviation from $(ref1)")
+	hm1=Mkie.contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
+	Mkie.xlims!(ax1,0.0,336.0)
+	fig1
+end
+
+# ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
+let
+	fn(x)=transpose(x);
+	if namzmanom=="THETA"
+		levs=(-2.0:0.25:2.0)/10.0; fn(x)=transpose(x); cm=:turbo
+		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
+	elseif namzmanom=="SALT"
+		levs=(-0.5:0.1:0.5)/10.0; fn(x)=transpose(x); cm=:turbo
+		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
+	else
+		levs=missing
+	end
+
+	dlat=2.0
+	lats=(-90+dlat/2:dlat:90-dlat/2)
+
+	tmp=load(fil,"single_stored_object")
+	z=fn(tmp[l_Tzm,:,:])
+	addon1=" at $(lats[l_Tzm])N "
+	x=vec(0.5:size(tmp,3)); 
+	y=vec(Γ.RC)
+	nt=size(tmp,3)
+	
+	#a. subtract monthly mean
+	ref1="1992-2011 monthy mean"
+	for m in 1:12
+		zmean=vec(mean(z[m:12:240,:],dims=1))
+		[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+	end
+	#b. subtract time mean
+	#ref1="1992-2011 annual mean"
+	#zmean=vec(mean(z[1:240,:],dims=1))
+	#[z[t,:]=z[t,:]-zmean for t in 1:nt]
+	
+	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzmanom)$(addon1) ; deviation from $(ref1)")
+	hm1=Mkie.contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
+	Mkie.xlims!(ax1,0.0,336.0)
+	Mkie.ylims!(ax1,-3000.0,0.0)
+	fig1
+end
+
+# ╔═╡ 12790dfb-5806-498b-8a08-3bfea0dac6a6
+let
+	fil=joinpath(pth_out,"THETA_overturn/overturn.jld2")
+	tmp=load(fil,"single_stored_object")
+	
+	ovmean=1e-6*dropdims(mean(tmp,dims=3),dims=3)
+	#ov1=1e-6*dropdims(mean(tmp[:,:,1:12],dims=3),dims=3)
+	#ovN=1e-6*dropdims(mean(tmp[:,:,end-11:end],dims=3),dims=3);
+		
+	x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
+	z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
+
+	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+	ax1 = Mkie.Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv)")
+	hm1=Mkie.contourf!(ax1,x,y,z,levels=(-40.0:5.0:40.0),clims=(-40,40))
+	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
+	fig1
+
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1027,9 +1052,9 @@ uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [[Libffi_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "761a393aeccd6aa92ec3515e428c26bf99575b3b"
+git-tree-sha1 = "0b4a5d71f3e5200a7dff793393e09dfc2d874290"
 uuid = "e9f186c6-92d2-5b65-8a66-fee21dc1b490"
-version = "3.2.2+0"
+version = "3.2.2+1"
 
 [[Libgcrypt_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libgpg_error_jll", "Pkg"]
@@ -1767,9 +1792,8 @@ version = "3.0.0+3"
 """
 
 # ╔═╡ Cell order:
-# ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
-# ╟─64cd25be-2875-4249-b59c-19dcda28a127
-# ╟─8fced956-e527-4ed0-94d4-321368f09773
+# ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
+# ╟─6f721618-d955-4c51-ba44-2873f8609831
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
 # ╟─038bb114-3949-4a2a-8bdf-fd6eddf34f28
 # ╟─015af3c5-6b1c-4310-81fc-5686e65d1dc3
@@ -1781,8 +1805,10 @@ version = "3.0.0+3"
 # ╟─302c84ce-c39d-456b-b748-e3f5ddec0eda
 # ╟─9d2f3281-2296-4ccb-b4b1-8ab9405dbedd
 # ╟─3f73757b-bab9-4d72-9fff-8884e96e76cd
+# ╟─92d1fc2f-9bdc-41dc-af49-9412f931d882
 # ╟─e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 # ╟─5d320375-0a3c-4197-b35d-f6610173329d
+# ╟─d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 # ╟─48463682-0ac0-4d7d-a83a-ee88b8984122
 # ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
 # ╟─ee8f5f40-a72f-4947-8ab1-4b452087aedc
@@ -1790,7 +1816,9 @@ version = "3.0.0+3"
 # ╟─430d77e7-c906-47f9-9428-3ca98f1e6f05
 # ╟─c9c4a700-32da-4f3d-b6d0-6a19ff3bb380
 # ╟─57d01a67-01c7-4d61-93c7-737ef2cbb6a9
-# ╟─ccf2ec61-edde-4924-9c9e-32f8d5d1ee61
-# ╟─40774700-6cf2-4ee9-b57e-6178eafc7592
+# ╟─0f308191-13ca-4056-a85f-3a0061958e28
+# ╟─8fced956-e527-4ed0-94d4-321368f09773
+# ╟─64cd25be-2875-4249-b59c-19dcda28a127
+# ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
