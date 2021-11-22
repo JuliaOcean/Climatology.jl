@@ -43,7 +43,7 @@ end
 
 # ╔═╡ 038bb114-3949-4a2a-8bdf-fd6eddf34f28
 begin
-			namzm_select = @bind namzm Select(["MXLDEPTH", "SIarea","THETA","SALT","SSH","ETAN"])
+			namzm_select = @bind namzm Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
 			md"""select a variable for zonal mean vs time : $(namzm_select)
 			"""
 end
@@ -143,7 +143,7 @@ end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
 let
-	fil=joinpath(pth_out,"THETA_MHT/MHT.jld2")
+	fil=joinpath(pth_out,"MHT/MHT.jld2")
 	tmp=load(fil,"single_stored_object")
 	MT=vec(mean(tmp[:,1:240],dims=2))
 
@@ -158,7 +158,7 @@ end
 
 # ╔═╡ c9c4a700-32da-4f3d-b6d0-6a19ff3bb380
 begin
-	fil_trsp=joinpath(pth_out,"THETA_trsp/trsp.jld2")
+	fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
 	ntr=length(load(fil_trsp,"single_stored_object"))
 	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
 
@@ -350,7 +350,7 @@ end
 
 # ╔═╡ 12790dfb-5806-498b-8a08-3bfea0dac6a6
 let
-	fil=joinpath(pth_out,"THETA_overturn/overturn.jld2")
+	fil=joinpath(pth_out,"overturn/overturn.jld2")
 	tmp=load(fil,"single_stored_object")
 	
 	ovmean=1e-6*dropdims(mean(tmp,dims=3),dims=3)
