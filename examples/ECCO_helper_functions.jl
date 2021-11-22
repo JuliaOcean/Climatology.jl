@@ -57,6 +57,10 @@ function read_monthly(sol,nam,t,list)
         "TRSP/trsp_3d_set1","TRSP/trsp_3d_set1","TRSP/trsp_3d_set2",
         "TRSP/trsp_3d_set2","TRSP/trsp_3d_set2","TRSP/trsp_3d_set2")
 
+    var_list2d=("MXLDEPTH","SIarea","sIceLoad","ETAN")
+    mdsio_list2d=("STATE/state_2d_set1","STATE/state_2d_set1",
+                  "STATE/state_2d_set1","STATE/state_2d_set1")
+
     if (sol=="ECCOv4r2_analysis")||(sol=="ECCOv4r3_analysis")
         nct_path=joinpath(pth_in,nam)
         if sum(var_list3d.==nam)==1
@@ -91,12 +95,21 @@ function read_monthly(sol,nam,t,list)
             tmp
         end
     else
+      if !isempty(findall(var_list3d.==nam))
         ii=findall(var_list3d.==nam)[1];
         fil=mdsio_list3d[ii]
         meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
         kk=findall(vec(meta.fldList).==nam)[1]
         tmp=read_mdsio(joinpath(pth_in,fil*list[t][14:end]))[:,:,:,kk]
         tmp=mskC*read(tmp,γ)     
+      else
+        ii=findall(var_list2d.==nam)[1];
+        fil=mdsio_list2d[ii]
+        meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
+        kk=findall(vec(meta.fldList).==nam)[1]
+        tmp=read_mdsio(joinpath(pth_in,fil*list[t][14:end]))[:,:,kk]
+        tmp=mskC[:,1]*read(tmp,XC)
+      end
     end
 end
 
