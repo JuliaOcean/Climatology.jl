@@ -91,9 +91,11 @@ function read_monthly(sol,nam,t,list)
             tmp
         end
     else
-        meta=read_meta(joinpath(pth_in,"STATE/state_3d_set1.0000241020.meta"))
+        ii=findall(var_list3d.==nam)[1];
+        fil=mdsio_list3d[ii]
+        meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
         kk=findall(vec(meta.fldList).==nam)[1]
-        tmp=read_mdsio(joinpath(pth_in,"STATE/state_3d_set1."*list[t]))[:,:,:,kk]
+        tmp=read_mdsio(joinpath(pth_in,fil*list[t][14:end]))[:,:,:,kk]
         tmp=mskC*read(tmp,γ)     
     end
 end
