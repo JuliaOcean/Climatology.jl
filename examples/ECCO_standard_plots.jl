@@ -16,7 +16,7 @@ end
 
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin
-	using JLD2, MeshArrays, OceanStateEstimation, PlutoUI, Statistics
+	using JLD2, MeshArrays, OceanStateEstimation, PlutoUI, Statistics, RollingFunctions
 	import CairoMakie as Mkie
 	"Done with packages"
 end
@@ -32,63 +32,66 @@ PlutoUI.TableOfContents()
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
-	sol_select = @bind sol Select(["ECCOv4r2_analysis","ECCOv4r3_analysis","ECCOv4r4_analysis","ECCOv4r5_analysis"])
+	sol_select = @bind sol Select(["ECCOv4r2_analysis","ECCOv4r3_analysis",
+		"ECCOv4r4_analysis","ECCOv4r5_analysis"])
+	k_zm_select = @bind k_zm Slider(1:50, default=1, show_value=true)
+	namzm_select = @bind namzm Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
+	
 	md"""## Zonal Means 
 	
 	Here we select a quantity and plot it vs time and latitude.
 	
-	select a solution : $(sol_select)
-	"""
-end
-
-# ╔═╡ 038bb114-3949-4a2a-8bdf-fd6eddf34f28
-begin
-			namzm_select = @bind namzm Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
-			md"""select a variable for zonal mean vs time : $(namzm_select)
-			"""
-end
-
-# ╔═╡ 015af3c5-6b1c-4310-81fc-5686e65d1dc3
-begin
-	k_zm_select = @bind k_zm Slider(1:50)
-	md"""select a level for zonal mean vs time : $(k_zm_select)
+	- select a solution : $(sol_select)
+	- variable for zonal mean vs time : $(namzm_select)
+	- level for zonal mean vs time : $(k_zm_select)
 	
 	_note : choosing level only has an effect if $(namzm) is a three-dimensional variable._
-	"""
-end
 
-# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 5c51b678-b537-4086-bce7-3b433cb5bdb2
-begin
-	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","ETAN","THETA","SALT"])
-	md"""## Zonal Mean Anomalies
-	
-	Select a variable for zonal mean vs time : $(namzmanom2d_select)
 	"""
 end
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
-	k_zm2d_select = @bind k_zm2d Slider(1:50)
-	md"""select a level for zonal mean vs time : $(k_zm2d_select)
+	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","ETAN","THETA","SALT"])
+	k_zm2d_select = @bind k_zm2d Slider(1:50,show_value=true)
+	cmap_fac_select = @bind cmap_fac Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
+	l0_select = @bind l0 Slider(1:90;default=1, show_value=true)
+	l1_select = @bind l1 Slider(1:90;default=90, show_value=true)
 
-	_note : choosing level only has an effect if $(namzmanom2d) is a three-dimensional variable._
+	#cmap_fac_select = @bind cmap_fac Select(string.([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0])[:])
+	#cmap_fac_select = @bind cmap_fac Select([1 2])
+	md"""## Zonal Mean Anomalies
+
+	Select a variable for zonal mean vs time : $(namzmanom2d_select)
+
+	- depth level for zonal mean vs time : $(k_zm2d_select)
+	- latitude index, min : $(l0_select)
+	- latitude index, max : $(l1_select)
+	- scaling factor for color range : $(cmap_fac_select)
+
+	!!! note
+	    Choosing level may only take effect if a three-dimensional variable was selected.
 	"""
 end
+
+# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
+md"""Select a solution : $(sol_select)"""
 
 # ╔═╡ 302c84ce-c39d-456b-b748-e3f5ddec0eda
 begin
 	namzmanom_select = @bind namzmanom Select(["THETA","SALT"])
-	md"""select a variable for zonal mean vs time : $(namzmanom_select)
-	"""
-end
+	l_zm_select = @bind l_Tzm Slider(8:5:90;default=28,show_value=true)
+	k0_select = @bind k0 Slider(1:50;default=1, show_value=true)
+	k1_select = @bind k1 Slider(1:50;default=30, show_value=true)
+	facA_select = @bind facA Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
 
-# ╔═╡ 9d2f3281-2296-4ccb-b4b1-8ab9405dbedd
-begin
-	l_zm_select = @bind l_Tzm Slider(8:5:90;default=28)
-	md"""select a latitude point for depth vs time : $(l_zm_select)
+	md"""### Depth vs Time Plot
+	
+	- variable for zonal mean vs time : $(namzmanom_select)
+	- latitude index for depth vs time : $(l_zm_select)
+	- top depth level : $(k0_select)
+	- bottom depth level : $(k1_select)
+	- scaling factor for color range : $(facA_select)
 	"""
 end
 
@@ -141,6 +144,32 @@ let
 	fig1
 end
 
+# ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
+let
+
+	fil=joinpath(pth_out,"overturn/overturn.jld2")
+	tmp=-1e-6*load(fil,"single_stored_object")
+
+	kk=29
+	nt=size(tmp,3)
+	rng=(4.0,22.0)
+	txt="Temperature"
+
+	x=vec(0.5:nt)
+	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+	ax1 = Mkie.Axis(fig1[1,1],xlabel="month",ylabel="Sv",
+	title="Global Overturning, in Sv, at kk=$(kk)",xticks=(12:24:336))
+	for ll in 115:10:145
+		ov=tmp[ll,kk,:]
+		ov=runmean(ov, 12)
+		hm1=Mkie.lines!(x,ov,label="ll=$(ll)")
+	end
+	Mkie.xlims!(ax1,(0.0,336.0))
+	Mkie.ylims!(ax1,rng)
+
+	fig1
+end
+
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
 let
 	fil=joinpath(pth_out,"MHT/MHT.jld2")
@@ -177,12 +206,14 @@ let
 
 	txt=tmp.nam[1:end-5]
 	val=1e-6*vec(sum(tmp.val,dims=1)[:])
+	valsmo = runmean(val, 12)
 
 	x=vec(0.5:nt)
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
 	ax1 = Mkie.Axis(fig1[1,1], title=" $txt (in Sv)",
 		xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
 	hm1=Mkie.lines!(x,val,label="ECCO estimate")
+	Mkie.lines!(x,valsmo,linewidth=4.0,color=:red)
 	Mkie.xlims!(ax1,(0.0,336.0))
 	#Mkie.ylims!(ax1,rng)
 	fig1
@@ -263,7 +294,7 @@ let
 		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
 	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-0.5:0.1:0.5)/2.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
 	else
 		levs=missing
@@ -299,9 +330,10 @@ let
 	
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
 	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzm)$(addon1) ; deviation from $(ref1)")
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+	hm1=Mkie.contourf!(ax1,x,y,z,levels=cmap_fac*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	Mkie.xlims!(ax1,0.0,336.0)
+	Mkie.ylims!(ax1,y[l0],y[l1])
 	fig1
 end
 
@@ -309,7 +341,7 @@ end
 let
 	fn(x)=transpose(x);
 	if namzmanom=="THETA"
-		levs=(-2.0:0.25:2.0)/10.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-3.0:0.4:3.0)/8.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
 	elseif namzmanom=="SALT"
 		levs=(-0.5:0.1:0.5)/10.0; fn(x)=transpose(x); cm=:turbo
@@ -341,27 +373,25 @@ let
 	
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
 	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzmanom)$(addon1) ; deviation from $(ref1)")
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+	hm1=Mkie.contourf!(ax1,x,y,z,levels=facA*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	Mkie.xlims!(ax1,0.0,336.0)
-	Mkie.ylims!(ax1,-3000.0,0.0)
+	Mkie.ylims!(ax1,Γ.RC[k1],Γ.RC[k0])
 	fig1
 end
 
 # ╔═╡ 12790dfb-5806-498b-8a08-3bfea0dac6a6
 let
 	fil=joinpath(pth_out,"overturn/overturn.jld2")
-	tmp=load(fil,"single_stored_object")
+	tmp=-1e-6*load(fil,"single_stored_object")
 	
-	ovmean=1e-6*dropdims(mean(tmp,dims=3),dims=3)
-	#ov1=1e-6*dropdims(mean(tmp[:,:,1:12],dims=3),dims=3)
-	#ovN=1e-6*dropdims(mean(tmp[:,:,end-11:end],dims=3),dims=3);
+	ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
 		
 	x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
 	z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
 
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv)")
+	ax1 = Mkie.Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, 92-11)")
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=(-40.0:5.0:40.0),clims=(-40,40))
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	fig1
@@ -376,6 +406,7 @@ JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 OceanStateEstimation = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+RollingFunctions = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
@@ -384,6 +415,7 @@ JLD2 = "~0.4.15"
 MeshArrays = "~0.2.27"
 OceanStateEstimation = "~0.1.15"
 PlutoUI = "~0.7.19"
+RollingFunctions = "~0.6.2"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -1450,6 +1482,12 @@ git-tree-sha1 = "68db32dff12bb6127bac73c209881191bf0efbb7"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.3.0+0"
 
+[[RollingFunctions]]
+deps = ["LinearAlgebra", "Statistics", "StatsBase", "Test"]
+git-tree-sha1 = "cdf9158377f81470b1b73c630d0853a3ec0c7445"
+uuid = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
+version = "0.6.2"
+
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
@@ -1795,15 +1833,11 @@ version = "3.0.0+3"
 # ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
-# ╟─038bb114-3949-4a2a-8bdf-fd6eddf34f28
-# ╟─015af3c5-6b1c-4310-81fc-5686e65d1dc3
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
-# ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
-# ╟─5c51b678-b537-4086-bce7-3b433cb5bdb2
 # ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
 # ╟─2d819d3e-f62e-4a73-b51c-0e1204da2369
+# ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
 # ╟─302c84ce-c39d-456b-b748-e3f5ddec0eda
-# ╟─9d2f3281-2296-4ccb-b4b1-8ab9405dbedd
 # ╟─3f73757b-bab9-4d72-9fff-8884e96e76cd
 # ╟─92d1fc2f-9bdc-41dc-af49-9412f931d882
 # ╟─e88a17f0-5e42-4d0b-8253-e83cabfec4d2
@@ -1811,6 +1845,7 @@ version = "3.0.0+3"
 # ╟─d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 # ╟─48463682-0ac0-4d7d-a83a-ee88b8984122
 # ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
+# ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
 # ╟─ee8f5f40-a72f-4947-8ab1-4b452087aedc
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
 # ╟─430d77e7-c906-47f9-9428-3ca98f1e6f05
