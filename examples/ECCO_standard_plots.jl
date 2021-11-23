@@ -96,7 +96,16 @@ begin
 end
 
 # ╔═╡ 92d1fc2f-9bdc-41dc-af49-9412f931d882
-md"""## Global Means"""
+begin
+	ngl1_select = @bind ngl1 Select(["THETA","SALT"])
+	kgl1_select = @bind kgl1 Slider(0:1;default=0, show_value=true)
+
+	md"""## Global Means
+	
+	- variable for global mean vs time : $(ngl1_select)
+	- latitude index for depth vs time : $(kgl1_select)
+	"""
+end
 
 # ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 md"""select a solution : $(sol_select)"""
@@ -104,13 +113,7 @@ md"""select a solution : $(sol_select)"""
 # ╔═╡ d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 md"""## Transports"""
 
-# ╔═╡ 48463682-0ac0-4d7d-a83a-ee88b8984122
-md"""select a solution : $(sol_select)"""
-
 # ╔═╡ ee8f5f40-a72f-4947-8ab1-4b452087aedc
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 430d77e7-c906-47f9-9428-3ca98f1e6f05
 md"""select a solution : $(sol_select)"""
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
@@ -120,54 +123,40 @@ md"""## Appendices"""
 pth_out=joinpath("ECCO_diags",sol)
 
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
-let
-	#fil=joinpath(pth_out,"THETA_glo2d/glo2d.jld2")
-	fil=joinpath(pth_out,"THETA_glo3d/glo3d.jld2")
-	tmp=vec(load(fil,"single_stored_object"))
-	if occursin("glo2d.jld2",fil)
-		nt=Int(length(tmp[:])./50.0)
-	    tmp=reshape(tmp,(nt,50))
-		rng=(18.0,19.0)
-		txt="SST"
-	else
-		nt=length(tmp[:])
-		rng=(3.55,3.65)
-		txt="Temperature"
+begin
+	function glo(nam,k=0)
+		if k>0
+			fil=fil=joinpath(pth_out,nam*"_glo2d/glo2d.jld2")
+		else
+			fil=joinpath(pth_out,nam*"_glo3d/glo3d.jld2")
+		end
+		tmp=vec(load(fil,"single_stored_object"))
+		if k>0
+			nt=Int(length(tmp[:])./50.0)
+		    tmp=reshape(tmp,(nt,50))
+			tmp=tmp[:,k]
+			occursin("THETA",fil) ? rng=(18.0,19.0) : rng=(34.5,35.0)
+			occursin("THETA",fil) ? txt="SST  (degree C)" : txt="SSS (psu)"
+		else
+			nt=length(tmp[:])
+			occursin("THETA",fil) ? rng=(3.55,3.65) : rng=(34.72,34.73)
+			occursin("THETA",fil) ? txt="Temperature  (degree C)" : txt="Salinity (psu)"
+		end
+		(y=tmp,txt=txt,rng=rng,x=vec(0.5:nt))
 	end
-	
-	x=vec(0.5:nt)
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Global Mean $txt (in degree C)",xticks=(12:24:336))
-	hm1=Mkie.lines!(x,tmp[:,1],xlabel="latitude",ylabel="$txt (degree C)",label="ECCO estimate")
-	Mkie.xlims!(ax1,(0.0,336.0))
-	Mkie.ylims!(ax1,rng)
-	fig1
-end
 
-# ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-let
-
-	fil=joinpath(pth_out,"overturn/overturn.jld2")
-	tmp=-1e-6*load(fil,"single_stored_object")
-
-	kk=29
-	nt=size(tmp,3)
-	rng=(4.0,22.0)
-	txt="Temperature"
-
-	x=vec(0.5:nt)
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1],xlabel="month",ylabel="Sv",
-	title="Global Overturning, in Sv, at kk=$(kk)",xticks=(12:24:336))
-	for ll in 115:10:145
-		ov=tmp[ll,kk,:]
-		ov=runmean(ov, 12)
-		hm1=Mkie.lines!(x,ov,label="ll=$(ll)")
+	function onegloplot(gl1)
+		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Mkie.Axis(fig1[1,1], title="Global Mean $(gl1.txt)",
+			xticks=(12:24:336),xlabel="latitude",ylabel="$(gl1.txt)")
+		hm1=Mkie.lines!(ax1,gl1.x,gl1.y)
+		Mkie.xlims!(ax1,(0.0,336.0))
+		Mkie.ylims!(ax1,gl1.rng)
+		fig1
 	end
-	Mkie.xlims!(ax1,(0.0,336.0))
-	Mkie.ylims!(ax1,rng)
 
-	fig1
+	gl1=glo(ngl1,kgl1)
+	onegloplot(gl1)
 end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
@@ -185,38 +174,75 @@ let
 	fig1
 end
 
-# ╔═╡ c9c4a700-32da-4f3d-b6d0-6a19ff3bb380
+# ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 begin
 	fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
 	ntr=length(load(fil_trsp,"single_stored_object"))
 	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
 
-	namtr_select = @bind namtr Select(list_trsp)
-	md"""select a solution : $(namtr_select)
+	ntr1_select = @bind ntr1 Select(list_trsp)
+	ktr1_select = @bind ktr1 Slider(1:50;default=29, show_value=true)
+	
+	md"""### Time Series
+	
+	- variable for overturning vs time : $(ktr1_select)
+	- transect for transport vs time : $(ntr1_select)	
 	"""
 end
 
 # ╔═╡ 57d01a67-01c7-4d61-93c7-737ef2cbb6a9
-let
-	itr=findall(list_trsp.==namtr)[1]
-	tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
+begin
+	function figtr1(namtr)
+		itr=findall(list_trsp.==namtr)[1]
+		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
+		
+		nt=size(tmp.val,2)
+		x=vec(0.5:nt)
 	
-	nt=size(tmp.val,2)
-	x=vec(0.5:nt)
+		txt=tmp.nam[1:end-5]
+		val=1e-6*vec(sum(tmp.val,dims=1)[:])
+		valsmo = runmean(val, 12)
+	
+		x=vec(0.5:nt)
+		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Mkie.Axis(fig1[1,1], title=" $txt (in Sv)",
+			xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
+		hm1=Mkie.lines!(x,val,label="ECCO estimate")
+		Mkie.lines!(x,valsmo,linewidth=4.0,color=:red)
+		Mkie.xlims!(ax1,(0.0,336.0))
+		#Mkie.ylims!(ax1,rng)
+		fig1
+	end
+	figtr1(ntr1)
+end
 
-	txt=tmp.nam[1:end-5]
-	val=1e-6*vec(sum(tmp.val,dims=1)[:])
-	valsmo = runmean(val, 12)
+# ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
+begin
+	function figov1(kk=29)
+		fil=joinpath(pth_out,"overturn/overturn.jld2")
+		tmp=-1e-6*load(fil,"single_stored_object")
+	
+		nt=size(tmp,3)
+		x=vec(0.5:nt)
+		lats=vec(-89.0:89.0)
 
-	x=vec(0.5:nt)
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title=" $txt (in Sv)",
-		xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
-	hm1=Mkie.lines!(x,val,label="ECCO estimate")
-	Mkie.lines!(x,valsmo,linewidth=4.0,color=:red)
-	Mkie.xlims!(ax1,(0.0,336.0))
-	#Mkie.ylims!(ax1,rng)
-	fig1
+		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Mkie.Axis(fig1[1,1],xlabel="month",ylabel="Sv",
+		title="Global Overturning, in Sv, at kk=$(kk)",xticks=(12:24:336))
+		for ll in 115:10:145
+			ov=tmp[ll,kk,:]
+			ov=runmean(ov, 12)
+			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
+		end
+		Mkie.xlims!(ax1,(0.0,336.0))
+		#Mkie.ylims!(ax1,rng)
+		fig1[1, 2] = Mkie.Legend(fig1, ax1, "estimate", framevisible = false)
+
+	
+		fig1
+	end
+
+	figov1(ktr1)
 end
 
 # ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
@@ -1840,16 +1866,14 @@ version = "3.0.0+3"
 # ╟─302c84ce-c39d-456b-b748-e3f5ddec0eda
 # ╟─3f73757b-bab9-4d72-9fff-8884e96e76cd
 # ╟─92d1fc2f-9bdc-41dc-af49-9412f931d882
-# ╟─e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 # ╟─5d320375-0a3c-4197-b35d-f6610173329d
+# ╟─e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 # ╟─d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
-# ╟─48463682-0ac0-4d7d-a83a-ee88b8984122
 # ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
-# ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
-# ╟─ee8f5f40-a72f-4947-8ab1-4b452087aedc
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
-# ╟─430d77e7-c906-47f9-9428-3ca98f1e6f05
-# ╟─c9c4a700-32da-4f3d-b6d0-6a19ff3bb380
+# ╟─ee8f5f40-a72f-4947-8ab1-4b452087aedc
+# ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
+# ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
 # ╟─57d01a67-01c7-4d61-93c7-737ef2cbb6a9
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
