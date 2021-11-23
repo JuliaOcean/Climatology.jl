@@ -52,7 +52,7 @@ end
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
-	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","ETAN","THETA","SALT"])
+	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"])
 	k_zm2d_select = @bind k_zm2d Slider(1:50,show_value=true)
 	cmap_fac_select = @bind cmap_fac Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
 	l0_select = @bind l0 Slider(1:90;default=1, show_value=true)
@@ -60,18 +60,18 @@ begin
 
 	#cmap_fac_select = @bind cmap_fac Select(string.([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0])[:])
 	#cmap_fac_select = @bind cmap_fac Select([1 2])
-	md"""## Zonal Mean Anomalies
+md"""## Zonal Mean Anomalies
 
-	Select a variable for zonal mean vs time : $(namzmanom2d_select)
+Select a variable for zonal mean vs time : $(namzmanom2d_select)
 
-	- depth level for zonal mean vs time : $(k_zm2d_select)
-	- latitude index, min : $(l0_select)
-	- latitude index, max : $(l1_select)
-	- scaling factor for color range : $(cmap_fac_select)
+- depth level for zonal mean vs time : $(k_zm2d_select)
+- latitude index, min : $(l0_select)
+- latitude index, max : $(l1_select)
+- scaling factor for color range : $(cmap_fac_select)
 
-	!!! note
-	    Choosing level may only take effect if a three-dimensional variable was selected.
-	"""
+!!! note
+	Choosing level may only take effect if a three-dimensional variable was selected.
+"""
 end
 
 # ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
