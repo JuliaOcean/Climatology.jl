@@ -116,6 +116,9 @@ md"""## Transports"""
 # ╔═╡ ee8f5f40-a72f-4947-8ab1-4b452087aedc
 md"""select a solution : $(sol_select)"""
 
+# ╔═╡ 4a01c78a-277f-4c13-afb7-a105271b1a75
+md"""select a solution : $(sol_select)"""
+
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
 md"""## Appendices"""
 
@@ -269,7 +272,7 @@ begin
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
 		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
 	elseif namzm=="SALT"
-		levs=(32.0:0.2:36.2); fn(x)=transpose(x); cm=:turbo
+		levs=(32.6:0.2:36.2); fn(x)=transpose(x); cm=:turbo
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
 		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
 	elseif (namzm=="ETAN")||(namzm=="SSH")
@@ -1872,9 +1875,10 @@ version = "3.0.0+3"
 # ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
 # ╟─ee8f5f40-a72f-4947-8ab1-4b452087aedc
-# ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 # ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
+# ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 # ╟─57d01a67-01c7-4d61-93c7-737ef2cbb6a9
+# ╟─4a01c78a-277f-4c13-afb7-a105271b1a75
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
