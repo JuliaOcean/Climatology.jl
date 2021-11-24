@@ -113,8 +113,15 @@ md"""select a solution : $(sol_select)"""
 # ╔═╡ d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 md"""## Transports"""
 
-# ╔═╡ ee8f5f40-a72f-4947-8ab1-4b452087aedc
-md"""select a solution : $(sol_select)"""
+# ╔═╡ 7a9269b9-b7aa-4dec-bc86-636a0be6ad01
+begin
+	ktr1_select = @bind ktr1 Slider(1:50;default=29, show_value=true)
+	
+	md"""
+	- level for overturning vs time : $(ktr1_select)
+	- select a solution : $(sol_select)
+	"""
+end
 
 # ╔═╡ 4a01c78a-277f-4c13-afb7-a105271b1a75
 md"""select a solution : $(sol_select)"""
@@ -177,6 +184,35 @@ let
 	fig1
 end
 
+# ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
+begin
+	function figov1(kk=29)
+		fil=joinpath(pth_out,"overturn/overturn.jld2")
+		tmp=-1e-6*load(fil,"single_stored_object")
+	
+		nt=size(tmp,3)
+		x=vec(0.5:nt)
+		lats=vec(-89.0:89.0)
+
+		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Mkie.Axis(fig1[1,1],xlabel="month",ylabel="Sv",
+		title="Global Overturning, in Sv, at kk=$(kk)",xticks=(12:24:336))
+		for ll in 115:10:145
+			ov=tmp[ll,kk,:]
+			ov=runmean(ov, 12)
+			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
+		end
+		Mkie.xlims!(ax1,(0.0,336.0))
+		#Mkie.ylims!(ax1,rng)
+		fig1[1, 2] = Mkie.Legend(fig1, ax1, "estimate", framevisible = false)
+
+	
+		fig1
+	end
+
+	figov1(ktr1)
+end
+
 # ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 begin
 	fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
@@ -184,11 +220,9 @@ begin
 	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
 
 	ntr1_select = @bind ntr1 Select(list_trsp)
-	ktr1_select = @bind ktr1 Slider(1:50;default=29, show_value=true)
 	
-	md"""### Time Series
+	md"""### Transport Across One Section
 	
-	- variable for overturning vs time : $(ktr1_select)
 	- transect for transport vs time : $(ntr1_select)	
 	"""
 end
@@ -219,33 +253,53 @@ begin
 	figtr1(ntr1)
 end
 
-# ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
+# ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
 begin
-	function figov1(kk=29)
-		fil=joinpath(pth_out,"overturn/overturn.jld2")
-		tmp=-1e-6*load(fil,"single_stored_object")
+	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
 	
-		nt=size(tmp,3)
+	md"""### Transport Across Several Sections
+	
+	$(ntr2_select)	
+	"""
+end
+
+# ╔═╡ a468baa1-2e5b-40ce-b33c-2e275d720c8e
+begin
+	function axtr1(ax,namtr)
+		itr=findall(list_trsp.==namtr)[1]
+		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
+		
+		nt=size(tmp.val,2)
 		x=vec(0.5:nt)
-		lats=vec(-89.0:89.0)
-
-		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1],xlabel="month",ylabel="Sv",
-		title="Global Overturning, in Sv, at kk=$(kk)",xticks=(12:24:336))
-		for ll in 115:10:145
-			ov=tmp[ll,kk,:]
-			ov=runmean(ov, 12)
-			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
-		end
-		Mkie.xlims!(ax1,(0.0,336.0))
-		#Mkie.ylims!(ax1,rng)
-		fig1[1, 2] = Mkie.Legend(fig1, ax1, "estimate", framevisible = false)
-
 	
+		txt=tmp.nam[1:end-5]
+		val=1e-6*vec(sum(tmp.val,dims=1)[:])
+		valsmo = runmean(val, 12)
+	
+		x=vec(0.5:nt)
+
+		hm1=Mkie.lines!(ax,x,val,label="ECCO estimate")
+		Mkie.lines!(ax,x,valsmo,linewidth=4.0,color=:red)
+		Mkie.xlims!(ax,(0.0,336.0))
+	end
+
+	function figtr2(namtrs,ncols)
+		fig1 = Mkie.Figure(resolution = (2000,1000),markersize=0.1)
+		for na in 1:length(namtrs)
+			txt=namtrs[na][1:end-5]
+			jj=div.(na,ncols,RoundUp)
+			kk=na-(jj.-1)*ncols
+			ax1 = Mkie.Axis(fig1[jj,kk], title=" $txt (in Sv)",
+				xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
+			axtr1(ax1,namtrs[na])
+		end
+		#Mkie.ylims!(ax1,rng)
 		fig1
 	end
 
-	figov1(ktr1)
+	#namtrs=[ntr1,ntr1,ntr1,ntr1]
+	ncols=Int(floor(sqrt(length(namtrs))))
+	ff=figtr2(namtrs,ncols)
 end
 
 # ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
@@ -1874,10 +1928,12 @@ version = "3.0.0+3"
 # ╟─d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 # ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
-# ╟─ee8f5f40-a72f-4947-8ab1-4b452087aedc
+# ╟─7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 # ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
 # ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 # ╟─57d01a67-01c7-4d61-93c7-737ef2cbb6a9
+# ╟─8b286e86-692f-419c-83c1-f9120e4e35de
+# ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
 # ╟─4a01c78a-277f-4c13-afb7-a105271b1a75
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
