@@ -113,38 +113,3 @@ function read_monthly(sol,nam,t,list)
     end
 end
 
-##
-
-#same as LatitudeCircles? split out of LatitudeCircles?
-function edge_mask(mskCint::MeshArray)
-    mskCint=1.0*mskCint
-
-    #treat the case of blank tiles:
-    #mskCint[findall(RAC.==0)].=NaN
-    
-    mskCplus=exchange(mskCint)
-
-    #edge tracer mask
-    mskCedge=similar(mskCint)
-    for i in eachindex(mskCedge)
-        tmp1=mskCplus[i]
-        tmp2=tmp1[2:end-1,1:end-2]+tmp1[2:end-1,3:end]+
-            tmp1[1:end-2,2:end-1]+tmp1[3:end,2:end-1]
-        mskCedge[i]=1.0*(tmp2.>0).*(tmp1[2:end-1,2:end-1].==0.0)
-    end
-
-    #edge velocity mask:
-    mskWedge=similar(mskCint)
-    mskSedge=similar(mskCint)
-    for i in eachindex(mskCedge)
-        mskWedge[i]=mskCplus[i][2:end-1,2:end-1] - mskCplus[i][1:end-2,2:end-1]
-        mskSedge[i]=mskCplus[i][2:end-1,2:end-1] - mskCplus[i][2:end-1,1:end-2]
-    end
-
-    #treat the case of blank tiles:
-    #mskCedge[findall(isnan.(mskCedge))].=0.0
-    #mskWedge[findall(isnan.(mskWedge))].=0.0
-    #mskSedge[findall(isnan.(mskSedge))].=0.0
-
-    return mskCedge,mskWedge,mskSedge
-end
