@@ -24,9 +24,6 @@ begin
 	"Done with packages"
 end
 
-# ╔═╡ 0ca1e0f5-9656-44d5-99b7-6d8f2a58f43a
-readdir(joinpath(tempdir(),"ECCO_transport_lines"))
-
 # ╔═╡ cc3e9d0c-8b71-432b-b68d-a8b832ca5f26
 md"""# Tansport Lines For ECCO Analysis"""
 
@@ -76,6 +73,20 @@ end
 # ╔═╡ 21d8bccb-a065-4965-806d-5757f8177dbb
 @bind ii Select(1:length(namPairs))
 
+# ╔═╡ 963e421c-43fb-43d3-b667-1b9912f940b8
+begin
+	lons=Float64.(lonPairs[ii])
+	lats=Float64.(latPairs[ii])
+	name=namPairs[ii]
+
+	x0,y0,z0,R=MeshArrays.rotate_points(lons,lats)
+	x,y,z=MeshArrays.rotate_XCYC(Γ,R)
+	mskCint=1.0*(z.>0)
+	mskCedge,mskWedge,mskSedge=MeshArrays.edge_mask(mskCint)
+	mskCedge,mskWedge,mskSedge=MeshArrays.shorter_paths!((x,y,z),(x0,y0,z0),(mskCedge,mskWedge,mskSedge))
+	"Done with transport line masks"
+end
+
 # ╔═╡ 94b8ba05-dfb8-4075-a260-7968e8fdd78f
 md"""## Main Computation Loop"""
 
@@ -96,142 +107,6 @@ end
 
 # ╔═╡ 25144e1b-21fc-4cc9-b63d-7b26eab1a673
 md"""## Underlying Functions"""
-
-# ╔═╡ f140908c-a8cd-4dd9-8244-ba5d08689559
-#bring end points to the equator -> define 3D rotation matrix
-function rotate_points(lons,lats)
-	#... and of end points
-	x0=cosd.(lats).*cosd.(lons)
-	y0=cosd.(lats).*sind.(lons)
-	z0=sind.(lats)
-
-	#get the rotation matrix:
-	#1) rotate around x axis to put first point at z=0
-	theta=atan(-z0[1],y0[1])
-	R1=[[1;0;0] [0;cos(theta);sin(theta)] [0;-sin(theta);cos(theta)]]
-	tmp0=[x0;y0;z0]; tmp1=R1*tmp0; x1=tmp1[1,:]; y1=tmp1[2,:]; z1=tmp1[3,:]
-	x0=x1; y0=y1; z0=z1
-	#2) rotate around z axis to put first point at y=0
-	theta=atan(x0[1],y0[1])
-	R2=[[cos(theta);sin(theta);0] [-sin(theta);cos(theta);0] [0;0;1]]
-	tmp0=transpose([x0 y0 z0]); tmp1=R2*tmp0; x1=tmp1[1,:]; y1=tmp1[2,:]; z1=tmp1[3,:]
-	x0=x1; y0=y1; z0=z1
-	#3) rotate around y axis to put second point at z=0
-	theta=atan(-z0[2],-x0[2])
-	R3=[[cos(theta);0;-sin(theta)] [0;1;0] [sin(theta);0;cos(theta)]]
-	tmp0=transpose([x0 y0 z0]); tmp1=R3*tmp0; x1=tmp1[1,:]; y1=tmp1[2,:]; z1=tmp1[3,:]
-	x0=x1; y0=y1; z0=z1
-
-	x0,y0,z0,R3*R2*R1
-end
-
-# ╔═╡ 2b7d7df1-7309-4645-ad52-c46e29c7d610
-function rotate_XCYC(Γ,R)
-	#3D carthesian coordinates:
-	lon=Γ.XC; lat=Γ.YC
-	x=cosd.(lat)*cosd.(lon)
-	y=cosd.(lat)*sind.(lon)
-	z=sind.(lat)
-
-	#rotation R:
-	tmpx=γ.write(x); tmpy=γ.write(y); tmpz=γ.write(z)
-	tmp1=findall((!isnan).(tmpx))
-	tmpx2=tmpx[tmp1]; tmpy2=tmpy[tmp1]; tmpz2=tmpz[tmp1]
-	tmp2=[tmpx2';tmpy2';tmpz2']
-	
-	tmp3=R*tmp2
-
-	tmpx2=tmp3[1,:]; tmpy2=tmp3[2,:]; tmpz2=tmp3[3,:]
-	tmpx[tmp1]=tmpx2; tmpy[tmp1]=tmpy2; tmpz[tmp1]=tmpz2
-	x=γ.read(tmpx,Γ.XC); y=γ.read(tmpy,Γ.XC); z=γ.read(tmpz,Γ.XC)
-	
-	x,y,z
-end
-
-# ╔═╡ 963e421c-43fb-43d3-b667-1b9912f940b8
-begin
-	lons=Float64.(lonPairs[ii])
-	lats=Float64.(latPairs[ii])
-	name=namPairs[ii]
-
-	x0,y0,z0,R=rotate_points(lons,lats)
-	x,y,z=rotate_XCYC(Γ,R)
-	mskCint=1.0*(z.>0)
-	mskCedge,mskWedge,mskSedge=MeshArrays.edge_mask(mskCint)
-	mskCedge,mskWedge,mskSedge=MeshArrays.shorter_paths!((x,y,z),(x0,y0,z0),(mskCedge,mskWedge,mskSedge))
-	"Done with transport line masks"
-end
-
-# ╔═╡ 5e3fb2fa-4e6a-4cb3-b76f-d02011948530
-function edge_mask(mskCint::MeshArray)
-    mskCint=1.0*mskCint
-
-    #treat the case of blank tiles:
-    #mskCint[findall(RAC.==0)].=NaN
-    
-    mskCplus=exchange(mskCint)
-
-    #edge tracer mask
-    mskCedge=similar(mskCint)
-    for i in eachindex(mskCedge)
-        tmp1=mskCplus[i]
-        tmp2=tmp1[2:end-1,1:end-2]+tmp1[2:end-1,3:end]+
-            tmp1[1:end-2,2:end-1]+tmp1[3:end,2:end-1]
-        mskCedge[i]=1.0*(tmp2.>0).*(tmp1[2:end-1,2:end-1].==0.0)
-    end
-
-    #edge velocity mask:
-    mskWedge=similar(mskCint)
-    mskSedge=similar(mskCint)
-    for i in eachindex(mskCedge)
-        mskWedge[i]=mskCplus[i][2:end-1,2:end-1] - mskCplus[i][1:end-2,2:end-1]
-        mskSedge[i]=mskCplus[i][2:end-1,2:end-1] - mskCplus[i][2:end-1,1:end-2]
-    end
-
-    #treat the case of blank tiles:
-    #mskCedge[findall(isnan.(mskCedge))].=0.0
-    #mskWedge[findall(isnan.(mskWedge))].=0.0
-    #mskSedge[findall(isnan.(mskSedge))].=0.0
-
-    return mskCedge,mskWedge,mskSedge
-end
-
-# ╔═╡ d5e26bc2-5b15-458d-98eb-0fc5d4977b9d
-function shorter_paths!(xyz,xyz0,msk_in)
-	(x0,y0,z0)=xyz0[:]
-	(x,y,z)=xyz[:]
-
-	#split in two segments:
-	theta=zeros(2)
-	theta[1]=atan(y0[1],x0[1])
-	theta[2]=atan(y0[2],x0[2])
-
-	γ=msk_in[1],grid
-	tmpx=γ.write(x); tmpy=γ.write(y); tmpz=γ.write(z);
-	tmptheta=atan.(tmpy,tmpx)
-	if theta[2]<0;
-		tmp00=findall(tmptheta.<=theta[2])
-		tmptheta[tmp00].=tmptheta[tmp00]+2*pi
-		theta[2]=theta[2]+2*pi
-	end
-
-	msk_out=[]
-	for kk in 1:3
-		#select field to treat:
-		mm=msk_in[kk]
-		#select the shorther segment:
-		tmpm=γ.write(mm)
-       if theta[2]-theta[1]<=pi
-            tmpm[findall( (tmptheta.>theta[2]).|(tmptheta.<theta[1]) )].=0.0
-        else
-            tmpm[findall( (tmptheta.<=theta[2]).&(tmptheta.>=theta[1]) )].=0.0
-        end
-        mm=γ.read(tmpm,mm);
-        #store result:
-		push!(msk_out,mm)
-    end
-	msk_out[:]
-end
 
 # ╔═╡ 75c98143-dd36-4446-adfa-c440fdf8aab1
 function setup_interp(Γ)
@@ -268,27 +143,9 @@ begin
 	fig
 end
 
-# ╔═╡ c70e3a7a-5512-4076-9aae-2d8bd86367e7
-#joinpath(tempdir(),"ECCO_transport_lines","$(name).jld2")
-        function MskToTab(msk::MeshArray)
-          n=Int(sum(msk .!= 0)); k=0
-          tab=Array{Int,2}(undef,n,4)
-          for i=1:msk.grid.nFaces
-            a=msk.f[i]
-            b=findall( a .!= 0)
-            for ii in eachindex(b)
-              k += 1
-              tab[k,:]=[i,b[ii][1],b[ii][2],a[b[ii]]]
-            end
-          end
-          return tab
-        end
-
-
 # ╔═╡ Cell order:
-# ╠═0ca1e0f5-9656-44d5-99b7-6d8f2a58f43a
 # ╟─cc3e9d0c-8b71-432b-b68d-a8b832ca5f26
-# ╠═d123161e-49f1-11ec-1c1b-51871624545d
+# ╟─d123161e-49f1-11ec-1c1b-51871624545d
 # ╟─39924391-38ce-46a1-877f-80a7975340a0
 # ╟─26299781-c3f7-493e-8ae8-e11aa2eb726e
 # ╟─2507c335-2886-42b5-b6b8-63279a2d60fe
@@ -298,9 +155,4 @@ end
 # ╟─94b8ba05-dfb8-4075-a260-7968e8fdd78f
 # ╠═6cc62cf0-cb30-4d93-aad6-2ab16f60f95f
 # ╟─25144e1b-21fc-4cc9-b63d-7b26eab1a673
-# ╟─f140908c-a8cd-4dd9-8244-ba5d08689559
-# ╟─2b7d7df1-7309-4645-ad52-c46e29c7d610
-# ╟─5e3fb2fa-4e6a-4cb3-b76f-d02011948530
-# ╟─d5e26bc2-5b15-458d-98eb-0fc5d4977b9d
 # ╟─75c98143-dd36-4446-adfa-c440fdf8aab1
-# ╟─c70e3a7a-5512-4076-9aae-2d8bd86367e7
