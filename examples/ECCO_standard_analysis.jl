@@ -86,14 +86,14 @@ if calc=="clim"
         #save_object(joinpath(pth_tmp,nam*suff*Printf.@sprintf("_m%02d.jld2",m)),tmp_m)
     end
 
-    tmp0=read(tmp_m,γ)
+    tmp0=read(tmp_m[:],γ)
 
     tmp=1.0/nt*sum(tmp_s1,dims=3)
-    tmp1=read(tmp,Γ.XC)
+    tmp1=read(tmp[:],Γ.XC)
 
     tmp=1/nt*sum(tmp_s2,dims=3)-tmp.^2
     tmp=sqrt.(nt/(nt-1)*tmp)
-    tmp2=read(tmp,Γ.XC)
+    tmp2=read(tmp[:],Γ.XC)
 
     fil_out=joinpath(pth_tmp,nam*suff*".jld2")
     save(fil_out,"mean",tmp1,"std",tmp2,"mon",tmp0)
