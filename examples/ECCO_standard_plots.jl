@@ -30,19 +30,6 @@ Explore and compare ocean state estimates from the [ECCO version 4](https://doi.
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
 PlutoUI.TableOfContents()
 
-# ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
-function clim_files(pth_out)
-	list_clim=readdir(pth_out)
-	kk=findall(occursin.(Ref("clim"),list_clim))
-	list_clim=list_clim[kk]
-	clim_files=[]
-	for ii in 1:length(list_clim)
-		tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
-		[push!(clim_files,i) for i in tmp]
-	end
-	clim_files
-end
-
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
 	sol_select = @bind sol Select(["ECCOv4r2_analysis","ECCOv4r3_analysis",
@@ -145,12 +132,33 @@ md"""## Appendices"""
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
 pth_out=joinpath("ECCO_diags",sol)
 
+# ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
+begin
+	function climatology_files(pth_out)
+		list_clim=readdir(pth_out)
+		kk=findall(occursin.(Ref("clim"),list_clim))
+		list_clim=list_clim[kk]
+		clim_files=[]
+		for ii in 1:length(list_clim)
+			tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
+			[push!(clim_files,i) for i in tmp]
+		end
+		clim_files
+	end
+	clim_files=climatology_files(pth_out)
+	"Done with listing files"
+end
+
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
 begin
-		nammap_select = @bind nammap Select(clim_files(pth_out))
+	nammap_select = @bind nammap Select(clim_files)
+	statmap_select = @bind statmap Select(["mean","std","mon"])
+	timemap_select = @bind timemap Select(1:12)
 	md"""## Maps
 	
 	- variable for time mean map : $(nammap_select)
+	- variable for time mean map : $(statmap_select)
+	- variable for time mean map : $(timemap_select)
 	
 	"""
 end
@@ -361,7 +369,11 @@ end
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 let
 	fil=joinpath(pth_out,nammap)
-	tmp=load(fil,"single_stored_object")
+	if statmap!=="mon"
+		tmp=load(fil,statmap)
+	else
+		tmp=load(fil,statmap)[:,timemap]
+	end
 
 	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
 	DD=reshape(DD,size(λ.lon))
@@ -1978,14 +1990,14 @@ version = "3.0.0+3"
 # ╔═╡ Cell order:
 # ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
-# ╠═a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
+# ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─963c0bcf-5804-47a5-940e-68f348db95ea
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
 # ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
-# ╠═2d819d3e-f62e-4a73-b51c-0e1204da2369
+# ╟─2d819d3e-f62e-4a73-b51c-0e1204da2369
 # ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
 # ╟─302c84ce-c39d-456b-b748-e3f5ddec0eda
 # ╟─3f73757b-bab9-4d72-9fff-8884e96e76cd

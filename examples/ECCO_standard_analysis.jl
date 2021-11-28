@@ -64,6 +64,8 @@ if calc=="clim"
     @everywhere Γ=GridLoad(γ,option="full")
     tmp_s1 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
+    tmp_m = SharedArray{Float64}(γ.ioSize...,12)
+
     tmp=read_monthly(sol,nam,1,list_steps)
     ndims(tmp)>1 ? nz=size(tmp,2) : nz=1
     nz==1 ? kk=1 : nothing
@@ -71,25 +73,30 @@ if calc=="clim"
 
     @sync @distributed for m in 1:12
         nm=length(m:12:nt)
-        tmp_m=0.0*Γ.XC
+        tmp_m[:,:,m].=0.0
+        tmp_s1[:,:,m].=0.0
+        tmp_s2[:,:,m].=0.0
         for t in m:12:nt
             tmp=read_monthly(sol,nam,t,list_steps)
             ndims(tmp)>1 ? tmp=tmp[:,kk] : nothing
-            tmp_m.=tmp_m+1.0/nm*tmp
+            tmp_m[:,:,m]=tmp_m[:,:,m]+1.0/nm*γ.write(tmp)
             tmp_s1[:,:,m]=tmp_s1[:,:,m]+γ.write(tmp)
             tmp_s2[:,:,m]=tmp_s2[:,:,m]+γ.write(tmp).^2
         end
-        save_object(joinpath(pth_tmp,nam*suff*Printf.@sprintf("_m%02d.jld2",m)),tmp_m)
+        #save_object(joinpath(pth_tmp,nam*suff*Printf.@sprintf("_m%02d.jld2",m)),tmp_m)
     end
 
-    tmp=1/nt*sum(tmp_s1,dims=3)
-    tmp=read(tmp,Γ.XC)
-    save_object(joinpath(pth_tmp,nam*suff*"_mean.jld2"),tmp)
+    tmp0=read(tmp_m,γ)
 
-    tmp=1/nt*sum(tmp_s2,dims=3)-write(tmp).^2
+    tmp=1.0/nt*sum(tmp_s1,dims=3)
+    tmp1=read(tmp,Γ.XC)
+
+    tmp=1/nt*sum(tmp_s2,dims=3)-tmp.^2
     tmp=sqrt.(nt/(nt-1)*tmp)
-    tmp=read(tmp,Γ.XC)
-    save_object(joinpath(pth_tmp,nam*suff*"_std.jld2"),tmp)
+    tmp2=read(tmp,Γ.XC)
+
+    fil_out=joinpath(pth_tmp,nam*suff*".jld2")
+    save(fil_out,"mean",tmp1,"std",tmp2,"mon",tmp0)
 end
 
 ## global mean
