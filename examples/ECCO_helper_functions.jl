@@ -50,7 +50,81 @@ tot_VOL=nansum(tmp,2)
 
 ## generic read function
 
-function read_monthly(sol,nam,t,list)
+function read_monthly(sol,nam,t,list_steps) 
+    if nam=="SSH"
+        read_monthly_SSH(sol,nam,t,list_steps)
+    elseif nam=="MHT"
+        read_monthly_MHT(sol,nam,t,list_steps)
+    elseif nam=="BSF"
+        read_monthly_BSF(sol,nam,t,list_steps)
+    else
+        read_monthly_default(sol,nam,t,list_steps)
+    end
+end
+
+###
+
+function read_monthly_SSH(sol,nam,t,list_steps)
+    ETAN=read_monthly_default(sol,"ETAN",t,list_steps)
+    sIceLoad=read_monthly_default(sol,"sIceLoad",t,list_steps)
+    (ETAN+sIceLoad/1029.0)*mskC[:,1]
+end
+
+function read_monthly_MHT(sol,nam,t,list_steps)
+    U=read_monthly(sol,"ADVx_TH",t,list_steps)
+    V=read_monthly(sol,"ADVy_TH",t,list_steps)
+    U=U+read_monthly(sol,"DFxE_TH",t,list_steps)
+    V=V+read_monthly(sol,"DFyE_TH",t,list_steps)
+
+    [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
+    [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
+
+    Tx=0.0*U[:,1]
+    Ty=0.0*V[:,1]
+    [Tx=Tx+U[:,z] for z=1:nr]
+    [Ty=Ty+V[:,z] for z=1:nr]
+
+    return Tx,Ty
+end
+
+function read_monthly_BSF(sol,nam,t,list_steps)
+    U=read_monthly(sol,"UVELMASS",t,list_steps)
+    V=read_monthly(sol,"VVELMASS",t,list_steps)
+    (Utr,Vtr)=UVtoTransport(U,V,Γ)
+    
+    nz=size(Γ.hFacC,2)
+    μ=mskC[:,1]
+    Tx=0.0*Utr[:,1]
+	Ty=0.0*Vtr[:,1]
+	for z=1:nz
+		Tx=Tx+Utr[:,z]
+		Ty=Ty+Vtr[:,z]
+	end
+
+    #convergence & land mask
+    TrspCon=μ.*convergence(Tx,Ty)
+
+    #scalar potential
+    TrspPot=ScalarPotential(TrspCon)
+
+    #Divergent transport component
+    (TxD,TyD)=gradient(TrspPot,Γ)
+    TxD=TxD.*Γ.DXC
+    TyD=TyD.*Γ.DYC
+
+    #Rotational transport component
+    TxR = Tx-TxD
+    TyR = Ty-TyD
+
+    #vector Potential
+    TrspPsi=VectorPotential(TxR,TyR,Γ)
+
+    return TrspPsi
+end
+
+###
+
+function read_monthly_default(sol,nam,t,list)
     var_list3d=("THETA","SALT","UVELMASS","VVELMASS",
                 "ADVx_TH","ADVy_TH","DFxE_TH","DFyE_TH")
     mdsio_list3d=("STATE/state_3d_set1","STATE/state_3d_set1",
