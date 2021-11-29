@@ -33,8 +33,6 @@ PlutoUI.TableOfContents()
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
-	sol_select = @bind sol Select(["ECCOv4r2_analysis","ECCOv4r3_analysis",
-		"ECCOv4r4_analysis","ECCOv4r5_analysis"])
 	k_zm_select = @bind k_zm Slider(1:50, default=1, show_value=true)
 	namzm_select = @bind namzm Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
 	
@@ -42,7 +40,6 @@ begin
 	
 	Here we select a quantity and plot it vs time and latitude.
 	
-	- select a solution : $(sol_select)
 	- variable for zonal mean vs time : $(namzm_select)
 	- level for zonal mean vs time : $(k_zm_select)
 	
@@ -50,9 +47,6 @@ begin
 
 	"""
 end
-
-# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
-md""" select a solution : $(sol_select)"""
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
@@ -78,9 +72,6 @@ Select a variable for zonal mean vs time : $(namzmanom2d_select)
 """
 end
 
-# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
-md"""Select a solution : $(sol_select)"""
-
 # ╔═╡ 302c84ce-c39d-456b-b748-e3f5ddec0eda
 begin
 	namzmanom_select = @bind namzmanom Select(["THETA","SALT"])
@@ -101,7 +92,7 @@ end
 
 # ╔═╡ 92d1fc2f-9bdc-41dc-af49-9412f931d882
 begin
-	ngl1_select = @bind ngl1 Select(["THETA","SALT"])
+	ngl1_select = @bind ngl1 Select(["THETA","SALT"];default="THETA")
 	kgl1_select = @bind kgl1 Slider(0:1;default=0, show_value=true)
 
 	md"""## Global Means
@@ -110,9 +101,6 @@ begin
 	- latitude index for depth vs time : $(kgl1_select)
 	"""
 end
-
-# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
-md"""select a solution : $(sol_select)"""
 
 # ╔═╡ d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 md"""## Transports"""
@@ -123,22 +111,40 @@ begin
 	
 	md"""
 	- level for overturning vs time : $(ktr1_select)
-	- select a solution : $(sol_select)
 	"""
 end
-
-# ╔═╡ 4a01c78a-277f-4c13-afb7-a105271b1a75
-md"""select a solution : $(sol_select)"""
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
 md"""## Appendices"""
 
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
+begin
+	sol_select = @bind sol Select(["ECCOv4r2_analysis","ECCOv4r3_analysis",
+									"ECCOv4r4_analysis","ECCOv4r5_analysis"],default="ECCOv4r2_analysis")
+	md"""select a solution : $(sol_select)"""
+end
+
+# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
+md""" select a solution : $(sol_select)"""
+
+# ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
+md"""Select a solution : $(sol_select)"""
+
+# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 53069bcc-9b28-40bf-9053-4ec0c6099611
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
 pth_out=joinpath("ECCO_diags",sol)
 
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
 begin
-	function glo(nam,k=0)
+	function glo(pth_out,nam,k=0)
 		if k>0
 			fil=fil=joinpath(pth_out,nam*"_glo2d/glo2d.jld2")
 		else
@@ -169,7 +175,7 @@ begin
 		fig1
 	end
 
-	gl1=glo(ngl1,kgl1)
+	gl1=glo(pth_out,ngl1,kgl1)
 	onegloplot(gl1)
 end
 
@@ -189,8 +195,8 @@ let
 end
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-begin
-	function figov1(kk=29)
+begin	
+	function figov1(pth_out,kk=29)
 		fil=joinpath(pth_out,"overturn/overturn.jld2")
 		tmp=-1e-6*load(fil,"single_stored_object")
 	
@@ -214,7 +220,7 @@ begin
 		fig1
 	end
 
-	figov1(ktr1)
+	figov1(pth_out,ktr1)
 end
 
 # ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
@@ -317,6 +323,8 @@ end
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
 begin
+	pth_out
+
 	if namzm=="MXLDEPTH"
 		levs=(0.0:50.0:400.0); fn(x)=transpose(x); cm=:turbo
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
@@ -365,6 +373,7 @@ end
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
 let
+	pth_out
 	fn(x)=transpose(x)
 
 	namzm=namzmanom2d
@@ -426,7 +435,8 @@ end
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
 let
-	fn(x)=transpose(x);
+	pth_out
+	fn(x)=transpose(x)
 	if namzmanom=="THETA"
 		levs=(-3.0:0.4:3.0)/8.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
@@ -535,11 +545,11 @@ begin
 	nammap_select = @bind nammap Select(clim_files)
 	statmap_select = @bind statmap Select(["mean","std","mon"])
 	timemap_select = @bind timemap Select(1:12)
-	md"""## Maps
+	md"""## Climatology Maps
 
-	- variable for time mean map : $(nammap_select)
-	- variable for time mean map : $(statmap_select)
-	- variable for time mean map : $(timemap_select)
+	- file for time mean map : $(nammap_select)
+	- statistics for time mean map : $(statmap_select)
+	- (optional) month for time mean map : $(timemap_select)
 	
 	"""
 end
@@ -2007,6 +2017,7 @@ version = "3.0.0+3"
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
+# ╟─0477e49b-d8b2-4308-b692-cadcdfe28892
 # ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
 # ╟─2d819d3e-f62e-4a73-b51c-0e1204da2369
 # ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
@@ -2020,13 +2031,14 @@ version = "3.0.0+3"
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
 # ╟─7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 # ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
+# ╟─53069bcc-9b28-40bf-9053-4ec0c6099611
 # ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 # ╟─57d01a67-01c7-4d61-93c7-737ef2cbb6a9
 # ╟─8b286e86-692f-419c-83c1-f9120e4e35de
 # ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
-# ╟─4a01c78a-277f-4c13-afb7-a105271b1a75
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
+# ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─963c0bcf-5804-47a5-940e-68f348db95ea
