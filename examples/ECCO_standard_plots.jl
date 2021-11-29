@@ -16,7 +16,8 @@ end
 
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin
-	using JLD2, MeshArrays, OceanStateEstimation, PlutoUI, Statistics, RollingFunctions
+	using JLD2, MeshArrays, OceanStateEstimation, PlutoUI
+	using TOML, Statistics, RollingFunctions
 	import CairoMakie as Mkie
 	"Done with packages"
 end
@@ -49,6 +50,9 @@ begin
 
 	"""
 end
+
+# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
+md""" select a solution : $(sol_select)"""
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
@@ -146,6 +150,8 @@ begin
 		clim_files
 	end
 	clim_files=climatology_files(pth_out)
+	clim_colors1=TOML.parsefile("clim_colors1.toml")
+	clim_colors2=TOML.parsefile("clim_colors2.toml")
 	"Done with listing files"
 end
 
@@ -155,7 +161,7 @@ begin
 	statmap_select = @bind statmap Select(["mean","std","mon"])
 	timemap_select = @bind timemap Select(1:12)
 	md"""## Maps
-	
+
 	- variable for time mean map : $(nammap_select)
 	- variable for time mean map : $(statmap_select)
 	- variable for time mean map : $(timemap_select)
@@ -378,10 +384,13 @@ let
 	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
 	DD=reshape(DD,size(λ.lon))
 	#DD[findall(DD.==0.0)].=NaN
-	
+	kk3=basename(nammap)[1:end-5]
+	statmap=="std" ? rng=clim_colors2[kk3] : rng=clim_colors1[kk3]
+	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
+
 	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
 	ax = Mkie.Axis(fig[1,1], title=nammap,xlabel="longitude",ylabel="latitude")
-	hm1=Mkie.heatmap!(ax,λ.lon[:,1],λ.lat[1,:],DD) #,colorrange=(-1.0,1.0).*0.2)
+	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	fig	
 end
@@ -566,6 +575,7 @@ OceanStateEstimation = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 RollingFunctions = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
 CairoMakie = "~0.6.6"
@@ -1990,6 +2000,7 @@ version = "3.0.0+3"
 # ╔═╡ Cell order:
 # ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
+# ╟─c46f0656-3627-448b-a779-dad2d980e3cf
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─963c0bcf-5804-47a5-940e-68f348db95ea

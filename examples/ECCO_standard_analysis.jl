@@ -92,6 +92,7 @@ if calc=="clim"
     tmp1=read(tmp[:],Γ.XC)
 
     tmp=1/nt*sum(tmp_s2,dims=3)-tmp.^2
+    tmp[findall(tmp.<0.0)].=0.0
     tmp=sqrt.(nt/(nt-1)*tmp)
     tmp2=read(tmp[:],Γ.XC)
 
