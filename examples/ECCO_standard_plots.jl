@@ -136,39 +136,6 @@ md"""## Appendices"""
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
 pth_out=joinpath("ECCO_diags",sol)
 
-# ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
-begin
-	function climatology_files(pth_out)
-		list_clim=readdir(pth_out)
-		kk=findall(occursin.(Ref("clim"),list_clim))
-		list_clim=list_clim[kk]
-		clim_files=[]
-		for ii in 1:length(list_clim)
-			tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
-			[push!(clim_files,i) for i in tmp]
-		end
-		clim_files
-	end
-	clim_files=climatology_files(pth_out)
-	clim_colors1=TOML.parsefile("clim_colors1.toml")
-	clim_colors2=TOML.parsefile("clim_colors2.toml")
-	"Done with listing files"
-end
-
-# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
-begin
-	nammap_select = @bind nammap Select(clim_files)
-	statmap_select = @bind statmap Select(["mean","std","mon"])
-	timemap_select = @bind timemap Select(1:12)
-	md"""## Maps
-
-	- variable for time mean map : $(nammap_select)
-	- variable for time mean map : $(statmap_select)
-	- variable for time mean map : $(timemap_select)
-	
-	"""
-end
-
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
 begin
 	function glo(nam,k=0)
@@ -348,53 +315,6 @@ begin
 	"Done with grid"
 end
 
-# ╔═╡ 963c0bcf-5804-47a5-940e-68f348db95ea
-begin
-	function setup_interp(Γ)
-		μ =Γ.hFacC[:,1]
-		μ[findall(μ.>0.0)].=1.0
-		μ[findall(μ.==0.0)].=NaN
-	
-		if !isfile(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"))
-			lon=[i for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
-			lat=[j for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
-			
-			(f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
-			jldsave(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"); 
-				lon=lon, lat=lat, f=f, i=i, j=j, w=w, μ=μ)
-		end
-	
-		λ = load(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"))
-		λ = MeshArrays.Dict_to_NamedTuple(λ)
-	end
-	
-	λ=setup_interp(Γ)
-	"Done with interpolation coefficients"	
-end
-
-# ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-let
-	fil=joinpath(pth_out,nammap)
-	if statmap!=="mon"
-		tmp=load(fil,statmap)
-	else
-		tmp=load(fil,statmap)[:,timemap]
-	end
-
-	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
-	DD=reshape(DD,size(λ.lon))
-	#DD[findall(DD.==0.0)].=NaN
-	kk3=basename(nammap)[1:end-5]
-	statmap=="std" ? rng=clim_colors2[kk3] : rng=clim_colors1[kk3]
-	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
-
-	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
-	ax = Mkie.Axis(fig[1,1], title=nammap,xlabel="longitude",ylabel="latitude")
-	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
-	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
-	fig	
-end
-
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
 begin
 	if namzm=="MXLDEPTH"
@@ -563,6 +483,88 @@ let
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	fig1
 
+end
+
+# ╔═╡ 963c0bcf-5804-47a5-940e-68f348db95ea
+begin
+	function setup_interp(Γ)
+		μ =Γ.hFacC[:,1]
+		μ[findall(μ.>0.0)].=1.0
+		μ[findall(μ.==0.0)].=NaN
+	
+		if !isfile(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"))
+			lon=[i for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
+			lat=[j for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
+			
+			(f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
+			jldsave(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"); 
+				lon=lon, lat=lat, f=f, i=i, j=j, w=w, μ=μ)
+		end
+	
+		λ = load(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"))
+		λ = MeshArrays.Dict_to_NamedTuple(λ)
+	end
+	
+	λ=setup_interp(Γ)
+	"Done with interpolation coefficients"	
+end
+
+# ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
+begin
+	function climatology_files(pth_out)
+		list_clim=readdir(pth_out)
+		kk=findall(occursin.(Ref("clim"),list_clim))
+		list_clim=list_clim[kk]
+		clim_files=[]
+		for ii in 1:length(list_clim)
+			tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
+			[push!(clim_files,i) for i in tmp]
+		end
+		clim_files
+	end
+	
+	clim_colors1=TOML.parsefile("clim_colors1.toml")
+	clim_colors2=TOML.parsefile("clim_colors2.toml")
+	"Done with listing files"
+end
+
+# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
+begin
+	pth_tmp1=joinpath("ECCO_diags","ECCOv4r5_analysis")
+	clim_files=climatology_files(pth_tmp1)	
+	nammap_select = @bind nammap Select(clim_files)
+	statmap_select = @bind statmap Select(["mean","std","mon"])
+	timemap_select = @bind timemap Select(1:12)
+	md"""## Maps
+
+	- variable for time mean map : $(nammap_select)
+	- variable for time mean map : $(statmap_select)
+	- variable for time mean map : $(timemap_select)
+	
+	"""
+end
+
+# ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
+let
+	fil=joinpath(pth_out,nammap)
+	if statmap!=="mon"
+		tmp=load(fil,statmap)
+	else
+		tmp=load(fil,statmap)[:,timemap]
+	end
+
+	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
+	DD=reshape(DD,size(λ.lon))
+	#DD[findall(DD.==0.0)].=NaN
+	kk3=basename(nammap)[1:end-5]
+	statmap=="std" ? rng=clim_colors2[kk3] : rng=clim_colors1[kk3]
+	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
+
+	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
+	ax = Mkie.Axis(fig[1,1], title=nammap,xlabel="longitude",ylabel="latitude")
+	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
+	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
+	fig	
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -2002,8 +2004,6 @@ version = "3.0.0+3"
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
 # ╟─c46f0656-3627-448b-a779-dad2d980e3cf
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
-# ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
-# ╟─963c0bcf-5804-47a5-940e-68f348db95ea
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
@@ -2029,5 +2029,7 @@ version = "3.0.0+3"
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
+# ╟─963c0bcf-5804-47a5-940e-68f348db95ea
+# ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
