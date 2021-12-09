@@ -26,10 +26,19 @@ end
 md"""# ECCO.v4 Standard Analysis
 
 Explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) framework ([release 1 to 5](https://ecco-group.org/products.htm), currently) using [Julia](https://julialang.org). 
+
+- [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/)
+- [MITgcmTools.jl](https://github.com/gaelforget/MITgcmTools.jl)
+- [JuliaClimate Notebooks](https://juliaclimate.github.io/GlobalOceanNotebooks/)
+- <https://youtu.be/UEmBnzspSRg>
+
 """
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
 PlutoUI.TableOfContents()
+
+# ╔═╡ 488912d3-f956-46d5-a0ea-0f46ae0f8cd9
+readdir("ECCO_diags/ECCOv4r5_analysis/")
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
@@ -221,95 +230,6 @@ begin
 	end
 
 	figov1(pth_out,ktr1)
-end
-
-# ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
-begin
-	fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
-	ntr=length(load(fil_trsp,"single_stored_object"))
-	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
-
-	ntr1_select = @bind ntr1 Select(list_trsp)
-	
-	md"""### Transport Across One Section
-	
-	- transect for transport vs time : $(ntr1_select)	
-	"""
-end
-
-# ╔═╡ 57d01a67-01c7-4d61-93c7-737ef2cbb6a9
-begin
-	function figtr1(namtr)
-		itr=findall(list_trsp.==namtr)[1]
-		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
-		
-		nt=size(tmp.val,2)
-		x=vec(0.5:nt)
-	
-		txt=tmp.nam[1:end-5]
-		val=1e-6*vec(sum(tmp.val,dims=1)[:])
-		valsmo = runmean(val, 12)
-	
-		x=vec(0.5:nt)
-		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1], title=" $txt (in Sv)",
-			xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
-		hm1=Mkie.lines!(x,val,label="ECCO estimate")
-		Mkie.lines!(x,valsmo,linewidth=4.0,color=:red)
-		Mkie.xlims!(ax1,(0.0,336.0))
-		#Mkie.ylims!(ax1,rng)
-		fig1
-	end
-	figtr1(ntr1)
-end
-
-# ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
-begin
-	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
-	
-	md"""### Transport Across Several Sections
-	
-	$(ntr2_select)	
-	"""
-end
-
-# ╔═╡ a468baa1-2e5b-40ce-b33c-2e275d720c8e
-begin
-	function axtr1(ax,namtr)
-		itr=findall(list_trsp.==namtr)[1]
-		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
-		
-		nt=size(tmp.val,2)
-		x=vec(0.5:nt)
-	
-		txt=tmp.nam[1:end-5]
-		val=1e-6*vec(sum(tmp.val,dims=1)[:])
-		valsmo = runmean(val, 12)
-	
-		x=vec(0.5:nt)
-
-		hm1=Mkie.lines!(ax,x,val,label="ECCO estimate")
-		Mkie.lines!(ax,x,valsmo,linewidth=4.0,color=:red)
-		Mkie.xlims!(ax,(0.0,336.0))
-	end
-
-	function figtr2(namtrs,ncols)
-		fig1 = Mkie.Figure(resolution = (2000,1000),markersize=0.1)
-		for na in 1:length(namtrs)
-			txt=namtrs[na][1:end-5]
-			jj=div.(na,ncols,RoundUp)
-			kk=na-(jj.-1)*ncols
-			ax1 = Mkie.Axis(fig1[jj,kk], title=" $txt (in Sv)",
-				xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
-			axtr1(ax1,namtrs[na])
-		end
-		#Mkie.ylims!(ax1,rng)
-		fig1
-	end
-
-	#namtrs=[ntr1,ntr1,ntr1,ntr1]
-	ncols=Int(floor(sqrt(length(namtrs))))
-	ff=figtr2(namtrs,ncols)
 end
 
 # ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
@@ -535,6 +455,11 @@ begin
 	
 	clim_colors1=TOML.parsefile("clim_colors1.toml")
 	clim_colors2=TOML.parsefile("clim_colors2.toml")
+
+	fil_trsp="ECCO_diags/ECCOv4r5_analysis/trsp/trsp.jld2"
+	ntr=length(load(fil_trsp,"single_stored_object"))
+	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
+
 	"Done with listing files"
 end
 
@@ -575,6 +500,96 @@ let
 	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	fig	
+end
+
+# ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
+begin
+	ntr1_select = @bind ntr1 Select(list_trsp)
+	
+	md"""### Transport Across One Section
+	
+	- transect for transport vs time : $(ntr1_select)	
+	"""
+end
+
+# ╔═╡ 57d01a67-01c7-4d61-93c7-737ef2cbb6a9
+begin
+	function figtr1(namtr)
+		itr=findall(list_trsp.==namtr)[1]
+		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
+		
+		nt=size(tmp.val,2)
+		x=vec(0.5:nt)
+	
+		txt=tmp.nam[1:end-5]
+		val=1e-6*vec(sum(tmp.val,dims=1)[:])
+		valsmo = runmean(val, 12)
+	
+		x=vec(0.5:nt)
+		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Mkie.Axis(fig1[1,1], title=" $txt (in Sv)",
+			xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
+		hm1=Mkie.lines!(x,val,label="ECCO estimate")
+		Mkie.lines!(x,valsmo,linewidth=4.0,color=:red)
+		Mkie.xlims!(ax1,(0.0,336.0))
+		#Mkie.ylims!(ax1,rng)
+		fig1
+	end
+	figtr1(ntr1)
+end
+
+# ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
+begin
+	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
+	
+	md"""### Transport Across Several Sections
+	
+	$(ntr2_select)	
+	"""
+end
+
+# ╔═╡ a468baa1-2e5b-40ce-b33c-2e275d720c8e
+begin
+	function axtr1(ax,namtr)
+		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
+
+		itr=findall(list_trsp.==namtr)[1]
+		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
+		
+		nt=size(tmp.val,2)
+		x=vec(0.5:nt)
+	
+		txt=tmp.nam[1:end-5]
+		val=1e-6*vec(sum(tmp.val,dims=1)[:])
+		valsmo = runmean(val, 12)
+	
+		x=vec(0.5:nt)
+
+		hm1=Mkie.lines!(ax,x,val,label="ECCO estimate")
+		Mkie.lines!(ax,x,valsmo,linewidth=4.0,color=:red)
+		Mkie.xlims!(ax,(0.0,336.0))
+	end
+
+	function figtr2(namtrs,ncols)
+		fig1 = Mkie.Figure(resolution = (2000,1000),markersize=0.1)
+		for na in 1:length(namtrs)
+			txt=namtrs[na][1:end-5]
+			jj=div.(na,ncols,RoundUp)
+			kk=na-(jj.-1)*ncols
+			ax1 = Mkie.Axis(fig1[jj,kk], title=" $txt (in Sv)",
+				xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
+			axtr1(ax1,namtrs[na])
+		end
+		#Mkie.ylims!(ax1,rng)
+		fig1
+	end
+end
+
+# ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
+begin
+		#namtrs=[ntr1,ntr1,ntr1,ntr1]
+		ncols=Int(floor(sqrt(length(namtrs))))
+		ff=figtr2(namtrs,ncols)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -2012,6 +2027,7 @@ version = "3.0.0+3"
 # ╔═╡ Cell order:
 # ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
+# ╟─488912d3-f956-46d5-a0ea-0f46ae0f8cd9
 # ╟─c46f0656-3627-448b-a779-dad2d980e3cf
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
@@ -2035,7 +2051,7 @@ version = "3.0.0+3"
 # ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 # ╟─57d01a67-01c7-4d61-93c7-737ef2cbb6a9
 # ╟─8b286e86-692f-419c-83c1-f9120e4e35de
-# ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─8702a6cf-69de-4e9c-8e77-81f39b55efc7
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
@@ -2043,5 +2059,6 @@ version = "3.0.0+3"
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─963c0bcf-5804-47a5-940e-68f348db95ea
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
+# ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
