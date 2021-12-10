@@ -27,26 +27,48 @@ function get_nr_nt(pth_in,nam)
     siz[end-1],siz[end]
 end
 
-
-γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-nr=50
-XC=GridLoadVar("XC",γ)
-YC=GridLoadVar("YC",γ)
-RAC=GridLoadVar("RAC",γ)
-hFacC=GridLoadVar("hFacC",γ)
-DRF=GridLoadVar("DRF",γ)
-
 nansum(x) = sum(filter(!isnan,x))
 nansum(x,y) = mapslices(nansum,x,dims=y)
 
-mskC=hFacC./hFacC
+function GridLoadSome()
 
-tmp=hFacC./hFacC
-tmp=[nansum(tmp[i,j].*RAC[i]) for j in 1:nr, i in eachindex(RAC)]
-tot_RAC=nansum(tmp,2)
+    γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+    nr=50
+    XC=GridLoadVar("XC",γ)
+    YC=GridLoadVar("YC",γ)
+    RAC=GridLoadVar("RAC",γ)
+    hFacC=GridLoadVar("hFacC",γ)
+    hFacW=GridLoadVar("hFacW",γ)
+    hFacS=GridLoadVar("hFacS",γ)
+    DRF=GridLoadVar("DRF",γ)
+    DXC=GridLoadVar("DXC",γ)
+    DYC=GridLoadVar("DYC",γ)
+    DXG=GridLoadVar("DXG",γ)
+    DYG=GridLoadVar("DYG",γ)
 
-tmp=[nansum(hFacC[i,j].*RAC[i].*DRF[j]) for j in 1:nr, i in eachindex(RAC)]
-tot_VOL=nansum(tmp,2)
+    mskC=hFacC./hFacC
+
+    tmp=hFacC./hFacC
+    tmp=[nansum(tmp[i,j].*RAC[i]) for j in 1:nr, i in eachindex(RAC)]
+    tot_RAC=nansum(tmp,2)
+
+    tmp=[nansum(hFacC[i,j].*RAC[i].*DRF[j]) for j in 1:nr, i in eachindex(RAC)]
+    tot_VOL=nansum(tmp,2)
+
+    Γ=(XC=XC,YC=YC,RAC=RAC,DXG=DXG,DYG=DYG,DXC=DXC,DYC=DYC,DRF=DRF,
+        hFacC=hFacC,hFacW=hFacW,hFacS=hFacS,
+        mskC=mskC,tot_RAC=tot_RAC,tot_VOL=tot_VOL)
+
+    return γ,Γ
+end
+
+function GridLoad_TR()
+    pth_trsp=joinpath(tempdir(),"ECCO_transport_lines")
+    list_trsp=readdir(pth_trsp)
+    ntr=length(list_trsp)
+    TR=[load(joinpath(pth_trsp,list_trsp[itr])) for itr in 1:ntr]
+    return list_trsp,MeshArrays.Dict_to_NamedTuple.(TR)
+end
 
 ## generic read function
 
@@ -67,7 +89,7 @@ end
 function read_monthly_SSH(sol,nam,t,list_steps)
     ETAN=read_monthly_default(sol,"ETAN",t,list_steps)
     sIceLoad=read_monthly_default(sol,"sIceLoad",t,list_steps)
-    (ETAN+sIceLoad/1029.0)*mskC[:,1]
+    (ETAN+sIceLoad/1029.0)*Γ.mskC[:,1]
 end
 
 function read_monthly_MHT(sol,nam,t,list_steps)
@@ -93,7 +115,7 @@ function read_monthly_BSF(sol,nam,t,list_steps)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
     
     nz=size(Γ.hFacC,2)
-    μ=mskC[:,1]
+    μ=Γ.mskC[:,1]
     Tx=0.0*Utr[:,1]
 	Ty=0.0*Vtr[:,1]
 	for z=1:nz
@@ -175,14 +197,14 @@ function read_monthly_default(sol,nam,t,list)
         meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
         kk=findall(vec(meta.fldList).==nam)[1]
         tmp=read_mdsio(joinpath(pth_in,fil*list[t][14:end]))[:,:,:,kk]
-        tmp=mskC*read(tmp,γ)     
+        tmp=Γ.mskC*read(tmp,γ)     
       else
         ii=findall(var_list2d.==nam)[1];
         fil=mdsio_list2d[ii]
         meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
         kk=findall(vec(meta.fldList).==nam)[1]
         tmp=read_mdsio(joinpath(pth_in,fil*list[t][14:end]))[:,:,kk]
-        tmp=mskC[:,1]*read(tmp,XC)
+        tmp=Γ.mskC[:,1]*read(tmp,Γ.XC)
       end
     end
 end

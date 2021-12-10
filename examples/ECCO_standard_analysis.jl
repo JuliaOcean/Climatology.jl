@@ -23,7 +23,14 @@ include("ECCO_standard_analysis.jl")
 @everywhere using MeshArrays, MITgcmTools, NCTiles
 @everywhere using JLD2, UUIDs, Unitful, Printf
 @everywhere using Distributed, SharedArrays
+
 @everywhere include("ECCO_helper_functions.jl")
+@everywhere γ,Γ=GridLoadSome()
+@everywhere nr=length(Γ.DRF)
+@everywhere LC=LatitudeCircles(-89.0:89.0,Γ)
+@everywhere nl=length(LC)
+@everywhere list_trsp,msk_trsp=GridLoad_TR()
+@everywhere ntr=length(msk_trsp)
 
 ## Preliminary Steps
 
@@ -61,7 +68,6 @@ end
 ## climatological mean
 
 if calc=="clim"
-    @everywhere Γ=GridLoad(γ,option="full")
     tmp_s1 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_m = SharedArray{Float64}(γ.ioSize...,12)
@@ -103,23 +109,24 @@ end
 ## global mean
 
 if (calc=="glo2d")||(calc=="glo3d")
+    
     glo = SharedArray{Float64}(nr,nt)
 
     @sync @distributed for t in 1:nt
 
         tmp=read_monthly(sol,nam,t,list_steps)
         if calc=="glo2d"
-            tmp=[nansum(tmp[i,j].*RAC[i]) for j in 1:nr, i in eachindex(RAC)]
+            tmp=[nansum(tmp[i,j].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
         else
-            tmp=[nansum(tmp[i,j].*hFacC[i,j].*RAC[i]*DRF[j]) for j in 1:nr, i in eachindex(RAC)]
+            tmp=[nansum(tmp[i,j].*Γ.hFacC[i,j].*Γ.RAC[i]*Γ.DRF[j]) for j in 1:nr, i in eachindex(Γ.RAC)]
         end
         glo[:,t]=nansum(tmp,2)
     end
 
     if calc=="glo2d"
-        tmp=[glo[r,t]/tot_RAC[r] for t in 1:nt, r in 1:nr]
+        tmp=[glo[r,t]/Γ.tot_RAC[r] for t in 1:nt, r in 1:nr]
     else
-        tmp=[nansum(glo[:,t])/nansum(tot_VOL) for t in 1:nt]
+        tmp=[nansum(glo[:,t])/nansum(Γ.tot_VOL) for t in 1:nt]
     end
     save_object(joinpath(pth_tmp,calc*".jld2"),tmp)
 end
@@ -134,21 +141,21 @@ if (calc=="zonmean")||(calc=="zonmean2d")
 
     msk0 = SharedArray{Float64}(γ.ioSize...,nl)
     zm0 = SharedArray{Float64}(nl,nr)
-    tmp0=hFacC./hFacC
+    tmp0 = Γ.mskC
     @sync @distributed for l in 1:nl
         la0=lats[l]-dlat/2
         la1=lats[l]+dlat/2
         if la1<0.0
-            msk=1.0*(YC.>=la0)*(YC.<la1)
+            msk=1.0*(Γ.YC.>=la0)*(Γ.YC.<la1)
         elseif la0>0.0
-            msk=1.0*(YC.>la0)*(YC.<=la1)
+            msk=1.0*(Γ.YC.>la0)*(Γ.YC.<=la1)
         else
-            msk=1.0*(YC.>=la0)*(YC.<=la1)
+            msk=1.0*(Γ.YC.>=la0)*(Γ.YC.<=la1)
         end
         msk[findall(msk.==0.0)].=NaN;
-        msk0[:,:,l]=write(msk*RAC)
+        msk0[:,:,l]=write(msk*Γ.RAC)
 
-        tmp2=[nansum(tmp0[i,j].*msk[i].*RAC[i]) for j in 1:nr, i in eachindex(RAC)]
+        tmp2=[nansum(tmp0[i,j].*msk[i].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
         zm0[l,:]=1.0 ./nansum(tmp2,2)
     end
     save_object(joinpath(pth_tmp,calc*"_zm0.jld2"),zm0)
@@ -167,7 +174,7 @@ if (calc=="zonmean")||(calc=="zonmean2d")
             tmp=read_monthly(sol,nam,t,list_steps)
             for l in 1:nl
                 mskrac=read(msk0[:,:,l],γ)
-                tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(RAC)]
+                tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
                 zm[l,:,t]=nansum(tmp1,2).*zm0[l,:]
             end
         end
@@ -177,7 +184,7 @@ if (calc=="zonmean")||(calc=="zonmean2d")
             tmp=read_monthly(sol,nam,t,list_steps)
             for l in 1:nl
                 mskrac=read(msk0[:,:,l],γ)
-                tmp1=[nansum(tmp[i].*mskrac[i]) for i in eachindex(RAC)]
+                tmp1=[nansum(tmp[i].*mskrac[i]) for i in eachindex(Γ.RAC)]
                 zm[l,t]=nansum(tmp1)*zm0[l,1]
             end
         end
@@ -191,10 +198,6 @@ end
 ##
 
 if (calc=="overturn")
-    @everywhere Γ=GridLoad(γ,option="full")
-	@everywhere LC=LatitudeCircles(-89.0:89.0,Γ)
-    @everywhere nl=length(LC)
-	
     ov = SharedArray{Float64}(nl,nr,nt)
     @sync @distributed for t in 1:nt
         U=read_monthly(sol,"UVELMASS",t,list_steps)
@@ -214,10 +217,6 @@ if (calc=="overturn")
 end
 
 if (calc=="MHT")
-    @everywhere Γ=GridLoad(γ,option="full")
-    @everywhere LC=LatitudeCircles(-89.0:89.0,Γ)
-    @everywhere nl=length(LC)
-
     MHT = SharedArray{Float64}(nl,nt)
     @sync @distributed for t in 1:nt
         U=read_monthly(sol,"ADVx_TH",t,list_steps)
@@ -244,13 +243,6 @@ end
 ##
 
 if (calc=="trsp")
-    @everywhere Γ=GridLoad(γ,option="full")
-    @everywhere pth_trsp=joinpath(tempdir(),"ECCO_transport_lines")
-    @everywhere list_trsp=readdir(pth_trsp)
-    @everywhere ntr=length(list_trsp)
-    @everywhere TR=[load(joinpath(pth_trsp,list_trsp[itr])) for itr in 1:ntr]
-    @everywhere TR=MeshArrays.Dict_to_NamedTuple.(TR)
-    
     trsp = SharedArray{Float64}(ntr,nr,nt)
     @sync @distributed for t in 1:nt
         U=read_monthly(sol,"UVELMASS",t,list_steps)
@@ -259,7 +251,7 @@ if (calc=="trsp")
         #integrate across transport lines
         for z=1:nr
             UV=Dict("U"=>Utr[:,z],"V"=>Vtr[:,z],"dimensions"=>["x","y"])
-            [trsp[itr,z,t]=ThroughFlow(UV,TR[itr],Γ) for itr=1:ntr]
+            [trsp[itr,z,t]=ThroughFlow(UV,msk_trsp[itr],Γ) for itr=1:ntr]
         end
     end
     
