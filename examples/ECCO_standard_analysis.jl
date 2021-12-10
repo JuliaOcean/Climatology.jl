@@ -68,16 +68,8 @@ end
 ## climatological mean
 
 if calc=="clim"
-    tmp_s1 = SharedArray{Float64}(γ.ioSize...,12)
-    tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
-    tmp_m = SharedArray{Float64}(γ.ioSize...,12)
-
-    tmp=read_monthly(sol,nam,1,list_steps)
-    ndims(tmp)>1 ? nz=size(tmp,2) : nz=1
-    nz==1 ? kk=1 : nothing
-    nz>1 ? suff=Printf.@sprintf("_k%02d",kk) : suff=""
-
-    @sync @distributed for m in 1:12
+    
+    @everywhere function comp_clim(tmp_m,tmp_s1,tmp_s2,kk,m)
         nm=length(m:12:nt)
         tmp_m[:,:,m].=0.0
         tmp_s1[:,:,m].=0.0
@@ -89,7 +81,19 @@ if calc=="clim"
             tmp_s1[:,:,m]=tmp_s1[:,:,m]+γ.write(tmp)
             tmp_s2[:,:,m]=tmp_s2[:,:,m]+γ.write(tmp).^2
         end
-        #save_object(joinpath(pth_tmp,nam*suff*Printf.@sprintf("_m%02d.jld2",m)),tmp_m)
+    end
+
+    tmp_s1 = SharedArray{Float64}(γ.ioSize...,12)
+    tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
+    tmp_m = SharedArray{Float64}(γ.ioSize...,12)
+
+    tmp=read_monthly(sol,nam,1,list_steps)
+    ndims(tmp)>1 ? nz=size(tmp,2) : nz=1
+    nz==1 ? kk=1 : nothing
+    nz>1 ? suff=Printf.@sprintf("_k%02d",kk) : suff=""
+
+    @sync @distributed for m in 1:12
+        comp_clim(tmp_m,tmp_s1,tmp_s2,kk,m)
     end
 
     tmp0=read(tmp_m[:],γ)
