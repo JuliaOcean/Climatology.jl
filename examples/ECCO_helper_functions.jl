@@ -62,7 +62,7 @@ end
 nansum(x) = sum(filter(!isnan,x))
 nansum(x,y) = mapslices(nansum,x,dims=y)
 
-function GridLoadSome()
+function GridLoad_Main()
 
     γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
     nr=50
@@ -278,7 +278,7 @@ function ECCO_standard_list_toml()
     push!(allcalc,allnam,allkk;calc="clim",nam="SIarea")
 
     tmp1=Dict("calc"=>allcalc,"nam"=>allnam,"kk"=>allkk)
-    open("ECCO_standard_list.toml", "w") do io
+    open("ECCO_diags/ECCO_standard_list.toml", "w") do io
         TOML.print(io, tmp1)
     end
 
