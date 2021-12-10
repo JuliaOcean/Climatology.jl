@@ -76,10 +76,6 @@ function main_clim(sol,nam,kk=1)
     return true
 end
 
-if calc=="clim"
-    main_clim(sol,nam,kk)
-end
-
 ## global mean
 
 @everywhere function comp_glo(glo,t)
@@ -105,10 +101,6 @@ function main_glo(sol,nam)
         tmp=[nansum(glo[:,t])/nansum(Γ.tot_VOL) for t in 1:nt]
     end
     save_object(joinpath(pth_tmp,calc*".jld2"),tmp)
-end
-
-if (calc=="glo2d")||(calc=="glo3d")
-    main_glo(sol,nam)
 end
 
 ##
@@ -191,10 +183,6 @@ function main_zonmean(sol,nam)
     return true
 end
 
-if (calc=="zonmean")||(calc=="zonmean2d")
-    main_zonmean(sol,nam)
-end
-
 ##
 
 @everywhere function comp_overturn(ov,t)
@@ -220,10 +208,6 @@ function main_overturn(sol,nam)
     
     save_object(joinpath(pth_tmp,calc*".jld2"),ov)
 	"Done with overturning"
-end
-
-if (calc=="overturn")
-    main_overturn(sol,nam)
 end
 
 ##
@@ -255,10 +239,6 @@ function main_MHT(sol,nam)
 	"Done with MHT"
 end
 
-if (calc=="MHT")
-    main_MHT(sol,nam)
-end
-
 ##
 
 @everywhere function comp_trsp(trsp,t)
@@ -283,6 +263,20 @@ function main_trsp(sol,nam)
 	"Done with transports"
 end
 
-if (calc=="trsp")
-    main_trsp(sol,nam)
+function main_function(calc,sol,nam,kk)
+    if calc=="clim"
+        main_clim(sol,nam,kk)
+    elseif (calc=="glo2d")||(calc=="glo3d")
+        main_glo(sol,nam)
+    elseif (calc=="zonmean")||(calc=="zonmean2d")
+        main_zonmean(sol,nam)
+    elseif (calc=="overturn")
+        main_overturn(sol,nam)
+    elseif (calc=="MHT")
+        main_MHT(sol,nam)
+    elseif (calc=="trsp")
+        main_trsp(sol,nam)
+    else
+        println("unknown calc")
+    end
 end
