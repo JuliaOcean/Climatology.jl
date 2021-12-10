@@ -241,3 +241,45 @@ function read_monthly_default(sol,nam,t,list)
     end
 end
 
+
+
+import Base:push!
+
+function push!(allcalc::Vector{String},allnam::Vector{String},allkk::Vector{Int};
+    calc="unknown",nam="unknown",kk=1)
+    push!(allcalc,calc)
+    push!(allnam,nam)
+    push!(allkk,kk)
+end
+
+function ECCO_standard_list_toml()
+    
+    allcalc=String[]
+    allnam=String[]
+    allkk=Int[]
+
+    push!(allcalc,allnam,allkk;calc="trsp")
+    push!(allcalc,allnam,allkk;calc="MHT")
+    push!(allcalc,allnam,allkk;calc="zonmean2d",nam="SIarea")
+    push!(allcalc,allnam,allkk;calc="zonmean2d",nam="MXLDEPTH")
+    push!(allcalc,allnam,allkk;calc="zonmean2d",nam="SSH")
+    push!(allcalc,allnam,allkk;calc="zonmean",nam="THETA")
+    push!(allcalc,allnam,allkk;calc="glo2d",nam="THETA")
+    push!(allcalc,allnam,allkk;calc="glo3d",nam="THETA")
+    push!(allcalc,allnam,allkk;calc="zonmean",nam="SALT")
+    push!(allcalc,allnam,allkk;calc="glo2d",nam="SALT")
+    push!(allcalc,allnam,allkk;calc="glo3d",nam="SALT")
+    push!(allcalc,allnam,allkk;calc="overturn")
+    [push!(allcalc,allnam,allkk;calc="clim",nam="THETA",kk=kk) for kk in [1 10 20 29 38 44]]
+    [push!(allcalc,allnam,allkk;calc="clim",nam="SALT",kk=kk) for kk in [1 10 20 29 38 44]]
+    push!(allcalc,allnam,allkk;calc="clim",nam="BSF")
+    push!(allcalc,allnam,allkk;calc="clim",nam="SSH")
+    push!(allcalc,allnam,allkk;calc="clim",nam="MXLDEPTH")
+    push!(allcalc,allnam,allkk;calc="clim",nam="SIarea")
+
+    tmp1=Dict("calc"=>allcalc,"nam"=>allnam,"kk"=>allkk)
+    open("ECCO_standard_list.toml", "w") do io
+        TOML.print(io, tmp1)
+    end
+
+end
