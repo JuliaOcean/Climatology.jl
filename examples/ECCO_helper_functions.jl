@@ -1,3 +1,35 @@
+
+function ECCO_path_etc(sol0::String,calc::String,nam::String)
+    sol="ECCOv4"*sol0*"_analysis"
+
+    if sol0=="r2"
+        nt=240
+    elseif sol0=="r3"
+        nt=288
+    elseif sol0=="r4"
+        nt=312
+    elseif sol0=="r5"
+        nt=336
+    end
+
+    if sol0!=="r5"
+        pth_in="ECCOv4"*sol0*"/nctiles_monthly/"
+    else
+        pth_in="ECCOv4"*sol0*"/diags/"
+    end
+    list_steps=list_time_steps(pth_in)
+
+    pth_out=joinpath("ECCO_diags",sol)
+
+    if sum(calc.==("overturn","MHT","trsp"))==0
+        pth_tmp=joinpath(pth_out,nam*"_"*calc)
+    else
+        pth_tmp=joinpath(pth_out,calc)
+    end    
+
+    return pth_in,pth_out,pth_tmp,sol,nt,list_steps
+end
+
 #STATE/state_3d_set1.0000241020.meta
 #    'THETA   ' 'SALT    ' 'DRHODR  '
 #TRSP/trsp_3d_set1.0000241020.meta
