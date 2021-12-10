@@ -110,10 +110,7 @@ end
 
 if (calc=="glo2d")||(calc=="glo3d")
     
-    glo = SharedArray{Float64}(nr,nt)
-
-    @sync @distributed for t in 1:nt
-
+    @everywhere function comp_glo(glo,t)
         tmp=read_monthly(sol,nam,t,list_steps)
         if calc=="glo2d"
             tmp=[nansum(tmp[i,j].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
@@ -121,6 +118,11 @@ if (calc=="glo2d")||(calc=="glo3d")
             tmp=[nansum(tmp[i,j].*Γ.hFacC[i,j].*Γ.RAC[i]*Γ.DRF[j]) for j in 1:nr, i in eachindex(Γ.RAC)]
         end
         glo[:,t]=nansum(tmp,2)
+    end
+    
+    glo = SharedArray{Float64}(nr,nt)
+    @sync @distributed for t in 1:nt
+        comp_glo(glo,t)
     end
 
     if calc=="glo2d"
@@ -139,10 +141,9 @@ if (calc=="zonmean")||(calc=="zonmean2d")
     save_object(joinpath(pth_tmp,calc*"_lats.jld2"),lats)
     nl=length(lats)
 
-    msk0 = SharedArray{Float64}(γ.ioSize...,nl)
-    zm0 = SharedArray{Float64}(nl,nr)
-    tmp0 = Γ.mskC
-    @sync @distributed for l in 1:nl
+    @everywhere function comp_msk0(msk0,zm0,l)
+        lats=load(joinpath(pth_tmp,calc*"_lats.jld2"),"single_stored_object")
+        dlat=lats[2]-lats[1]
         la0=lats[l]-dlat/2
         la1=lats[l]+dlat/2
         if la1<0.0
@@ -155,8 +156,14 @@ if (calc=="zonmean")||(calc=="zonmean2d")
         msk[findall(msk.==0.0)].=NaN;
         msk0[:,:,l]=write(msk*Γ.RAC)
 
-        tmp2=[nansum(tmp0[i,j].*msk[i].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
+        tmp2=[nansum(Γ.mskC[i,j].*msk[i].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
         zm0[l,:]=1.0 ./nansum(tmp2,2)
+    end
+
+    msk0 = SharedArray{Float64}(γ.ioSize...,nl)
+    zm0 = SharedArray{Float64}(nl,nr)
+    @sync @distributed for l in 1:nl
+        comp_msk0(msk0,zm0,l)
     end
     save_object(joinpath(pth_tmp,calc*"_zm0.jld2"),zm0)
     save_object(joinpath(pth_tmp,calc*"_msk0.jld2"),msk0)
@@ -168,25 +175,37 @@ if (calc=="zonmean")||(calc=="zonmean2d")
     @everywhere msk0=load(joinpath(pth_tmp,calc*"_msk0.jld2"),"single_stored_object")
     @everywhere zm0=load(joinpath(pth_tmp,calc*"_zm0.jld2"),"single_stored_object")
 
+    @everywhere function comp_zonmean(zm,t)
+        lats=load(joinpath(pth_tmp,calc*"_lats.jld2"),"single_stored_object")
+        nl=length(lats)
+        tmp=read_monthly(sol,nam,t,list_steps)
+        for l in 1:nl
+            mskrac=read(msk0[:,:,l],γ)
+            tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
+            zm[l,:,t]=nansum(tmp1,2).*zm0[l,:]
+        end
+    end
+
+    @everywhere function comp_zonmean2d(zm,t)
+        lats=load(joinpath(pth_tmp,calc*"_lats.jld2"),"single_stored_object")
+        nl=length(lats)
+        tmp=read_monthly(sol,nam,t,list_steps)
+        for l in 1:nl
+            mskrac=read(msk0[:,:,l],γ)
+            tmp1=[nansum(tmp[i].*mskrac[i]) for i in eachindex(Γ.RAC)]
+            zm[l,t]=nansum(tmp1)*zm0[l,1]
+        end
+    end
+
     if (calc=="zonmean")
         zm = SharedArray{Float64}(nl,nr,nt)
         @sync @distributed for t in 1:nt
-            tmp=read_monthly(sol,nam,t,list_steps)
-            for l in 1:nl
-                mskrac=read(msk0[:,:,l],γ)
-                tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
-                zm[l,:,t]=nansum(tmp1,2).*zm0[l,:]
-            end
+            comp_zonmean(zm,t)
         end
     else
         zm = SharedArray{Float64}(nl,nt)
         @sync @distributed for t in 1:nt
-            tmp=read_monthly(sol,nam,t,list_steps)
-            for l in 1:nl
-                mskrac=read(msk0[:,:,l],γ)
-                tmp1=[nansum(tmp[i].*mskrac[i]) for i in eachindex(Γ.RAC)]
-                zm[l,t]=nansum(tmp1)*zm0[l,1]
-            end
+            comp_zonmean2d(zm,t)
         end
     end
     save_object(joinpath(pth_tmp,calc*".jld2"),zm)
@@ -198,8 +217,7 @@ end
 ##
 
 if (calc=="overturn")
-    ov = SharedArray{Float64}(nl,nr,nt)
-    @sync @distributed for t in 1:nt
+    @everywhere function comp_overturn(ov,t)
         U=read_monthly(sol,"UVELMASS",t,list_steps)
         V=read_monthly(sol,"VVELMASS",t,list_steps)
         (Utr,Vtr)=UVtoTransport(U,V,Γ)
@@ -209,7 +227,14 @@ if (calc=="overturn")
             [ov[l,z,t]=ThroughFlow(UV,LC[l],Γ) for l=1:nl]
         end
         #integrate from bottom
-        ov[:,:,t]=reverse(cumsum(reverse(ov[:,:,t],dims=2),dims=2),dims=2);
+        ov[:,:,t]=reverse(cumsum(reverse(ov[:,:,t],dims=2),dims=2),dims=2)
+        #
+        true
+    end
+
+    ov = SharedArray{Float64}(nl,nr,nt)
+    @sync @distributed for t in 1:nt
+        comp_overturn(ov,t)
     end
     
     save_object(joinpath(pth_tmp,calc*".jld2"),ov)
@@ -217,8 +242,7 @@ if (calc=="overturn")
 end
 
 if (calc=="MHT")
-    MHT = SharedArray{Float64}(nl,nt)
-    @sync @distributed for t in 1:nt
+    @everywhere function comp_MHT(MHT,t)
         U=read_monthly(sol,"ADVx_TH",t,list_steps)
         V=read_monthly(sol,"ADVy_TH",t,list_steps)
         U=U+read_monthly(sol,"DFxE_TH",t,list_steps)
@@ -235,6 +259,11 @@ if (calc=="MHT")
         UV=Dict("U"=>Tx,"V"=>Ty,"dimensions"=>["x","y"])
         [MHT[l,t]=1e-15*4e6*ThroughFlow(UV,LC[l],Γ) for l=1:nl]
     end
+
+    MHT = SharedArray{Float64}(nl,nt)
+    @sync @distributed for t in 1:nt
+        comp_MHT(MHT,t)
+    end
     
     save_object(joinpath(pth_tmp,calc*".jld2"),MHT)
 	"Done with MHT"
@@ -243,8 +272,7 @@ end
 ##
 
 if (calc=="trsp")
-    trsp = SharedArray{Float64}(ntr,nr,nt)
-    @sync @distributed for t in 1:nt
+    @everywhere function comp_trsp(trsp,t)
         U=read_monthly(sol,"UVELMASS",t,list_steps)
         V=read_monthly(sol,"VVELMASS",t,list_steps)
         (Utr,Vtr)=UVtoTransport(U,V,Γ)
@@ -253,6 +281,11 @@ if (calc=="trsp")
             UV=Dict("U"=>Utr[:,z],"V"=>Vtr[:,z],"dimensions"=>["x","y"])
             [trsp[itr,z,t]=ThroughFlow(UV,msk_trsp[itr],Γ) for itr=1:ntr]
         end
+    end
+
+    trsp = SharedArray{Float64}(ntr,nr,nt)
+    @sync @distributed for t in 1:nt
+        comp_trsp(trsp,t)
     end
     
     trsp=[(nam=list_trsp[itr],val=trsp[itr,:,:]) for itr=1:ntr]
