@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.2
+# v0.17.3
 
 using Markdown
 using InteractiveUtils
@@ -609,7 +609,7 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 CairoMakie = "~0.6.6"
 JLD2 = "~0.4.15"
 MeshArrays = "~0.2.30"
-OceanStateEstimation = "~0.1.15"
+OceanStateEstimation = "~0.1.16"
 PlutoUI = "~0.7.22"
 RollingFunctions = "~0.6.2"
 """
@@ -1461,10 +1461,10 @@ uuid = "510215fc-4207-5dde-b226-833fc4488ee2"
 version = "0.4.0"
 
 [[OceanStateEstimation]]
-deps = ["Downloads", "FortranFiles", "LazyArtifacts", "MITgcmTools", "MeshArrays", "Statistics"]
-git-tree-sha1 = "360dc6984946dbd62d9fea096f4c99c34026f897"
+deps = ["Artifacts", "Downloads", "FortranFiles", "LazyArtifacts", "MITgcmTools", "MeshArrays", "Statistics"]
+git-tree-sha1 = "d4905121567ba751fbb87692e6d51da6ede268d2"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
-version = "0.1.15"
+version = "0.1.16"
 
 [[OffsetArrays]]
 deps = ["Adapt"]
