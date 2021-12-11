@@ -27,7 +27,7 @@ function ECCO_path_etc(sol0::String,calc::String,nam::String)
         pth_tmp=joinpath(pth_out,calc)
     end    
 
-    return pth_in,pth_out,pth_tmp,sol,nt,list_steps
+    return pth_in,pth_out,pth_tmp,nt,list_steps
 end
 
 #STATE/state_3d_set1.0000241020.meta
@@ -92,14 +92,6 @@ function GridLoad_Main()
         mskC=mskC,tot_RAC=tot_RAC,tot_VOL=tot_VOL)
 
     return γ,Γ
-end
-
-function GridLoad_TR()
-    pth_trsp=joinpath(tempdir(),"ECCO_transport_lines")
-    list_trsp=readdir(pth_trsp)
-    ntr=length(list_trsp)
-    TR=[load(joinpath(pth_trsp,list_trsp[itr])) for itr in 1:ntr]
-    return list_trsp,MeshArrays.Dict_to_NamedTuple.(TR)
 end
 
 ## generic read function
@@ -252,7 +244,7 @@ function push!(allcalc::Vector{String},allnam::Vector{String},allkk::Vector{Int}
     push!(allkk,kk)
 end
 
-function ECCO_standard_list_toml()
+function ECCO_standard_list_toml(fil)
     
     allcalc=String[]
     allnam=String[]
@@ -278,8 +270,63 @@ function ECCO_standard_list_toml()
     push!(allcalc,allnam,allkk;calc="clim",nam="SIarea")
 
     tmp1=Dict("calc"=>allcalc,"nam"=>allnam,"kk"=>allkk)
-    open("ECCO_diags/ECCO_standard_list.toml", "w") do io
+    open(fil, "w") do io
         TOML.print(io, tmp1)
     end
 
+end
+
+##
+
+function ECCO_transport_lines()
+    lonPairs=[]    
+    latPairs=[]    
+    namPairs=[]    
+
+    push!(lonPairs,[-173 -164]); push!(latPairs,[65.5 65.5]); push!(namPairs,"Bering Strait");
+    push!(lonPairs,[-5 -5]); push!(latPairs,[34 40]); push!(namPairs,"Gibraltar");
+    push!(lonPairs,[-81 -77]); push!(latPairs,[28 26]); push!(namPairs,"Florida Strait");
+    push!(lonPairs,[-81 -79]); push!(latPairs,[28 22]); push!(namPairs,"Florida Strait W1");
+    push!(lonPairs,[-76 -76]); push!(latPairs,[21 8]); push!(namPairs,"Florida Strait S1");
+    push!(lonPairs,[-77 -77]); push!(latPairs,[26 24]); push!(namPairs,"Florida Strait E1");
+    push!(lonPairs,[-77 -77]); push!(latPairs,[24 22]); push!(namPairs,"Florida Strait E2");
+    push!(lonPairs,[-65 -50]); push!(latPairs,[66 66]); push!(namPairs,"Davis Strait");
+    push!(lonPairs,[-35 -20]); push!(latPairs,[67 65]); push!(namPairs,"Denmark Strait");
+    push!(lonPairs,[-16 -7]); push!(latPairs,[65 62.5]); push!(namPairs,"Iceland Faroe");
+    push!(lonPairs,[-6.5 -4]); push!(latPairs,[62.5 57]); push!(namPairs,"Faroe Scotland");
+    push!(lonPairs,[-4 8]); push!(latPairs,[57 62]); push!(namPairs,"Scotland Norway");
+    push!(lonPairs,[-68 -63]); push!(latPairs,[-54 -66]); push!(namPairs,"Drake Passage");
+    push!(lonPairs,[103 103]); push!(latPairs,[4 -1]); push!(namPairs,"Indonesia W1");
+    push!(lonPairs,[104 109]); push!(latPairs,[-3 -8]); push!(namPairs,"Indonesia W2");
+    push!(lonPairs,[113 118]); push!(latPairs,[-8.5 -8.5]); push!(namPairs,"Indonesia W3");
+    push!(lonPairs,[118 127 ]); push!(latPairs,[-8.5 -15]); push!(namPairs,"Indonesia W4");
+    push!(lonPairs,[127 127]); push!(latPairs,[-25 -68]); push!(namPairs,"Australia Antarctica");
+    push!(lonPairs,[38 46]); push!(latPairs,[-10 -22]); push!(namPairs,"Madagascar Channel");
+    push!(lonPairs,[46 46]); push!(latPairs,[-22 -69]); push!(namPairs,"Madagascar Antarctica");
+    push!(lonPairs,[20 20]); push!(latPairs,[-30 -69.5]); push!(namPairs,"South Africa Antarctica");
+    push!(lonPairs,[-76 -72]); push!(latPairs,[21 18.5]); push!(namPairs,"Florida Strait E3");
+    push!(lonPairs,[-72 -72]); push!(latPairs,[18.5 10]); push!(namPairs,"Florida Strait E4");
+
+    lonPairs,latPairs,namPairs
+end
+
+function ECCO_transport_lines(pth_trsp)
+    mkdir(pth_trsp)
+    lonPairs,latPairs,namPairs=ECCO_transport_lines()
+    for ii in 1:length(lonPairs)
+        lons=Float64.(lonPairs[ii])
+        lats=Float64.(latPairs[ii])
+        name=namPairs[ii]
+        Trsct=Transect(name,lons,lats,Γ)
+        jldsave(joinpath(pth_trsp,"$(Trsct.name).jld2"),
+            tabC=Trsct.tabC,tabW=Trsct.tabW,tabS=Trsct.tabS); 
+    end
+    return true
+end
+
+function reload_transport_lines(pth_trsp)
+    list_trsp=readdir(pth_trsp)
+    ntr=length(list_trsp)
+    TR=[load(joinpath(pth_trsp,list_trsp[itr])) for itr in 1:ntr]
+    return list_trsp,MeshArrays.Dict_to_NamedTuple.(TR),ntr
 end

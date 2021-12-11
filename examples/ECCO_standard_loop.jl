@@ -3,9 +3,20 @@
 @everywhere include("ECCO_standard_analysis.jl")
 
 @everywhere sol0="r2"
-@everywhere list0=TOML.parsefile("ECCO_diags/ECCO_standard_list.toml")
+@everywhere sol="ECCOv4"*sol0*"_analysis"
 
-for ff in 1:length(list0["kk"])
+pth0=joinpath("ECCO_diags",sol)
+!isdir(pth0) ? mkdir(pth0) : nothing
+
+@everywhere fil=joinpath("ECCO_diags",sol,"ECCO_standard_list.toml")
+!isfile(fil) ? ECCO_standard_list_toml(fil) : nothing
+@everywhere list0=TOML.parsefile(joinpath("ECCO_diags",sol,"ECCO_standard_list.toml"))
+
+@everywhere pth0=joinpath("ECCO_diags",sol,"ECCO_transport_lines")
+!isdir(pth0) ? ECCO_transport_lines(pth0) : nothing
+@everywhere list_trsp,msk_trsp,ntr=reload_transport_lines(pth0)
+
+for ff in 1:1 #length(list0["kk"])
     save("ECCO_diags/taskID.jld2","ID",ff)
     
     @sync @everywhere gg=load("ECCO_diags/taskID.jld2","ID")
@@ -14,8 +25,7 @@ for ff in 1:length(list0["kk"])
     @everywhere nam=list0["nam"][gg]
     @everywhere kk=list0["kk"][gg]
     
-    @everywhere pth_in,pth_out,pth_tmp,sol,nt,list_steps=ECCO_path_etc(sol0,calc,nam)
-    !isdir(pth_out) ? mkdir(pth_out) : nothing
+    @everywhere pth_in,pth_out,pth_tmp,nt,list_steps=ECCO_path_etc(sol0,calc,nam)
     !isdir(pth_tmp) ? mkdir(pth_tmp) : nothing
 
     main_function(calc,sol,nam,kk)
