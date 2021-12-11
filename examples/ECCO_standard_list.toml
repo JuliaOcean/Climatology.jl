@@ -1,3 +1,0 @@
-kk = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 10, 20, 29, 38, 44, 1, 10, 20, 29, 38, 44, 1, 1, 1, 1]
-calc = ["trsp", "MHT", "zonmean2d", "zonmean2d", "zonmean2d", "zonmean", "glo2d", "glo3d", "zonmean", "glo2d", "glo3d", "overturn", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim", "clim"]
-nam = ["unknown", "unknown", "SIarea", "MXLDEPTH", "SSH", "THETA", "THETA", "THETA", "SALT", "SALT", "SALT", "unknown", "THETA", "THETA", "THETA", "THETA", "THETA", "THETA", "SALT", "SALT", "SALT", "SALT", "SALT", "SALT", "BSF", "SSH", "MXLDEPTH", "SIarea"]
