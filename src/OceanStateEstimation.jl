@@ -1,13 +1,13 @@
 module OceanStateEstimation
 
-using Statistics, LazyArtifacts, Downloads
+using Statistics, Artifacts, LazyArtifacts, Downloads
 using FortranFiles, MeshArrays, MITgcmTools
 
 export dataverse_lists, get_from_dataverse
 export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 export get_occa_variable_if_needed, get_occa_velocity_if_needed
 export ECCOclim_path, OCCAclim_path
-export MITPROFclim_path, CBIOMESclim_path
+export MITPROFclim_path, CBIOMESclim_path, ECCOdiags_path
 
 ##
 
@@ -28,6 +28,10 @@ MITPROFclim_download() = artifact"MITPROFclim"
 CBIOMESclim_hash = artifact_hash("CBIOMESclim", artifact_toml)
 CBIOMESclim_path = artifact_path(CBIOMESclim_hash)*"/"
 CBIOMESclim_download() = artifact"CBIOMESclim"
+
+ECCOdiags_hash = artifact_hash("ECCOdiags", artifact_toml)
+ECCOdiags_path = artifact_path(ECCOdiags_hash)*"/"
+ECCOdiags_download() = artifact"ECCOdiags"
 
 ## Dataverse Donwloads
 

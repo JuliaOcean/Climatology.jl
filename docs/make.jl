@@ -16,9 +16,10 @@ makedocs(;
     assets=String[],
 )
 
-#OceanStateEstimation.CBIOMESclim_download()
+OceanStateEstimation.CBIOMESclim_download()
+OceanStateEstimation.ECCOdiags_download()
 #lst=("CBIOMES_climatogy_create.jl",)
-lst=("CBIOMES_climatology_plot.jl",)
+lst=("CBIOMES_climatology_plot.jl","ECCO_standard_plots.jl")
 
 pth_out=joinpath(@__DIR__,"build", "examples")
 !isdir(pth_out) ? mkdir(pth_out) : nothing

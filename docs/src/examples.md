@@ -12,8 +12,11 @@ They can be relatively large files, compared to the package codes, so they are t
 | ECCOclim_path             | NetCDF              | lazy, by variable, [dataverse](https://dataverse.harvard.edu/dataverse/ECCO?q=&types=dataverses&sort=dateSort&order=desc&page=1) |
 | OCCAclim_path             | NetCDF              |lazy, by variable, [dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RNXA2A) |
 | MITPROFclim_path             | binary    | lazy, whole, [zenodo](https://zenodo.org/record/5101243#.YXiEci1h1qs) |
+| ECCOdiags_path             | JLD2    | lazy, whole, [zenodo](https://zenodo.org/record/5773401#.YbQmhS1h3Pg) |
 
-Use examples:
+In [ECCO\_standard\_plots](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl)) we visualize a set of summary statistics derived from full ocean state estimates as an example (`ECCOdiags_path`).
+
+#### Basic Usage
 
 ```julia
 using OceanStateEstimation
