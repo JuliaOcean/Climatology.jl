@@ -147,11 +147,15 @@ end
 """
     ECCOdiags_add(nam::String)
 
-Add data to the ECCOdiags_path folder. Known options for nam : 
-"release3", "release4", "interp_coeffs"
+Add data to the ECCOdiags_path folder. Known options for `nam` include 
+"release3", "release3", "release4", and "interp_coeffs". Note that 
+"release2" is the estimate that's readily donwloaded by ECCOdiags_download().
 """
 function ECCOdiags_add(nam::String)
-    if nam=="release3"
+    if nam=="release1"
+        url="https://zenodo.org/record/5787104/files/ECCOv4r1_analysis.tar.gz?download=1"
+        fil="ECCOv4r1_analysis.tar.gz"
+    elseif nam=="release3"
         url="https://zenodo.org/record/5786213/files/ECCOv4r3_analysis.tar.gz?download=1"
         fil="ECCOv4r3_analysis.tar.gz"
     elseif nam=="release4"
