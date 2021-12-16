@@ -452,9 +452,11 @@ begin
 		end
 		clim_files
 	end
+
+	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples/")
 	
-	clim_colors1=TOML.parsefile("clim_colors1.toml")
-	clim_colors2=TOML.parsefile("clim_colors2.toml")
+	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
+	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
 
 	fil_trsp=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis/trsp/trsp.jld2")
 	ntr=length(load(fil_trsp,"single_stored_object"))
@@ -1315,7 +1317,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[LinearAlgebra]]
-deps = ["Libdl"]
+deps = ["Libdl", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[LogExpFunctions]]
@@ -1478,6 +1480,10 @@ git-tree-sha1 = "7937eda4681660b4d6aeeecc2f7e1c81c8ee4e2f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
 version = "1.3.5+0"
 
+[[OpenBLAS_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
+uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
+
 [[OpenEXR]]
 deps = ["Colors", "FileIO", "OpenEXR_jll"]
 git-tree-sha1 = "327f53360fdb54df7ecd01e96ef1983536d1e633"
@@ -1635,7 +1641,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[Random]]
-deps = ["Serialization"]
+deps = ["SHA", "Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Ratios]]
@@ -1979,6 +1985,10 @@ deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers",
 git-tree-sha1 = "acc685bcf777b2202a904cdcb49ad34c2fa1880c"
 uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.14.0+4"
+
+[[libblastrampoline_jll]]
+deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
 
 [[libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
