@@ -1,11 +1,9 @@
 
 ## Physical Oceanography
 
-A selection of gridded estimates of the ocean state for physical variables like temperature, salinity, and currents.
+In [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl)) we visualize a selection of climate-relevant variables and indices as an example. These were derived from gridded estimates of the ocean state for physical variables like temperature, salinity, and currents (see `examples/ECCO_standard_analysis.jl`) and archived using [zenodo.org](https://zenodo.org) (see [ECCOclim_downlad](@ref), and [ECCOclim_add](@ref)).
 
-These data sets are made available by this package via the artifact system and retrieved from e.g. the [Harvard Dataverse Repository](https://dataverse.harvard.edu).
-
-They can be relatively large files, compared to the package codes, so they are therefore handled `lazily` (only downloaded when needed). 
+The underlying gridded fields can in turn be retrieved from [ecco-group.org](https://ecco-group.org/products.htm) or [Harvard Dataverse Repository](https://dataverse.harvard.edu) for the `ECCOv4r2` estimate. A monthly climatology of `ECCOv4r2` is also readily available using the Julia artifact system as explained below. They can be relatively large files, compared to the package codes, so they are handled `lazily` (only downloaded when needed). 
 
 | Artifact path | File Type  | Download Method |
 |:----------------|:----------------:|-----------------:|
@@ -13,8 +11,6 @@ They can be relatively large files, compared to the package codes, so they are t
 | OCCAclim_path             | NetCDF              |lazy, by variable, [dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RNXA2A) |
 | MITPROFclim_path             | binary    | lazy, whole, [zenodo](https://zenodo.org/record/5101243#.YXiEci1h1qs) |
 | ECCOdiags_path             | JLD2    | lazy, whole, [zenodo](https://zenodo.org/record/5773401#.YbQmhS1h3Pg) |
-
-In [ECCO\_standard\_plots](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl)) we visualize a set of summary statistics derived from full ocean state estimates as an example (`ECCOdiags_path`).
 
 #### Basic Usage
 
