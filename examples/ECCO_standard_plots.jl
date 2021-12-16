@@ -422,16 +422,16 @@ begin
 		μ[findall(μ.>0.0)].=1.0
 		μ[findall(μ.==0.0)].=NaN
 	
-		if !isfile(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"))
+		if !isfile(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"))
 			lon=[i for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
 			lat=[j for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
 			
 			(f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
-			jldsave(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"); 
+			jldsave(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"); 
 				lon=lon, lat=lat, f=f, i=i, j=j, w=w, μ=μ)
 		end
 	
-		λ = load(joinpath(tempdir(),"interp_coeffs_halfdeg.jld2"))
+		λ = load(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"))
 		λ = MeshArrays.Dict_to_NamedTuple(λ)
 	end
 	
