@@ -25,10 +25,10 @@ pth0=joinpath("ECCO_diags",sol)
 !isdir(pth0) ? ECCO_transport_lines(pth0) : nothing
 @everywhere list_trsp,msk_trsp,ntr=reload_transport_lines(pth0)
 
-for ff in 1:1 #length(list0["kk"])
-    save("ECCO_diags/taskID.jld2","ID",ff)
+for ff in 1:length(list0["kk"])
+    save(joinpath("ECCO_diags",sol,"taskID.jld2"),"ID",ff)
     
-    @sync @everywhere gg=load("ECCO_diags/taskID.jld2","ID")
+    @sync @everywhere gg=load(joinpath("ECCO_diags",sol,"taskID.jld2"),"ID")
 
     @everywhere calc=list0["calc"][gg]
     @everywhere nam=list0["nam"][gg]
