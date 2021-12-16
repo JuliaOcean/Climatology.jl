@@ -1,7 +1,7 @@
 module OceanStateEstimation
 
-using Statistics, Artifacts, LazyArtifacts, Downloads
-using FortranFiles, MeshArrays, MITgcmTools
+using Artifacts, LazyArtifacts, Downloads, Tar, CodecZlib
+using Statistics, FortranFiles, MeshArrays, MITgcmTools
 
 export dataverse_lists, get_from_dataverse
 export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
@@ -140,6 +140,43 @@ function get_occa_velocity_if_needed()
     nams = ("DDuvel","DDvvel","DDwvel","DDtheta","DDsalt")
     [get_occa_variable_if_needed(nam) for nam in nams]
     "done"
+end
+
+## zenodo.org Downloads
+
+"""
+    ECCOdiags_add(nam::String)
+
+Add data to the ECCOdiags_path folder. Known options for nam : 
+"release3", "release4", "interp_coeffs"
+"""
+function ECCOdiags_add(nam::String)
+    if nam=="release3"
+        url="https://zenodo.org/record/5786213/files/ECCOv4r3_analysis.tar.gz?download=1"
+        fil="ECCOv4r3_analysis.tar.gz"
+    elseif nam=="release4"
+        url="https://zenodo.org/record/5786229/files/ECCOv4r4_analysis.tar.gz?download=1"
+        fil="ECCOv4r4_analysis.tar.gz"
+    elseif nam=="interp_coeffs"
+        url="https://zenodo.org/record/5784905/files/interp_coeffs_halfdeg.jld2?download=1"
+        fil="interp_coeffs_halfdeg.jld2"
+    else
+        println("unknown release name")
+        url=missing
+        fil=missing
+    end
+    if (!ismissing(url))&&(nam=="interp_coeffs")
+        Downloads.download(url,joinpath(ECCOdiags_path,fil))
+    elseif (!ismissing(url))&&(!isdir(joinpath(ECCOdiags_path,fil)[1:end-7]))
+        println("downloading "*nam*" ... started")
+        Downloads.download(url,joinpath(ECCOdiags_path,fil))
+        tmp_path=open(joinpath(ECCOdiags_path,fil)) do io
+            Tar.extract(CodecZlib.GzipDecompressorStream(io))
+        end
+        mv(joinpath(tmp_path,fil[1:end-7]),joinpath(ECCOdiags_path,fil[1:end-7]))
+        rm(joinpath(ECCOdiags_path,fil))
+        println("downloading "*nam*" ... done")
+    end
 end
 
 end # module
