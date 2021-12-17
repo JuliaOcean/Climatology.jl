@@ -23,14 +23,32 @@ OCCAclim_path = artifact_path(OCCAclim_hash)*"/"
 
 MITPROFclim_hash = artifact_hash("MITPROFclim", artifact_toml)
 MITPROFclim_path = artifact_path(MITPROFclim_hash)*"/"
+
+"""
+    MITPROFclim_download()
+
+Download lazy artifact to `MITPROFclim_path`.
+"""   
 MITPROFclim_download() = artifact"MITPROFclim"
 
 CBIOMESclim_hash = artifact_hash("CBIOMESclim", artifact_toml)
 CBIOMESclim_path = artifact_path(CBIOMESclim_hash)*"/"
+
+"""
+    CBIOMESclim_download()
+
+Download lazy artifact to `CBIOMESclim_path`.
+"""   
 CBIOMESclim_download() = artifact"CBIOMESclim"
 
 ECCOdiags_hash = artifact_hash("ECCOdiags", artifact_toml)
 ECCOdiags_path = artifact_path(ECCOdiags_hash)*"/"
+
+"""
+    ECCOdiags_download()
+
+Download lazy artifact to `ECCOdiags_path`.
+"""    
 ECCOdiags_download() = artifact"ECCOdiags"
 
 ## Dataverse Donwloads

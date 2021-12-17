@@ -1,9 +1,9 @@
 
 ## Physical Oceanography
 
-In [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl)) we visualize a selection of climate-relevant variables and indices as an example. These were derived from gridded estimates of the ocean state for physical variables like temperature, salinity, and currents (see `examples/ECCO_standard_analysis.jl`) and archived using [zenodo.org](https://zenodo.org) (see [ECCOclim_downlad](@ref), and [ECCOclim_add](@ref)).
+In [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl)) we visualize a selection of climate-relevant variables and indices as an example. These were derived from gridded estimates of the ocean state for physical variables like temperature, salinity, and currents (see `examples/ECCO_standard_analysis.jl`) and archived using [zenodo.org](https://zenodo.org) (see [`OceanStateEstimation.ECCOdiags_download`](@ref), and [`OceanStateEstimation.ECCOdiags_add`](@ref)).
 
-The underlying gridded fields can in turn be retrieved from [ecco-group.org](https://ecco-group.org/products.htm) or [Harvard Dataverse Repository](https://dataverse.harvard.edu) for the `ECCOv4r2` estimate. A monthly climatology of `ECCOv4r2` is also readily available using the Julia artifact system as explained below. They can be relatively large files, compared to the package codes, so they are handled `lazily` (only downloaded when needed). 
+The underlying gridded fields can in turn be retrieved from [ecco-group.org](https://ecco-group.org/products.htm) and, for the `ECCOv4r2` estimate, from [Harvard Dataverse](https://dataverse.harvard.edu). Two monthly climatologies (`ECCOv4r2` and `OCCA`) are also readily available using the `Julia` artifact system as explained below. These can be relatively large files, compared to the package codes, so they are handled `lazily` (only downloaded when needed). 
 
 | Artifact path | File Type  | Download Method |
 |:----------------|:----------------:|-----------------:|
@@ -43,3 +43,10 @@ OceanStateEstimation.CBIOMESclim_download()
 fil_out=joinpath(CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
 nc=NCTiles.NCDataset(fil_out,"r")
 ```
+
+## References
+
+- OCCA : [Forget 2010]()
+- ECCO v4 : [Forget et al 2015](https://gmd.copernicus.org/articles/8/3071/2015/)
+- CBIOMES-global : [Forget 2018](https://zenodo.org/record/2653669#.YbwAUi1h0ow)
+	
