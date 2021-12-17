@@ -122,7 +122,7 @@ end
 
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
 begin
-	sol_select = @bind sol Select(["ECCOv4r2_analysis","ECCOv4r3_analysis",
+	sol_select = @bind sol Select(["ECCOv4r1_analysis","ECCOv4r2_analysis","ECCOv4r3_analysis",
 									"ECCOv4r4_analysis","ECCOv4r5_analysis"],default="ECCOv4r2_analysis")
 	md"""select a solution : $(sol_select)"""
 end
