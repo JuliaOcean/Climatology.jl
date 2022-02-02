@@ -344,7 +344,8 @@ begin
 		end
 
 		x=1992.0 .+ x./12.0
-		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)$(addon1)",xticks=collect(1992.0:4:2021.0))
+		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)$(addon1)",ylabel="latitude",
+			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0))
 		hm1 = Mkie.contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs),colormap=cm)
 		Mkie.xlims!(ax1,1992.0,2021.0)
 		Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
@@ -409,7 +410,7 @@ let
 	x=1992.0 .+ x./12.0
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
 	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzm)$(addon1) ; deviation from $(ref1)",
-		xticks=collect(1992.0:4:2021.0))
+		xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=cmap_fac*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	Mkie.xlims!(ax1,1992.0,2021.0)
@@ -461,6 +462,7 @@ let
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	Mkie.xlims!(ax1,1992.0,2021.0)
 	Mkie.ylims!(ax1,Γ.RC[k1],Γ.RC[k0])
+	
 	fig1
 end
 
