@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.3
+# v0.17.7
 
 using Markdown
 using InteractiveUtils
@@ -23,15 +23,29 @@ begin
 end
 
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
-md"""# ECCO.v4 Standard Analysis
+md"""#  Standard Analysis of ECCO Solutions
 
-Explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) framework ([release 1 to 5](https://ecco-group.org/products.htm), currently) using [Julia](https://julialang.org). 
+This notebook let's you explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) series ([releases 1 to 4](https://ecco-group.org/products.htm), for now, with _release 5_ coming soon) using [Julia](https://julialang.org)
 
+If you are running a live version of the notebook via Pluto.jl (rather than viewing the html page hosted online) then the various plots will update when you use the drow down menus, as seen in [this video](https://youtu.be/UEmBnzspSRg). 
+
+For more on the underlying software and additional notebooks like this, take a look at the list below.
+
+- [OceanStateEstimation.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/)
 - [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/)
 - [MITgcmTools.jl](https://github.com/gaelforget/MITgcmTools.jl)
 - [JuliaClimate Notebooks](https://juliaclimate.github.io/GlobalOceanNotebooks/)
-- <https://youtu.be/UEmBnzspSRg>
 
+
+!!! note
+    Running the notebook requires ECCO output and ancillary files that can be downloaded as shown below.
+
+```
+import OceanStateEstimation
+OceanStateEstimation.ECCOdiags_download()
+OceanStateEstimation.ECCOdiags_add("interp_coeffs")
+OceanStateEstimation.ECCOdiags_add("release4")
+```
 """
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
@@ -44,12 +58,13 @@ begin
 	
 	md"""## Zonal Means 
 	
-	Here we select a quantity and plot it vs time and latitude.
+	Here we select a quantity and plot it as a function of time and latitude.
 	
 	- variable for zonal mean vs time : $(namzm_select)
 	- level for zonal mean vs time : $(k_zm_select)
 	
-	_note : choosing level only has an effect if $(namzm) is a three-dimensional variable._
+	!!! note
+	    Choosing a `level` only has an effect if the selected variable, $(namzm), is three-dimensional.
 
 	"""
 end
@@ -66,15 +81,16 @@ begin
 	#cmap_fac_select = @bind cmap_fac Select([1 2])
 md"""## Zonal Mean Anomalies
 
-Select a variable for zonal mean vs time : $(namzmanom2d_select)
+Here we select a quantity and plot it's anomaly as a function of time and latitude.
 
+- variable for zonal mean anomaly vs time : $(namzmanom2d_select)
 - depth level for zonal mean vs time : $(k_zm2d_select)
 - latitude index, min : $(l0_select)
 - latitude index, max : $(l1_select)
 - scaling factor for color range : $(cmap_fac_select)
 
 !!! note
-	Choosing level may only take effect if a three-dimensional variable was selected.
+	Choosing a `level` only has an effect if the selected variable, $(namzmanom2d), is three-dimensional.
 """
 end
 
@@ -86,9 +102,9 @@ begin
 	k1_select = @bind k1 Slider(1:50;default=30, show_value=true)
 	facA_select = @bind facA Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
 
-	md"""### Depth vs Time Plot
+	md"""### Depth vs Time Anomalies
 	
-	- variable for zonal mean vs time : $(namzmanom_select)
+	- variable for depth vs time anomaly : $(namzmanom_select)
 	- latitude index for depth vs time : $(l_zm_select)
 	- top depth level : $(k0_select)
 	- bottom depth level : $(k1_select)
@@ -99,24 +115,37 @@ end
 # ╔═╡ 92d1fc2f-9bdc-41dc-af49-9412f931d882
 begin
 	ngl1_select = @bind ngl1 Select(["THETA","SALT"];default="THETA")
-	kgl1_select = @bind kgl1 Slider(0:1;default=0, show_value=true)
+	kgl1_select = @bind kgl1 Slider(0:50;default=0, show_value=true)
 
 	md"""## Global Means
 	
 	- variable for global mean vs time : $(ngl1_select)
-	- latitude index for depth vs time : $(kgl1_select)
+	- depth index, k, for time series : $(kgl1_select)
+	
+	!!! note
+	    k=0 for volume integral; k>0 for level temperature
 	"""
 end
 
 # ╔═╡ d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
-md"""## Transports"""
+md"""## Ocean Transports
+
+Here we look at a few aspects of the ocean circulation as estimated in ECCO.
+
+### Meridional Heat Transport
+"""
+
+# ╔═╡ c2cd21d9-3fe7-42ec-b6a8-ce34d0770d63
+md"""### Overturning Streamfunction"""
 
 # ╔═╡ 7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 begin
 	ktr1_select = @bind ktr1 Slider(1:50;default=29, show_value=true)
+	low1_select = @bind low1 Select(["auto",-10.0,0.0,5.0,10.0];default="auto")
 	
-	md"""
+	md"""### Overturning Time Series
 	- level for overturning vs time : $(ktr1_select)
+	- lower limit for overturning plot : $(low1_select)
 	"""
 end
 
@@ -128,7 +157,9 @@ begin
 end
 
 # ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
-md""" select a solution : $(sol_select)"""
+md"""## Select a solution : 
+
+$(sol_select)"""
 
 # ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
 md"""select a solution : $(sol_select)"""
@@ -143,7 +174,13 @@ md"""select a solution : $(sol_select)"""
 md"""select a solution : $(sol_select)"""
 
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
-pth_out=joinpath(OceanStateEstimation.ECCOdiags_path,sol)
+begin
+	pth_out=joinpath(OceanStateEstimation.ECCOdiags_path,sol)
+	md"""### Input Files
+	
+	Current folder : $(pth_out)
+	"""
+end
 
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
 begin
@@ -159,27 +196,46 @@ begin
 		    tmp=reshape(tmp,(nt,50))
 			tmp=tmp[:,k]
 			occursin("THETA",fil) ? rng=(18.0,19.0) : rng=(34.5,35.0)
-			occursin("THETA",fil) ? txt="SST  (degree C)" : txt="SSS (psu)"
+			occursin("THETA",fil) ? txt="Temperature (degree C, level $(k))" : txt="Salinity (psu), level $(k)"
+			k>1 ? rng=extrema(tmp) : nothing
 		else
 			nt=length(tmp[:])
 			occursin("THETA",fil) ? rng=(3.55,3.65) : rng=(34.72,34.73)
 			occursin("THETA",fil) ? txt="Temperature  (degree C)" : txt="Salinity (psu)"
 		end
-		(y=tmp,txt=txt,rng=rng,x=vec(0.5:nt))
+
+		x=vec(0.5:nt)
+		x=1992.0 .+ x./12.0
+
+		(y=tmp,txt=txt,rng=rng,x=x)
 	end
 
 	function onegloplot(gl1)
+		ttl="Global Mean $(gl1.txt)"
+		zlb=gl1.txt
+		rng=gl1.rng
+
+		if false
+			fac=4e6*1.335*10^9*10^9/1e21
+			ttl="Ocean Heat Uptake (Zetta-Joules)"
+			zlb="Zetta-Joules"
+			rng=(-100.0,300.0)
+			y=fac*(gl1.y.-gl1.y[1])
+		else
+			y=gl1.y
+		end
+
 		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1], title="Global Mean $(gl1.txt)",
-			xticks=(12:24:336),xlabel="latitude",ylabel="$(gl1.txt)")
-		hm1=Mkie.lines!(ax1,gl1.x,gl1.y)
-		Mkie.xlims!(ax1,(0.0,336.0))
-		Mkie.ylims!(ax1,gl1.rng)
+		ax1 = Mkie.Axis(fig1[1,1], title=ttl,
+			xticks=collect(1992.0:4:2021.0),ylabel=zlb)
+		hm1=Mkie.lines!(ax1,gl1.x,y)
+		Mkie.xlims!(ax1,(1992.0,2021.0))
+		Mkie.ylims!(ax1,rng)
 		fig1
 	end
 
 	gl1=glo(pth_out,ngl1,kgl1)
-	onegloplot(gl1)
+	glfig1=onegloplot(gl1)
 end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
@@ -191,8 +247,9 @@ let
 	x=vec(-89.0:89.0)
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
 	ax1 = Mkie.Axis(fig1[1,1], title="Northward Heat Transport (in PW, 92-11)",
-					xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0))
-	hm1=Mkie.lines!(x,MT,xlabel="latitude",ylabel="Transport (in PW)",label="ECCO estimate")
+		xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
+		xlabel="latitude",ylabel="Transport (in PW)")
+	hm1=Mkie.lines!(x,MT,legend="ECCO estimate")
 	Mkie.ylims!(ax1,(-2.0,2.0))
 	fig1
 end
@@ -205,18 +262,20 @@ begin
 	
 		nt=size(tmp,3)
 		x=vec(0.5:nt)
+		x=1992.0 .+ x./12.0
 		lats=vec(-89.0:89.0)
 
 		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1],xlabel="month",ylabel="Sv",
-		title="Global Overturning, in Sv, at kk=$(kk)",xticks=(12:24:336))
+		ax1 = Mkie.Axis(fig1[1,1],ylabel="Sv",
+			title="Global Overturning, in Sv, at kk=$(kk)",
+			xticks=(1992.0:4:2021.0))
 		for ll in 115:10:145
 			ov=tmp[ll,kk,:]
 			ov=runmean(ov, 12)
 			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
 		end
-		Mkie.xlims!(ax1,(0.0,336.0))
-		#Mkie.ylims!(ax1,rng)
+		Mkie.xlims!(ax1,(1992.0,2021.0))
+		low1!="auto" ? Mkie.ylims!(ax1,(low1,20.0)) : nothing
 		fig1[1, 2] = Mkie.Legend(fig1, ax1, "estimate", framevisible = false)
 
 	
@@ -227,7 +286,9 @@ begin
 end
 
 # ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
-readdir(pth_out)
+with_terminal() do
+	fil_list=readdir(pth_out)
+end
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
 md"""## Appendices"""
@@ -281,10 +342,12 @@ begin
 			x=vec(0.5:size(tmp,2))
 			addon1=""
 		end
-		
-		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)$(addon1)")
+
+		x=1992.0 .+ x./12.0
+		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)$(addon1)",ylabel="latitude",
+			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0))
 		hm1 = Mkie.contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs),colormap=cm)
-		Mkie.xlims!(ax1,0.0,336.0)
+		Mkie.xlims!(ax1,1992.0,2021.0)
 		Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	end
 	
@@ -343,12 +406,14 @@ let
 		zmean=vec(mean(z[1:240,:],dims=1))
 		[z[t,:]=z[t,:]-zmean for t in 1:nt]
 	end
-	
+
+	x=1992.0 .+ x./12.0
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzm)$(addon1) ; deviation from $(ref1)")
+	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzm)$(addon1) ; deviation from $(ref1)",
+		xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=cmap_fac*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	Mkie.xlims!(ax1,0.0,336.0)
+	Mkie.xlims!(ax1,1992.0,2021.0)
 	Mkie.ylims!(ax1,y[l0],y[l1])
 	fig1
 end
@@ -387,13 +452,17 @@ let
 	#ref1="1992-2011 annual mean"
 	#zmean=vec(mean(z[1:240,:],dims=1))
 	#[z[t,:]=z[t,:]-zmean for t in 1:nt]
-	
+
+	x=1992.0 .+ x./12.0
+
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzmanom)$(addon1) ; deviation from $(ref1)")
+	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzmanom)$(addon1) ; deviation from $(ref1)"
+		,xticks=collect(1992.0:4:2021.0))
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=facA*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	Mkie.xlims!(ax1,0.0,336.0)
+	Mkie.xlims!(ax1,1992.0,2021.0)
 	Mkie.ylims!(ax1,Γ.RC[k1],Γ.RC[k0])
+	
 	fig1
 end
 
@@ -408,7 +477,8 @@ let
 	z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
 
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, 92-11)")
+	ax1 = Mkie.Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, 92-11)",
+			xlabel="latitude",ylabel="depth (in m)")
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=(-40.0:5.0:40.0),clims=(-40,40))
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	fig1
@@ -470,13 +540,13 @@ begin
 	pth_tmp1=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis")
 	clim_files=climatology_files(pth_tmp1)	
 	nammap_select = @bind nammap Select(clim_files)
-	statmap_select = @bind statmap Select(["mean","std","mon"])
+	statmap_select = @bind statmap Select(["mean","std","mon"])	
 	timemap_select = @bind timemap Select(1:12)
 	md"""## Climatology Maps
 
 	- file for time mean map : $(nammap_select)
-	- statistics for time mean map : $(statmap_select)
-	- (optional) month for time mean map : $(timemap_select)
+	- choice of statistic for time mean map : $(statmap_select)
+	- (optional) if `mon` was selected then show month # : $(timemap_select)
 	
 	"""
 end
@@ -498,7 +568,7 @@ let
 	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
 	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
-	ax = Mkie.Axis(fig[1,1], title=nammap,xlabel="longitude",ylabel="latitude")
+	ax = Mkie.Axis(fig[1,1], title="file is "*basename(nammap),xlabel="longitude",ylabel="latitude")
 	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	fig	
@@ -523,18 +593,18 @@ begin
 		
 		nt=size(tmp.val,2)
 		x=vec(0.5:nt)
-	
+		x=1992.0 .+ x./12.0
+
 		txt=tmp.nam[1:end-5]
 		val=1e-6*vec(sum(tmp.val,dims=1)[:])
 		valsmo = runmean(val, 12)
 	
-		x=vec(0.5:nt)
 		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Mkie.Axis(fig1[1,1], title=" $txt (in Sv)",
-			xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
+			xticks=(1992.0:4:2021.0),ylabel="transport, in Sv")
 		hm1=Mkie.lines!(x,val,label="ECCO estimate")
 		Mkie.lines!(x,valsmo,linewidth=4.0,color=:red)
-		Mkie.xlims!(ax1,(0.0,336.0))
+		Mkie.xlims!(ax1,(1992.0,2021.0))
 		#Mkie.ylims!(ax1,rng)
 		fig1
 	end
@@ -545,7 +615,7 @@ end
 begin
 	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
 	
-	md"""### Transport Across Several Sections
+	md"""### Transport Across Multiple Sections
 	
 	$(ntr2_select)	
 	"""
@@ -567,10 +637,11 @@ begin
 		valsmo = runmean(val, 12)
 	
 		x=vec(0.5:nt)
+		x=1992.0 .+ x./12.0
 
 		hm1=Mkie.lines!(ax,x,val,label="ECCO estimate")
 		Mkie.lines!(ax,x,valsmo,linewidth=4.0,color=:red)
-		Mkie.xlims!(ax,(0.0,336.0))
+		Mkie.xlims!(ax,(1992.0,2021.0))
 	end
 
 	function figtr2(namtrs,ncols)
@@ -580,7 +651,7 @@ begin
 			jj=div.(na,ncols,RoundUp)
 			kk=na-(jj.-1)*ncols
 			ax1 = Mkie.Axis(fig1[jj,kk], title=" $txt (in Sv)",
-				xticks=(12:24:336),xlabel="latitude",ylabel="transport, in Sv")
+				xticks=(1992.0:4:2021.0),ylabel="transport, in Sv")
 			axtr1(ax1,namtrs[na])
 		end
 		#Mkie.ylims!(ax1,rng)
@@ -1476,9 +1547,9 @@ version = "1.10.8"
 
 [[Ogg_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "7937eda4681660b4d6aeeecc2f7e1c81c8ee4e2f"
+git-tree-sha1 = "887579a3eb005446d514ab7aeac5d1d027658b8f"
 uuid = "e7412a2a-1a6e-54c0-be00-318e2571c051"
-version = "1.3.5+0"
+version = "1.3.5+1"
 
 [[OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
@@ -2010,9 +2081,9 @@ version = "1.0.20+0"
 
 [[libvorbis_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
-git-tree-sha1 = "c45f4e40e7aafe9d086379e5578947ec8b95a8fb"
+git-tree-sha1 = "b910cb81ef3fe6e78bf6acee440bda86fd6ae00c"
 uuid = "f27f6e37-5d2b-51aa-960f-b287f2bc3b7a"
-version = "1.3.7+0"
+version = "1.3.7+1"
 
 [[nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -2053,8 +2124,9 @@ version = "3.0.0+3"
 # ╟─5d320375-0a3c-4197-b35d-f6610173329d
 # ╟─e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 # ╟─d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
-# ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
+# ╟─c2cd21d9-3fe7-42ec-b6a8-ce34d0770d63
+# ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
 # ╟─7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 # ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
 # ╟─53069bcc-9b28-40bf-9053-4ec0c6099611
