@@ -184,7 +184,7 @@ begin
 	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
 	list_trsp=[i[1:end-5] for i in list_trsp]
 
-	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples/")	
+	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples","ECCO")	
 	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
 	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
 
@@ -709,7 +709,7 @@ CairoMakie = "~0.7.3"
 Glob = "~1.3.0"
 JLD2 = "~0.4.21"
 MeshArrays = "~0.2.31"
-OceanStateEstimation = "~0.2.1"
+OceanStateEstimation = "~0.2.2"
 PlutoUI = "~0.7.34"
 RollingFunctions = "~0.6.2"
 """
@@ -1575,9 +1575,9 @@ version = "0.4.0"
 
 [[deps.OceanStateEstimation]]
 deps = ["Artifacts", "CodecZlib", "Downloads", "FortranFiles", "LazyArtifacts", "MITgcmTools", "MeshArrays", "Statistics", "Tar"]
-git-tree-sha1 = "afeaae92d6d2d00f060499b5ef470e18e55f43d5"
+git-tree-sha1 = "cae706d0b95a1e762bdd01b67ff4965559bd918f"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
-version = "0.2.1"
+version = "0.2.2"
 
 [[deps.OffsetArrays]]
 deps = ["Adapt"]
