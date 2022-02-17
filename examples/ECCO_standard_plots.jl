@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.7
+# v0.18.0
 
 using Markdown
 using InteractiveUtils
@@ -16,40 +16,29 @@ end
 
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin	
-	using JLD2, MeshArrays, OceanStateEstimation, PlutoUI
+	using MeshArrays, OceanStateEstimation
+	using JLD2, PlutoUI, Glob
 	using TOML, Statistics, RollingFunctions
 	import CairoMakie as Mkie
 	"Done with packages"
 end
 
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
-md"""#  Standard Analysis of ECCO Solutions
-
-This notebook let's you explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) series ([releases 1 to 4](https://ecco-group.org/products.htm), for now, with _release 5_ coming soon) using [Julia](https://julialang.org)
-
-If you are running a live version of the notebook via Pluto.jl (rather than viewing the html page hosted online) then the various plots will update when you use the drow down menus, as seen in [this video](https://youtu.be/UEmBnzspSRg). 
-
-For more on the underlying software and additional notebooks like this, take a look at the list below.
-
-- [OceanStateEstimation.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/)
-- [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/)
-- [MITgcmTools.jl](https://github.com/gaelforget/MITgcmTools.jl)
-- [JuliaClimate Notebooks](https://juliaclimate.github.io/GlobalOceanNotebooks/)
+md"""#  ECCO Solutions : Standard Plots
 
 
-!!! note
-    Running the notebook requires ECCO output and ancillary files that can be downloaded as shown below.
-
-```
-import OceanStateEstimation
-OceanStateEstimation.ECCOdiags_download()
-OceanStateEstimation.ECCOdiags_add("interp_coeffs")
-OceanStateEstimation.ECCOdiags_add("release4")
-```
+!!! introduction
+	This notebook let's you explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) series ([releases 1 to 4](https://ecco-group.org/products.htm), for now, with _release 5_ coming soon) using [Julia](https://julialang.org). If you are running a live version of the notebook via Pluto.jl (instructions provided at bottom of this page) then the various plots will update when you use the drow down menus, as seen in [this video](https://youtu.be/UEmBnzspSRg). If instead you are viewing the html page hosted online then this interactivity is disabled.
 """
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
 PlutoUI.TableOfContents()
+
+# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
+md"""## Select a Solution"""
+
+# ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
+md"""## Climatology Maps"""
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
@@ -149,149 +138,6 @@ begin
 	"""
 end
 
-# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
-begin
-	sol_select = @bind sol Select(["ECCOv4r1_analysis","ECCOv4r2_analysis","ECCOv4r3_analysis",
-									"ECCOv4r4_analysis","ECCOv4r5_analysis"],default="ECCOv4r2_analysis")
-	md"""select a solution : $(sol_select)"""
-end
-
-# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
-md"""## Select a solution : 
-
-$(sol_select)"""
-
-# ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
-md"""Select a solution : $(sol_select)"""
-
-# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 53069bcc-9b28-40bf-9053-4ec0c6099611
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
-begin
-	pth_out=joinpath(OceanStateEstimation.ECCOdiags_path,sol)
-	md"""### Input Files
-	
-	Current folder : $(pth_out)
-	"""
-end
-
-# ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
-begin
-	function glo(pth_out,nam,k=0)
-		if k>0
-			fil=fil=joinpath(pth_out,nam*"_glo2d/glo2d.jld2")
-		else
-			fil=joinpath(pth_out,nam*"_glo3d/glo3d.jld2")
-		end
-		tmp=vec(load(fil,"single_stored_object"))
-		if k>0
-			nt=Int(length(tmp[:])./50.0)
-		    tmp=reshape(tmp,(nt,50))
-			tmp=tmp[:,k]
-			occursin("THETA",fil) ? rng=(18.0,19.0) : rng=(34.5,35.0)
-			occursin("THETA",fil) ? txt="Temperature (degree C, level $(k))" : txt="Salinity (psu), level $(k)"
-			k>1 ? rng=extrema(tmp) : nothing
-		else
-			nt=length(tmp[:])
-			occursin("THETA",fil) ? rng=(3.55,3.65) : rng=(34.72,34.73)
-			occursin("THETA",fil) ? txt="Temperature  (degree C)" : txt="Salinity (psu)"
-		end
-
-		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
-
-		(y=tmp,txt=txt,rng=rng,x=x)
-	end
-
-	function onegloplot(gl1)
-		ttl="Global Mean $(gl1.txt)"
-		zlb=gl1.txt
-		rng=gl1.rng
-
-		if false
-			fac=4e6*1.335*10^9*10^9/1e21
-			ttl="Ocean Heat Uptake (Zetta-Joules)"
-			zlb="Zetta-Joules"
-			rng=(-100.0,300.0)
-			y=fac*(gl1.y.-gl1.y[1])
-		else
-			y=gl1.y
-		end
-
-		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2021.0),ylabel=zlb)
-		hm1=Mkie.lines!(ax1,gl1.x,y)
-		Mkie.xlims!(ax1,(1992.0,2021.0))
-		Mkie.ylims!(ax1,rng)
-		fig1
-	end
-
-	gl1=glo(pth_out,ngl1,kgl1)
-	glfig1=onegloplot(gl1)
-end
-
-# ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
-let
-	fil=joinpath(pth_out,"MHT/MHT.jld2")
-	tmp=load(fil,"single_stored_object")
-	MT=vec(mean(tmp[:,1:240],dims=2))
-
-	x=vec(-89.0:89.0)
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Northward Heat Transport (in PW, 92-11)",
-		xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
-		xlabel="latitude",ylabel="Transport (in PW)")
-	hm1=Mkie.lines!(x,MT)
-	Mkie.ylims!(ax1,(-2.0,2.0))
-	fig1
-end
-
-# ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-begin	
-	function figov1(pth_out,kk=29)
-		fil=joinpath(pth_out,"overturn/overturn.jld2")
-		tmp=-1e-6*load(fil,"single_stored_object")
-	
-		nt=size(tmp,3)
-		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
-		lats=vec(-89.0:89.0)
-
-		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1],ylabel="Sv",
-			title="Global Overturning, in Sv, at kk=$(kk)",
-			xticks=(1992.0:4:2021.0))
-		for ll in 115:10:145
-			ov=tmp[ll,kk,:]
-			ov=runmean(ov, 12)
-			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
-		end
-		Mkie.xlims!(ax1,(1992.0,2021.0))
-		low1!="auto" ? Mkie.ylims!(ax1,(low1,20.0)) : nothing
-		fig1[1, 2] = Mkie.Legend(fig1, ax1, "estimate", framevisible = false)
-
-	
-		fig1
-	end
-
-	figov1(pth_out,ktr1)
-end
-
-# ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
-with_terminal() do
-	fil_list=readdir(pth_out)
-	println.(fil_list)
-	"👇"
-end
-
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
 md"""## Appendices"""
 
@@ -302,6 +148,92 @@ begin
 	Γ=GridLoad(γ;option="full")
 	#LC=LatitudeCircles(-89.0:89.0,Γ)
 	"Done with grid"
+end
+
+# ╔═╡ 963c0bcf-5804-47a5-940e-68f348db95ea
+begin
+	function setup_interp(Γ)
+		μ =Γ.hFacC[:,1]
+		μ[findall(μ.>0.0)].=1.0
+		μ[findall(μ.==0.0)].=NaN
+	
+		if !isfile(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"))
+			lon=[i for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
+			lat=[j for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
+			
+			(f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
+			jldsave(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"); 
+				lon=lon, lat=lat, f=f, i=i, j=j, w=w, μ=μ)
+		end
+	
+		λ = load(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"))
+		λ = MeshArrays.Dict_to_NamedTuple(λ)
+	end
+	
+	λ=setup_interp(Γ)
+	"Done with interpolation coefficients"	
+end
+
+# ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
+begin
+	sol_list=glob("ECCOv4r?_analysis",ECCOdiags_path)
+	sol_list=[basename(i) for i in sol_list]
+
+	fil_trsp=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis/trsp/trsp.jld2")
+	ntr=length(load(fil_trsp,"single_stored_object"))
+	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
+	list_trsp=[i[1:end-5] for i in list_trsp]
+
+	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples/")	
+	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
+	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
+
+	"Done with listing solutions, file names, color codes"
+end
+
+# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
+begin
+	sol_select = @bind sol Select(sol_list,default="ECCOv4r2_analysis")
+	md"""select a solution : $(sol_select)"""
+end
+
+# ╔═╡ b6978bbe-7de6-4827-8b0e-43ceb70e0b52
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
+md"""Select a solution : $(sol_select)"""
+
+# ╔═╡ 3088bca4-0db3-4e4d-a7e5-8afb0f356271
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ b55432ac-4960-4983-8330-4ea957a05eee
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 347dc728-2224-4e91-9d7b-45badef8f9a0
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 53069bcc-9b28-40bf-9053-4ec0c6099611
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ edf6e079-9aad-4969-b6e3-06dd45b99d68
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 339c792e-7ef1-4554-9f12-d616bc9a7e5b
+md"""select a solution : $(sol_select)"""
+
+# ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
+begin
+	pth_out=joinpath(OceanStateEstimation.ECCOdiags_path,sol)
+	md"""### Input Files
+	
+	Current folder : $(pth_out)
+	"""
 end
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
@@ -468,6 +400,78 @@ let
 	fig1
 end
 
+# ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
+begin
+	function glo(pth_out,nam,k=0)
+		if k>0
+			fil=fil=joinpath(pth_out,nam*"_glo2d/glo2d.jld2")
+		else
+			fil=joinpath(pth_out,nam*"_glo3d/glo3d.jld2")
+		end
+		tmp=vec(load(fil,"single_stored_object"))
+		if k>0
+			nt=Int(length(tmp[:])./50.0)
+		    tmp=reshape(tmp,(nt,50))
+			tmp=tmp[:,k]
+			occursin("THETA",fil) ? rng=(18.0,19.0) : rng=(34.5,35.0)
+			occursin("THETA",fil) ? txt="Temperature (degree C, level $(k))" : txt="Salinity (psu), level $(k)"
+			k>1 ? rng=extrema(tmp) : nothing
+		else
+			nt=length(tmp[:])
+			occursin("THETA",fil) ? rng=(3.55,3.65) : rng=(34.72,34.73)
+			occursin("THETA",fil) ? txt="Temperature  (degree C)" : txt="Salinity (psu)"
+		end
+
+		x=vec(0.5:nt)
+		x=1992.0 .+ x./12.0
+
+		(y=tmp,txt=txt,rng=rng,x=x)
+	end
+
+	function onegloplot(gl1)
+		ttl="Global Mean $(gl1.txt)"
+		zlb=gl1.txt
+		rng=gl1.rng
+
+		if false
+			fac=4e6*1.335*10^9*10^9/1e21
+			ttl="Ocean Heat Uptake (Zetta-Joules)"
+			zlb="Zetta-Joules"
+			rng=(-100.0,300.0)
+			y=fac*(gl1.y.-gl1.y[1])
+		else
+			y=gl1.y
+		end
+
+		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Mkie.Axis(fig1[1,1], title=ttl,
+			xticks=collect(1992.0:4:2021.0),ylabel=zlb)
+		hm1=Mkie.lines!(ax1,gl1.x,y)
+		Mkie.xlims!(ax1,(1992.0,2021.0))
+		Mkie.ylims!(ax1,rng)
+		fig1
+	end
+
+	gl1=glo(pth_out,ngl1,kgl1)
+	glfig1=onegloplot(gl1)
+end
+
+# ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
+let
+	fil=joinpath(pth_out,"MHT/MHT.jld2")
+	tmp=load(fil,"single_stored_object")
+	MT=vec(mean(tmp[:,1:240],dims=2))
+
+	x=vec(-89.0:89.0)
+	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+	ax1 = Mkie.Axis(fig1[1,1], title="Northward Heat Transport (in PW, 92-11)",
+		xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
+		xlabel="latitude",ylabel="Transport (in PW)")
+	hm1=Mkie.lines!(x,MT)
+	Mkie.ylims!(ax1,(-2.0,2.0))
+	fig1
+end
+
 # ╔═╡ 12790dfb-5806-498b-8a08-3bfea0dac6a6
 let
 	fil=joinpath(pth_out,"overturn/overturn.jld2")
@@ -487,54 +491,78 @@ let
 
 end
 
-# ╔═╡ 963c0bcf-5804-47a5-940e-68f348db95ea
-begin
-	function setup_interp(Γ)
-		μ =Γ.hFacC[:,1]
-		μ[findall(μ.>0.0)].=1.0
-		μ[findall(μ.==0.0)].=NaN
+# ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
+begin	
+	function figov1(pth_out,kk=29)
+		fil=joinpath(pth_out,"overturn/overturn.jld2")
+		tmp=-1e-6*load(fil,"single_stored_object")
 	
-		if !isfile(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"))
-			lon=[i for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
-			lat=[j for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
-			
-			(f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
-			jldsave(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"); 
-				lon=lon, lat=lat, f=f, i=i, j=j, w=w, μ=μ)
+		nt=size(tmp,3)
+		x=vec(0.5:nt)
+		x=1992.0 .+ x./12.0
+		lats=vec(-89.0:89.0)
+
+		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Mkie.Axis(fig1[1,1],ylabel="Sv",
+			title="Global Overturning, in Sv, at kk=$(kk)",
+			xticks=(1992.0:4:2021.0))
+		for ll in 115:10:145
+			ov=tmp[ll,kk,:]
+			ov=runmean(ov, 12)
+			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
 		end
+		Mkie.xlims!(ax1,(1992.0,2021.0))
+		low1!="auto" ? Mkie.ylims!(ax1,(low1,20.0)) : nothing
+		fig1[1, 2] = Mkie.Legend(fig1, ax1, "estimate", framevisible = false)
+
 	
-		λ = load(joinpath(ECCOdiags_path,"interp_coeffs_halfdeg.jld2"))
-		λ = MeshArrays.Dict_to_NamedTuple(λ)
+		fig1
 	end
-	
-	λ=setup_interp(Γ)
-	"Done with interpolation coefficients"	
+
+	figov1(pth_out,ktr1)
 end
 
-# ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
+# ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
+with_terminal() do
+	fil_list=readdir(pth_out)
+	println.(fil_list)
+	"👇"
+end
+
+# ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 begin
-	function climatology_files(pth_out)
-		list_clim=readdir(pth_out)
-		kk=findall(occursin.(Ref("clim"),list_clim))
-		list_clim=list_clim[kk]
-		clim_files=[]
-		for ii in 1:length(list_clim)
-			tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
-			[push!(clim_files,i) for i in tmp]
-		end
-		clim_files
-	end
-
-	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples/")
+	ntr1_select = @bind ntr1 Select(list_trsp)
 	
-	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
-	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
+	md"""### Transport Across One Section
+	
+	- transect for transport vs time : $(ntr1_select)	
+	"""
+end
 
-	fil_trsp=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis/trsp/trsp.jld2")
-	ntr=length(load(fil_trsp,"single_stored_object"))
-	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
+# ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
+begin
+	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
+	
+	md"""### Transport Across Multiple Sections
 
-	"Done with listing files"
+!!! note
+    The layout of this multiple-panel display should update as you select and unselect sections.
+	
+$(ntr2_select)	
+	"""
+end
+
+# ╔═╡ 758e43bf-e60b-42a3-a3e0-5b928c330892
+function climatology_files(pth_out)
+	list_clim=readdir(pth_out)
+	kk=findall(occursin.(Ref("clim"),list_clim))
+	list_clim=list_clim[kk]
+	clim_files=[]
+	for ii in 1:length(list_clim)
+		tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
+		[push!(clim_files,i) for i in tmp]
+	end
+	clim_files
 end
 
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
@@ -544,12 +572,10 @@ begin
 	nammap_select = @bind nammap Select(clim_files)
 	statmap_select = @bind statmap Select(["mean","std","mon"])	
 	timemap_select = @bind timemap Select(1:12)
-	md"""## Climatology Maps
-
+	md"""
 	- file for time mean map : $(nammap_select)
 	- choice of statistic for time mean map : $(statmap_select)
 	- (optional) if `mon` was selected then show month # : $(timemap_select)
-	
 	"""
 end
 
@@ -576,53 +602,6 @@ let
 	fig	
 end
 
-# ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
-begin
-	ntr1_select = @bind ntr1 Select(list_trsp)
-	
-	md"""### Transport Across One Section
-	
-	- transect for transport vs time : $(ntr1_select)	
-	"""
-end
-
-# ╔═╡ 57d01a67-01c7-4d61-93c7-737ef2cbb6a9
-begin
-	function figtr1(namtr)
-		itr=findall(list_trsp.==namtr)[1]
-		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
-		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
-		
-		nt=size(tmp.val,2)
-		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
-
-		txt=tmp.nam[1:end-5]
-		val=1e-6*vec(sum(tmp.val,dims=1)[:])
-		valsmo = runmean(val, 12)
-	
-		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1], title=" $txt (in Sv)",
-			xticks=(1992.0:4:2021.0),ylabel="transport, in Sv")
-		hm1=Mkie.lines!(x,val,label="ECCO estimate")
-		Mkie.lines!(x,valsmo,linewidth=4.0,color=:red)
-		Mkie.xlims!(ax1,(1992.0,2021.0))
-		#Mkie.ylims!(ax1,rng)
-		fig1
-	end
-	figtr1(ntr1)
-end
-
-# ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
-begin
-	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
-	
-	md"""### Transport Across Multiple Sections
-	
-	$(ntr2_select)	
-	"""
-end
-
 # ╔═╡ a468baa1-2e5b-40ce-b33c-2e275d720c8e
 begin
 	function axtr1(ax,namtr)
@@ -646,10 +625,14 @@ begin
 		Mkie.xlims!(ax,(1992.0,2021.0))
 	end
 
-	function figtr2(namtrs,ncols)
-		fig1 = Mkie.Figure(resolution = (2000,1000),markersize=0.1)
+	function transport_plot(namtrs,ncols)
+		if ncols > 1
+			fig1 = Mkie.Figure(resolution = (2000,1000),markersize=0.1)
+		else
+			fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
+		end
 		for na in 1:length(namtrs)
-			txt=namtrs[na][1:end-5]
+			txt=namtrs[na]
 			jj=div.(na,ncols,RoundUp)
 			kk=na-(jj.-1)*ncols
 			ax1 = Mkie.Axis(fig1[jj,kk], title=" $txt (in Sv)",
@@ -661,17 +644,58 @@ begin
 	end
 end
 
+# ╔═╡ 030dab23-18ed-4e1e-9074-4da8bb9e3ee8
+transport_plot([ntr1],1)
+
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
 		#namtrs=[ntr1,ntr1,ntr1,ntr1]
 		ncols=Int(floor(sqrt(length(namtrs))))
-		ff=figtr2(namtrs,ncols)
+		transport_plot(namtrs,ncols)
 end
+
+# ╔═╡ 77339a25-c26c-4bfe-84ee-15274389619f
+md""" ## Directions
+
+!!! summary
+    Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as follows. Code for steps 2 to 4 is below. 
+
+1. [start julia](https://docs.julialang.org/en/v1/manual/getting-started/)
+1. download input files (see below)
+1. [add Pluto.jl](https://github.com/fonsp/Pluto.jl) using [Pkg.jl](https://pkgdocs.julialang.org/v1/)
+1. start `Pluto` (docs [here](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto))
+1. Once Pluto opens, in your web browser, paste the [notebook url](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl) and click open.
+
+At first, it may take a couple minutes for the whole suite of plots to get display, which can occur progressively. Afterwards, things should update much faster when using the drop down menus.
+
+```
+using Pluto
+
+import OceanStateEstimation
+OceanStateEstimation.ECCOdiags_download()
+OceanStateEstimation.ECCOdiags_add("interp_coeffs")
+
+#optional : ~250M each
+OceanStateEstimation.ECCOdiags_add("release4")
+OceanStateEstimation.ECCOdiags_add("release3")
+OceanStateEstimation.ECCOdiags_add("release1")
+
+Pluto.run()
+```
+
+For more on the underlying software and additional notebooks like this, take a look at the list below.
+
+- [OceanStateEstimation.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/)
+- [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/)
+- [MITgcmTools.jl](https://github.com/gaelforget/MITgcmTools.jl)
+- [JuliaClimate Notebooks](https://juliaclimate.github.io/GlobalOceanNotebooks/)
+"""
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 OceanStateEstimation = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
@@ -681,11 +705,12 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
-CairoMakie = "~0.7.2"
-JLD2 = "~0.4.19"
+CairoMakie = "~0.7.3"
+Glob = "~1.3.0"
+JLD2 = "~0.4.21"
 MeshArrays = "~0.2.31"
-OceanStateEstimation = "~0.2.0"
-PlutoUI = "~0.7.33"
+OceanStateEstimation = "~0.2.1"
+PlutoUI = "~0.7.34"
 RollingFunctions = "~0.6.2"
 """
 
@@ -693,7 +718,7 @@ RollingFunctions = "~0.6.2"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.7.0"
+julia_version = "1.7.2"
 manifest_format = "2.0"
 
 [[deps.AWS]]
@@ -736,9 +761,9 @@ uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
 
 [[deps.ArrayInterface]]
 deps = ["Compat", "IfElse", "LinearAlgebra", "Requires", "SparseArrays", "Static"]
-git-tree-sha1 = "1bdcc02836402d104a46f7843b6e6730b1948264"
+git-tree-sha1 = "745233d77146ad221629590b6d82fe7f1ddb478f"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
-version = "4.0.2"
+version = "4.0.3"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -760,9 +785,9 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[deps.Blosc]]
 deps = ["Blosc_jll"]
-git-tree-sha1 = "575bdd70552dd9a7eaeba08ef2533226cdc50779"
+git-tree-sha1 = "310b77648d38c223d947ff3f50f511d08690b8d5"
 uuid = "a74b3585-a348-5f62-a45c-50e91977d574"
-version = "0.7.2"
+version = "0.7.3"
 
 [[deps.Blosc_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Lz4_jll", "Pkg", "Zlib_jll", "Zstd_jll"]
@@ -801,9 +826,9 @@ version = "1.0.5"
 
 [[deps.CairoMakie]]
 deps = ["Base64", "Cairo", "Colors", "FFTW", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "SHA", "StaticArrays"]
-git-tree-sha1 = "90fe6622efbb627e7c962e9bd6f5c4228680b7ca"
+git-tree-sha1 = "b1d884ee7dae11985314192270eb5762b9ed09ae"
 uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-version = "0.7.2"
+version = "0.7.3"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -849,9 +874,9 @@ version = "0.4.0"
 
 [[deps.ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random"]
-git-tree-sha1 = "6b6f04f93710c71550ec7e16b650c1b9a612d0b6"
+git-tree-sha1 = "12fc73e5e0af68ad3137b886e3f7c1eacfca2640"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.16.0"
+version = "3.17.1"
 
 [[deps.ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -935,9 +960,9 @@ uuid = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
 version = "0.4.0"
 
 [[deps.DiskArrays]]
-git-tree-sha1 = "eea012149f3aaae4663da3b686f493fa4afad7ad"
+git-tree-sha1 = "8bd8656d6cec3e13885a822761e8ddfc3b6b2130"
 uuid = "3c3547ce-8d99-4f5e-a174-61eb10b00ae3"
-version = "0.3.0"
+version = "0.3.1"
 
 [[deps.Distances]]
 deps = ["LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI"]
@@ -951,9 +976,9 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[deps.Distributions]]
 deps = ["ChainRulesCore", "DensityInterface", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "2e97190dfd4382499a4ac349e8d316491c9db341"
+git-tree-sha1 = "38012bf3553d01255e83928eec9c998e19adfddf"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
-version = "0.25.46"
+version = "0.25.48"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -979,9 +1004,9 @@ version = "1.3.0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "b3bfd02e98aedfa5cf885665493c5598c350cd2f"
+git-tree-sha1 = "ae13fcbc7ab8f16b0856729b050ef0c446aa3492"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.2.10+0"
+version = "2.4.4+0"
 
 [[deps.ExprTools]]
 git-tree-sha1 = "56559bbef6ca5ea0c0818fa5c90320398a6fbf8d"
@@ -1020,9 +1045,9 @@ version = "3.3.10+0"
 
 [[deps.FileIO]]
 deps = ["Pkg", "Requires", "UUIDs"]
-git-tree-sha1 = "67551df041955cc6ee2ed098718c8fcd7fc7aebe"
+git-tree-sha1 = "80ced645013a5dbdc52cf70329399c35ce007fae"
 uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-version = "1.12.0"
+version = "1.13.0"
 
 [[deps.FilePathsBase]]
 deps = ["Compat", "Dates", "Mmap", "Printf", "Test", "UUIDs"]
@@ -1032,9 +1057,9 @@ version = "0.9.17"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "8756f9935b7ccc9064c6eef0bff0ad643df733a3"
+git-tree-sha1 = "deed294cde3de20ae0b2e0355a6c4e1c6a5ceffc"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.12.7"
+version = "0.12.8"
 
 [[deps.FixedPointNumbers]]
 deps = ["Statistics"]
@@ -1123,6 +1148,11 @@ git-tree-sha1 = "a32d672ac2c967f3deb8a81d828afc739c838a06"
 uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
 version = "2.68.3+2"
 
+[[deps.Glob]]
+git-tree-sha1 = "4df9f7e06108728ebf00a0a11edee4b29a482bb2"
+uuid = "c27321d9-0574-5035-807b-f59d2c89b15c"
+version = "1.3.0"
+
 [[deps.Graphics]]
 deps = ["Colors", "LinearAlgebra", "NaNMath"]
 git-tree-sha1 = "1c5a84319923bea76fa145d49e93aa4394c73fc2"
@@ -1193,10 +1223,10 @@ uuid = "a09fc81d-aa75-5fe9-8630-4744c3626534"
 version = "0.9.3"
 
 [[deps.ImageIO]]
-deps = ["FileIO", "Netpbm", "OpenEXR", "PNGFiles", "QOI", "Sixel", "TiffImages", "UUIDs"]
-git-tree-sha1 = "816fc866edd8307a6e79a575e6585bfab8cef27f"
+deps = ["FileIO", "JpegTurbo", "Netpbm", "OpenEXR", "PNGFiles", "QOI", "Sixel", "TiffImages", "UUIDs"]
+git-tree-sha1 = "464bdef044df52e6436f8c018bea2d48c40bb27b"
 uuid = "82e4d734-157c-48bb-816b-45c225c6df19"
-version = "0.6.0"
+version = "0.6.1"
 
 [[deps.Imath_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1281,10 +1311,10 @@ uuid = "82899510-4779-5014-852e-03e436cf321d"
 version = "1.0.0"
 
 [[deps.JLD2]]
-deps = ["DataStructures", "FileIO", "MacroTools", "Mmap", "Pkg", "Printf", "Reexport", "TranscodingStreams", "UUIDs"]
-git-tree-sha1 = "bcb31db46795eeb64480c89d854615bc78a13289"
+deps = ["FileIO", "MacroTools", "Mmap", "OrderedCollections", "Pkg", "Printf", "Reexport", "TranscodingStreams", "UUIDs"]
+git-tree-sha1 = "28b114b3279cdbac9a61c57b3e6548a572142b34"
 uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-version = "0.4.19"
+version = "0.4.21"
 
 [[deps.JLLWrappers]]
 deps = ["Preferences"]
@@ -1294,9 +1324,21 @@ version = "1.4.1"
 
 [[deps.JSON]]
 deps = ["Dates", "Mmap", "Parsers", "Unicode"]
-git-tree-sha1 = "8076680b162ada2a031f707ac7b4953e30667a37"
+git-tree-sha1 = "3c837543ddb02250ef42f4738347454f95079d4e"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-version = "0.21.2"
+version = "0.21.3"
+
+[[deps.JpegTurbo]]
+deps = ["CEnum", "FileIO", "ImageCore", "JpegTurbo_jll", "TOML"]
+git-tree-sha1 = "a77b273f1ddec645d1b7c4fd5fb98c8f90ad10a5"
+uuid = "b835a17e-a41a-41e7-81f0-2f016b05efe0"
+version = "0.1.1"
+
+[[deps.JpegTurbo_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "b53380851c6e6664204efb2e62cd24fa5c47e4ba"
+uuid = "aacddb02-875f-59d6-b918-886e6ef4fbf8"
+version = "2.1.2+0"
 
 [[deps.KernelDensity]]
 deps = ["Distributions", "DocStringExtensions", "FFTW", "Interpolations", "StatsBase"]
@@ -1424,9 +1466,9 @@ version = "0.5.9"
 
 [[deps.Makie]]
 deps = ["Animations", "Base64", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "Distributions", "DocStringExtensions", "FFMPEG", "FileIO", "FixedPointNumbers", "Formatting", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageIO", "IntervalSets", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MakieCore", "Markdown", "Match", "MathTeXEngine", "Observables", "OffsetArrays", "Packing", "PlotUtils", "PolygonOps", "Printf", "Random", "RelocatableFolders", "Serialization", "Showoff", "SignedDistanceFields", "SparseArrays", "StaticArrays", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "UnicodeFun"]
-git-tree-sha1 = "0aafd5121c6e1b6a83bd3bb341da45f058225a9b"
+git-tree-sha1 = "475b854bff7867c37687d65f7b9498401ac6536d"
 uuid = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-version = "0.16.3"
+version = "0.16.4"
 
 [[deps.MakieCore]]
 deps = ["Observables"]
@@ -1533,9 +1575,9 @@ version = "0.4.0"
 
 [[deps.OceanStateEstimation]]
 deps = ["Artifacts", "CodecZlib", "Downloads", "FortranFiles", "LazyArtifacts", "MITgcmTools", "MeshArrays", "Statistics", "Tar"]
-git-tree-sha1 = "6f52efdb2a7a921bb4912e544af574bb07523f0a"
+git-tree-sha1 = "afeaae92d6d2d00f060499b5ef470e18e55f43d5"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
-version = "0.2.0"
+version = "0.2.1"
 
 [[deps.OffsetArrays]]
 deps = ["Adapt"]
@@ -1610,9 +1652,9 @@ version = "0.11.5"
 
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
-git-tree-sha1 = "2271d1c3b0103844a9f4af6cd17d70d146d5295f"
+git-tree-sha1 = "eb4dbb8139f6125471aa3da98fb70f02dc58e49c"
 uuid = "f57f5aa1-a3ce-4bc8-8ab9-96f992907883"
-version = "0.3.13"
+version = "0.3.14"
 
 [[deps.Packing]]
 deps = ["GeometryBasics"]
@@ -1628,15 +1670,15 @@ version = "0.5.11"
 
 [[deps.Pango_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "9bc1871464b12ed19297fbc56c4fb4ba84988b0d"
+git-tree-sha1 = "3a121dfbba67c94a5bec9dde613c3d0cbcf3a12b"
 uuid = "36c8627f-9965-5494-a995-c6b170f724f3"
-version = "1.47.0+0"
+version = "1.50.3+0"
 
 [[deps.Parsers]]
 deps = ["Dates"]
-git-tree-sha1 = "0b5cfbb704034b5b4c1869e36634438a047df065"
+git-tree-sha1 = "13468f237353112a01b2d6b32f3d0f80219944aa"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "2.2.1"
+version = "2.2.2"
 
 [[deps.Pixman_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1662,9 +1704,9 @@ version = "1.1.3"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "UUIDs"]
-git-tree-sha1 = "da2314d0b0cb518906ea32a497bb4605451811a4"
+git-tree-sha1 = "8979e9802b4ac3d58c503a20f2824ad67f9074dd"
 uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-version = "0.7.33"
+version = "0.7.34"
 
 [[deps.PolygonOps]]
 git-tree-sha1 = "77b3d3605fc1cd0b42d95eba87dfcd2bf67d5ff6"
@@ -1787,9 +1829,9 @@ version = "1.1.0"
 
 [[deps.SentinelArrays]]
 deps = ["Dates", "Random"]
-git-tree-sha1 = "15dfe6b103c2a993be24404124b8791a09460983"
+git-tree-sha1 = "6a2f7d70512d205ca8c7ee31bfa9f142fe74310c"
 uuid = "91c51154-3ec4-41a3-a24f-3f23e20d615c"
-version = "1.3.11"
+version = "1.3.12"
 
 [[deps.Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
@@ -1837,9 +1879,9 @@ uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[deps.SpecialFunctions]]
 deps = ["ChainRulesCore", "IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
-git-tree-sha1 = "e6bf188613555c78062842777b116905a9f9dd49"
+git-tree-sha1 = "8d0c8e3d0ff211d9ff4a0c2307d876c99d10bdf1"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "2.1.0"
+version = "2.1.2"
 
 [[deps.StackViews]]
 deps = ["OffsetArrays"]
@@ -1849,30 +1891,31 @@ version = "0.1.1"
 
 [[deps.Static]]
 deps = ["IfElse"]
-git-tree-sha1 = "b4912cd034cdf968e06ca5f943bb54b17b97793a"
+git-tree-sha1 = "00b725fffc9a7e9aac8850e4ed75b4c1acbe8cd2"
 uuid = "aedffcd0-7271-4cad-89d0-dc628f76c6d3"
-version = "0.5.1"
+version = "0.5.5"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "Statistics"]
-git-tree-sha1 = "a635a9333989a094bddc9f940c04c549cd66afcf"
+git-tree-sha1 = "95c6a5d0e8c69555842fc4a927fc485040ccc31c"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.3.4"
+version = "1.3.5"
 
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[deps.StatsAPI]]
-git-tree-sha1 = "d88665adc9bcf45903013af0982e2fd05ae3d0a6"
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "c3d8ba7f3fa0625b062b82853a7d5229cb728b6b"
 uuid = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
-version = "1.2.0"
+version = "1.2.1"
 
 [[deps.StatsBase]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]
-git-tree-sha1 = "51383f2d367eb3b444c961d485c565e4c0cf4ba0"
+git-tree-sha1 = "8977b17906b0a1cc74ab2e3a05faa16cf08a8291"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-version = "0.33.14"
+version = "0.33.16"
 
 [[deps.StatsFuns]]
 deps = ["ChainRulesCore", "InverseFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
@@ -1957,9 +2000,9 @@ version = "0.4.1"
 
 [[deps.Unitful]]
 deps = ["ConstructionBase", "Dates", "LinearAlgebra", "Random"]
-git-tree-sha1 = "b95e0b8a8d1b6a6c3e0b3ca393a7a285af47c264"
+git-tree-sha1 = "b649200e887a487468b71821e2644382699f1b0f"
 uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "1.10.1"
+version = "1.11.0"
 
 [[deps.WeakRefStrings]]
 deps = ["DataAPI", "InlineStrings", "Parsers"]
@@ -2051,9 +2094,9 @@ uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "cc4bf3fdde8b7e3e9fa0351bdeedba1cf3b7f6e6"
+git-tree-sha1 = "e45044cd873ded54b6a5bac0eb5c971392cf1927"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
-version = "1.5.0+0"
+version = "1.5.2+0"
 
 [[deps.isoband_jll]]
 deps = ["Libdl", "Pkg"]
@@ -2126,8 +2169,11 @@ version = "3.5.0+0"
 # ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
 # ╟─c46f0656-3627-448b-a779-dad2d980e3cf
+# ╟─8fced956-e527-4ed0-94d4-321368f09773
+# ╟─8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
+# ╟─b6978bbe-7de6-4827-8b0e-43ceb70e0b52
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
 # ╟─0477e49b-d8b2-4308-b692-cadcdfe28892
@@ -2136,28 +2182,34 @@ version = "3.5.0+0"
 # ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
 # ╟─302c84ce-c39d-456b-b748-e3f5ddec0eda
 # ╟─3f73757b-bab9-4d72-9fff-8884e96e76cd
+# ╟─3088bca4-0db3-4e4d-a7e5-8afb0f356271
 # ╟─92d1fc2f-9bdc-41dc-af49-9412f931d882
 # ╟─5d320375-0a3c-4197-b35d-f6610173329d
 # ╟─e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 # ╟─d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
+# ╟─b55432ac-4960-4983-8330-4ea957a05eee
 # ╟─c2cd21d9-3fe7-42ec-b6a8-ce34d0770d63
 # ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
+# ╟─347dc728-2224-4e91-9d7b-45badef8f9a0
 # ╟─7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 # ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
 # ╟─53069bcc-9b28-40bf-9053-4ec0c6099611
 # ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
-# ╟─57d01a67-01c7-4d61-93c7-737ef2cbb6a9
+# ╟─030dab23-18ed-4e1e-9074-4da8bb9e3ee8
+# ╟─edf6e079-9aad-4969-b6e3-06dd45b99d68
 # ╟─8b286e86-692f-419c-83c1-f9120e4e35de
 # ╟─8702a6cf-69de-4e9c-8e77-81f39b55efc7
-# ╟─8fced956-e527-4ed0-94d4-321368f09773
+# ╟─339c792e-7ef1-4554-9f12-d616bc9a7e5b
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
-# ╟─64cd25be-2875-4249-b59c-19dcda28a127
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
+# ╟─64cd25be-2875-4249-b59c-19dcda28a127
 # ╟─963c0bcf-5804-47a5-940e-68f348db95ea
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
+# ╟─758e43bf-e60b-42a3-a3e0-5b928c330892
 # ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─77339a25-c26c-4bfe-84ee-15274389619f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
