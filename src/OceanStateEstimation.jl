@@ -166,18 +166,18 @@ end
     ECCOdiags_add(nam::String)
 
 Add data to the ECCOdiags_path folder. Known options for `nam` include 
-"release3", "release3", "release4", and "interp_coeffs". Note that 
+"release1", "release3", "release4", and "interp_coeffs". Note that 
 "release2" is the estimate that's readily donwloaded by ECCOdiags_download().
 """
 function ECCOdiags_add(nam::String)
     if nam=="release1"
-        url="https://zenodo.org/record/5787104/files/ECCOv4r1_analysis.tar.gz?download=1"
+        url="https://zenodo.org/record/6123262/files/ECCOv4r1_analysis.tar.gz?download=1"
         fil="ECCOv4r1_analysis.tar.gz"
     elseif nam=="release3"
-        url="https://zenodo.org/record/5786213/files/ECCOv4r3_analysis.tar.gz?download=1"
+        url="https://zenodo.org/record/6123288/files/ECCOv4r3_analysis.tar.gz?download=1"
         fil="ECCOv4r3_analysis.tar.gz"
     elseif nam=="release4"
-        url="https://zenodo.org/record/5786229/files/ECCOv4r4_analysis.tar.gz?download=1"
+        url="https://zenodo.org/record/6123127/files/ECCOv4r4_analysis.tar.gz?download=1"
         fil="ECCOv4r4_analysis.tar.gz"
     elseif nam=="interp_coeffs"
         url="https://zenodo.org/record/5784905/files/interp_coeffs_halfdeg.jld2?download=1"
