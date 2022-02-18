@@ -147,7 +147,7 @@ begin
 	γ=GridSpec("LatLonCap",pth)
 	Γ=GridLoad(γ;option="full")
 	#LC=LatitudeCircles(-89.0:89.0,Γ)
-	"Done with grid"
+	"Done with ECCO grid"
 end
 
 # ╔═╡ 963c0bcf-5804-47a5-940e-68f348db95ea
@@ -227,13 +227,90 @@ md"""select a solution : $(sol_select)"""
 # ╔═╡ 339c792e-7ef1-4554-9f12-d616bc9a7e5b
 md"""select a solution : $(sol_select)"""
 
+# ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
+begin
+	ntr1_select = @bind ntr1 Select(list_trsp)
+	
+	md"""### Transport Across One Section
+	
+	- transect for transport vs time : $(ntr1_select)	
+	"""
+end
+
+# ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
+begin
+	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
+	
+	md"""### Transport Across Multiple Sections
+
+!!! note
+    The layout of this multiple-panel display should update as you select and unselect sections.
+	
+$(ntr2_select)	
+	"""
+end
+
+# ╔═╡ 758e43bf-e60b-42a3-a3e0-5b928c330892
+function climatology_files(pth_out)
+	list_clim=readdir(pth_out)
+	kk=findall(occursin.(Ref("clim"),list_clim))
+	list_clim=list_clim[kk]
+	clim_files=[]
+	for ii in 1:length(list_clim)
+		tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
+		[push!(clim_files,i) for i in tmp]
+	end
+	clim_files
+end
+
+# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
+begin
+	pth_tmp1=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis")
+	clim_files=climatology_files(pth_tmp1)	
+	nammap_select = @bind nammap Select(clim_files)
+	statmap_select = @bind statmap Select(["mean","std","mon"])	
+	timemap_select = @bind timemap Select(1:12)
+	md"""
+	- file for time mean map : $(nammap_select)
+	- choice of statistic for time mean map : $(statmap_select)
+	- (optional) if `mon` was selected then show month # : $(timemap_select)
+	"""
+end
+
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
 begin
 	pth_out=joinpath(OceanStateEstimation.ECCOdiags_path,sol)
-	md"""### Input Files
+	md"""## ECCO Files
+
+	Here we read results from a previous computation that derived 
+	transports and other quantities like zonal means from the gridded 
+	model output. 
 	
-	Current folder : $(pth_out)
+	Folder name : $(pth_out)
 	"""
+end
+
+# ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
+let
+	fil=joinpath(pth_out,nammap)
+	if statmap!=="mon"
+		tmp=load(fil,statmap)
+	else
+		tmp=load(fil,statmap)[:,timemap]
+	end
+
+	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
+	DD=reshape(DD,size(λ.lon))
+	#DD[findall(DD.==0.0)].=NaN
+	kk3=basename(nammap)[1:end-5]
+	statmap=="std" ? rng=clim_colors2[kk3] : rng=clim_colors1[kk3]
+	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
+
+	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
+	ax = Mkie.Axis(fig[1,1], title="file is "*basename(nammap),xlabel="longitude",ylabel="latitude")
+	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
+	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
+	fig	
 end
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
@@ -522,86 +599,6 @@ begin
 	figov1(pth_out,ktr1)
 end
 
-# ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
-with_terminal() do
-	fil_list=readdir(pth_out)
-	println.(fil_list)
-	"👇"
-end
-
-# ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
-begin
-	ntr1_select = @bind ntr1 Select(list_trsp)
-	
-	md"""### Transport Across One Section
-	
-	- transect for transport vs time : $(ntr1_select)	
-	"""
-end
-
-# ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
-begin
-	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
-	
-	md"""### Transport Across Multiple Sections
-
-!!! note
-    The layout of this multiple-panel display should update as you select and unselect sections.
-	
-$(ntr2_select)	
-	"""
-end
-
-# ╔═╡ 758e43bf-e60b-42a3-a3e0-5b928c330892
-function climatology_files(pth_out)
-	list_clim=readdir(pth_out)
-	kk=findall(occursin.(Ref("clim"),list_clim))
-	list_clim=list_clim[kk]
-	clim_files=[]
-	for ii in 1:length(list_clim)
-		tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
-		[push!(clim_files,i) for i in tmp]
-	end
-	clim_files
-end
-
-# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
-begin
-	pth_tmp1=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis")
-	clim_files=climatology_files(pth_tmp1)	
-	nammap_select = @bind nammap Select(clim_files)
-	statmap_select = @bind statmap Select(["mean","std","mon"])	
-	timemap_select = @bind timemap Select(1:12)
-	md"""
-	- file for time mean map : $(nammap_select)
-	- choice of statistic for time mean map : $(statmap_select)
-	- (optional) if `mon` was selected then show month # : $(timemap_select)
-	"""
-end
-
-# ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-let
-	fil=joinpath(pth_out,nammap)
-	if statmap!=="mon"
-		tmp=load(fil,statmap)
-	else
-		tmp=load(fil,statmap)[:,timemap]
-	end
-
-	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
-	DD=reshape(DD,size(λ.lon))
-	#DD[findall(DD.==0.0)].=NaN
-	kk3=basename(nammap)[1:end-5]
-	statmap=="std" ? rng=clim_colors2[kk3] : rng=clim_colors1[kk3]
-	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
-
-	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
-	ax = Mkie.Axis(fig[1,1], title="file is "*basename(nammap),xlabel="longitude",ylabel="latitude")
-	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
-	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
-	fig	
-end
-
 # ╔═╡ a468baa1-2e5b-40ce-b33c-2e275d720c8e
 begin
 	function axtr1(ax,namtr)
@@ -654,6 +651,13 @@ begin
 		transport_plot(namtrs,ncols)
 end
 
+# ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
+with_terminal() do
+	fil_list=readdir(pth_out)
+	println.(fil_list)
+	"Subfolders And files list:"
+end
+
 # ╔═╡ 77339a25-c26c-4bfe-84ee-15274389619f
 md""" ## Directions
 
@@ -661,10 +665,10 @@ md""" ## Directions
     Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as follows. Code for steps 2 to 4 is below. 
 
 1. [start julia](https://docs.julialang.org/en/v1/manual/getting-started/)
-1. download input files (see below)
+1. download input files
 1. [add Pluto.jl](https://github.com/fonsp/Pluto.jl) using [Pkg.jl](https://pkgdocs.julialang.org/v1/)
 1. start `Pluto` (docs [here](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto))
-1. Once Pluto opens, in your web browser, paste the [notebook url](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl) and click open.
+1. Once Pluto opens, in your web browser, paste the [notebook url](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl) and click open.
 
 At first, it may take a couple minutes for the whole suite of plots to get display, which can occur progressively. Afterwards, things should update much faster when using the drop down menus.
 
@@ -687,7 +691,7 @@ For more on the underlying software and additional notebooks like this, take a l
 
 - [OceanStateEstimation.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/)
 - [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/)
-- [MITgcmTools.jl](https://github.com/gaelforget/MITgcmTools.jl)
+- [MITgcmTools.jl](https://gaelforget.github.io/MITgcmTools.jl/dev/)
 - [JuliaClimate Notebooks](https://juliaclimate.github.io/GlobalOceanNotebooks/)
 """
 
@@ -2201,8 +2205,6 @@ version = "3.5.0+0"
 # ╟─8b286e86-692f-419c-83c1-f9120e4e35de
 # ╟─8702a6cf-69de-4e9c-8e77-81f39b55efc7
 # ╟─339c792e-7ef1-4554-9f12-d616bc9a7e5b
-# ╟─79a9794e-85c6-400e-8b44-3742b56544a2
-# ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
@@ -2210,6 +2212,8 @@ version = "3.5.0+0"
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─758e43bf-e60b-42a3-a3e0-5b928c330892
 # ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─79a9794e-85c6-400e-8b44-3742b56544a2
+# ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
