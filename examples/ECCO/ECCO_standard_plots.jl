@@ -28,7 +28,7 @@ md"""#  ECCO Solutions : Standard Plots
 
 
 !!! introduction
-	This notebook let's you explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) series ([releases 1 to 4](https://ecco-group.org/products.htm), for now, with _release 5_ coming soon) using [Julia](https://julialang.org). If you are running a live version of the notebook via Pluto.jl (instructions provided at bottom of this page) then the various plots will update when you use the drow down menus, as seen in [this video](https://youtu.be/UEmBnzspSRg). If instead you are viewing the html page hosted online then this interactivity is disabled.
+	This notebook let's you explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) series ([releases 1 to 4](https://ecco-group.org/products.htm), for now, with _release 5_ coming soon) using [Julia](https://julialang.org). If you are running a live version of the notebook via Pluto.jl (`instructions provided at bottom of this page`) then the various plots will update when you use the drow down menus, as seen in [this video](https://youtu.be/UEmBnzspSRg). If instead you are viewing the html page hosted online then this interactivity is disabled.
 """
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
@@ -282,11 +282,9 @@ begin
 	pth_out=joinpath(OceanStateEstimation.ECCOdiags_path,sol)
 	md"""## ECCO Files
 
-	Here we read results from a previous computation that derived 
-	transports and other quantities like zonal means from the gridded 
-	model output. 
+Here we read and display results from a previous computation that derived transports and other quantities like zonal means from the gridded model output. Plotting includes interpolation from model grid to regular grid.
 	
-	Folder name : $(pth_out)
+Folder name : $(pth_out)
 	"""
 end
 
@@ -662,15 +660,7 @@ end
 md""" ## Directions
 
 !!! summary
-    Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as follows. Code for steps 2 to 4 is below. 
-
-1. [start julia](https://docs.julialang.org/en/v1/manual/getting-started/)
-1. download input files
-1. [add Pluto.jl](https://github.com/fonsp/Pluto.jl) using [Pkg.jl](https://pkgdocs.julialang.org/v1/)
-1. start `Pluto` (docs [here](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto))
-1. Once Pluto opens, in your web browser, paste the [notebook url](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl) and click open.
-
-At first, it may take a couple minutes for the whole suite of plots to get display, which can occur progressively. Afterwards, things should update much faster when using the drop down menus.
+    Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as show below. `Code for steps 2 to 4` is given first in the grey text box. These command should be executed in the Julia terminal window (the `REPL`) after installing `julia` in step 1.
 
 ```
 using Pluto
@@ -687,12 +677,24 @@ OceanStateEstimation.ECCOdiags_add("release1")
 Pluto.run()
 ```
 
+1. [start julia](https://docs.julialang.org/en/v1/manual/getting-started/)
+1. download input files (_incl. in code shown above_)
+1. [add Pluto](https://github.com/fonsp/Pluto.jl) using [Pkg.jl](https://pkgdocs.julialang.org/v1/getting-started/) (_incl. in code shown above_)
+1. [start Pluto](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto) (_incl. in code shown above_)
+1. Once Pluto opens, in your web browser, paste the [notebook url](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl) (not the julia code) and click open.
+
+**At first, it may take a couple minutes** for the whole suite of plots to get display, as code compilation takes place (on the fly). Afterwards, since compiled code is available, things should update much faster when using the drop down menus. Another point to note is that notebooks like this one can be executed in various ways outside of Pluto as well.
+
 For more on the underlying software and additional notebooks like this, take a look at the list below.
 
-- [OceanStateEstimation.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/)
-- [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/)
-- [MITgcmTools.jl](https://gaelforget.github.io/MITgcmTools.jl/dev/)
-- [JuliaClimate Notebooks](https://juliaclimate.github.io/GlobalOceanNotebooks/)
+- [Julia](https://www.julialang.org) ; [docs here](https://docs.julialang.org/en/v1/) and many other resources @ <https://www.julialang.org>
+- [Pluto.jl](https://github.com/fonsp/Pluto.jl) ; video from [JuliaCon 2020](https://www.youtube.com/watch?v=IAF8DjrQSSk) that introduced `Pluto.jl`
+- [OceanStateEstimation.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/) ; where this notebook is located along with the pre-processing loop.
+- [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/) ; array framework able to represents climate model grids like the ones used in ECCO.
+- [MITgcmTools.jl](https://gaelforget.github.io/MITgcmTools.jl/dev/) ; functions read/write MITgcm files (inputs & outputs) in various formats.
+- [JuliaClimate Notebooks](https://juliaclimate.github.io/GlobalOceanNotebooks/) ; a longer series of notebooks that often use ECCO as an example.
+- [OceanObs 2020 workshop](https://github.com/JuliaOcean/JuliaOceanSciencesMeeting2020) ; Julia (language) users and tools for oceanography.
+- [JuliaCon 2021 workshop](https://github.com/JuliaOcean/MarineEcosystemsJuliaCon2021.jl) ; Modeling Marine Ecosystems At Multiple Scales Using Julia.
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
