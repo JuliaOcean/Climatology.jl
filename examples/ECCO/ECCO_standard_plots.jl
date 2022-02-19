@@ -660,7 +660,7 @@ end
 md""" ## Directions
 
 !!! summary
-    Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as show below. `Code for steps 2 to 4` is given first in the grey text box. These command should be executed in the Julia terminal window (the `REPL`) after installing `julia` in step 1.
+    Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as show below. `Code for steps 2 to 4` is given first in the `grey box`. These commands should be executed in the Julia terminal window (the `REPL`) after installing `julia` in step 1.
 
 ```
 using Pluto
