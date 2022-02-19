@@ -2,8 +2,6 @@
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gaelforget.github.io/OceanStateEstimation.jl/dev)
 [![CI](https://github.com/gaelforget/OceanStateEstimation.jl/actions/workflows/ci.yml/badge.svg)](https://github.com/gaelforget/OceanStateEstimation.jl/actions/workflows/ci.yml)
-[![Codecov](https://codecov.io/gh/gaelforget/OceanStateEstimation.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gaelforget/OceanStateEstimation.jl)
-
 [![DOI](https://zenodo.org/badge/260376633.svg)](https://zenodo.org/badge/latestdoi/260376633)
 
 This package is currently focused on downloading, reading, displaying, and analyzing [ocean state estimates](http://dx.doi.org/10.5194/gmd-8-3071-2015). 
