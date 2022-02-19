@@ -1,7 +1,7 @@
 
 ## Physical Oceanography
 
-[ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) depicts a selection of climate-relevant variables and indices as an example. These were derived from gridded estimates of the ocean state for physical variables like temperature, salinity, and currents (see `ECCO_standard_analysis.jl`) and retrieved from [dataverse](https://dataverse.harvard.edu/dataverse/ECCO) or [zenodo.org](https://zenodo.org) (see [`ECCOdiags_download`](@ref), and [`ECCOdiags_add`](@ref)).
+[ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) depicts a selection of climate-relevant variables and indices as an example. These were derived from gridded estimates of the ocean state for physical variables like temperature, salinity, and currents (see `ECCO_standard_analysis.jl`) and retrieved from [dataverse](https://dataverse.harvard.edu/dataverse/ECCO) or [zenodo.org](https://zenodo.org) (see [`OceanStateEstimation.ECCOdiags_download`](@ref), and [`OceanStateEstimation.ECCOdiags_add`](@ref)).
 
 To run the notebook proceed as follows. Once Pluto opens, in your web browser, paste the `code link` url (not the julia code itself) and click open. 
 
