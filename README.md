@@ -10,8 +10,8 @@ _It is in early development stage; breaking changes remain likely._
 
 ### Use Examples
 
-- [ECCO\_standard\_plots.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO_standard_plots.jl))
-- [CBIOMES\_climatology\_plot](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES_climatology_plot.jl))
+- [ECCO\_standard\_plots.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl))
+- [CBIOMES\_climatology\_plot](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl))
 
 See [Physical Oceanography](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/#Physical-Oceanography), [Bio-Geo-Chemical Climatology](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/#Bio-Geo-Chemical-Climatology) in the [docs](https://gaelforget.github.io/OceanStateEstimation.jl/dev) for detail.
 
