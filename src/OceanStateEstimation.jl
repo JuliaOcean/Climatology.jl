@@ -188,10 +188,10 @@ function ECCOdiags_add(nam::String)
         fil=missing
     end
     if (!ismissing(url))&&(nam=="interp_coeffs")
-        Downloads.download(url,joinpath(ECCOdiags_path,fil))
+        Downloads.download(url,joinpath(ECCOdiags_path,fil);timeout=60000.0)
     elseif (!ismissing(url))&&(!isdir(joinpath(ECCOdiags_path,fil)[1:end-7]))
         println("downloading "*nam*" ... started")
-        Downloads.download(url,joinpath(ECCOdiags_path,fil))
+        Downloads.download(url,joinpath(ECCOdiags_path,fil);timeout=60000.0)
         tmp_path=open(joinpath(ECCOdiags_path,fil)) do io
             Tar.extract(CodecZlib.GzipDecompressorStream(io))
         end
