@@ -14,12 +14,12 @@ git-tree-sha1 = "ec3707d05425e2b371b5cb619383db1a3a9ab3de"
     url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.5.tar.gz"
 
 [ECCOdiags]
-git-tree-sha1 = "4bcaeab5638fc4b1cb4407c14b10529c6c7650c8"
+git-tree-sha1 = "88d76175cf7856091ee68ec83f03e74bc5041e96"
 lazy = true
 
     [[ECCOdiags.download]]
-    sha256 = "734817cd0739fbf0a6eade0244516ef09090613f1a3db2e20b5cd3562af3d34a"
-    url = "https://zenodo.org/record/5773401/files/ECCOv4r2_analysis.tar.gz?download=1"
+    sha256 = "33338d32863cda25ee43bb2614de252958929693d21a515c04a6fa04a1618bcc"
+    url = "https://zenodo.org/record/6123272/files/ECCOv4r2_analysis.tar.gz?download=1"
 
 [OCCAclim]
 git-tree-sha1 = "2a81eeb195756e04bb3bd78139dbff6f6767f670"

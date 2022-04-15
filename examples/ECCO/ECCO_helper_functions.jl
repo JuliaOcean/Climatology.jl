@@ -2,7 +2,7 @@
 function ECCO_path_etc(sol0::String,calc::String,nam::String)
     sol="ECCOv4"*sol0*"_analysis"
 
-    if sol0=="r2"
+    if sol0=="r1"||sol0=="r2"
         nt=240
     elseif sol0=="r3"
         nt=288
@@ -181,7 +181,7 @@ function read_monthly_default(sol,nam,t,list)
     mdsio_list2d=("STATE/state_2d_set1","STATE/state_2d_set1",
                   "STATE/state_2d_set1","STATE/state_2d_set1")
 
-    if (sol=="ECCOv4r2_analysis")||(sol=="ECCOv4r3_analysis")
+    if (sol=="ECCOv4r1_analysis")||(sol=="ECCOv4r2_analysis")||(sol=="ECCOv4r3_analysis")
         nct_path=joinpath(pth_in,nam)
         if sum(var_list3d.==nam)==1
             tmp=read_nctiles(nct_path,nam,γ,I=(:,:,:,t))
