@@ -21,7 +21,7 @@ OceanStateEstimation.ECCOdiags_download()
 OceanStateEstimation.ECCOdiags_add("interp_coeffs")
 
 #lst=("CBIOMES_climatogy_create.jl",)
-lst=("CBIOMES/CBIOMES_climatology_plot.jl","ECCO/ECCO_standard_plots.jl")
+lst=("CBIOMES/CBIOMES_climatology_plot.jl","ECCO/ECCO_standard_plots.jl","OptimalTransport/OptimalTransport_demo.jl")
 
 pth_out=joinpath(@__DIR__,"build", "examples")
 !isdir(pth_out) ? mkdir(pth_out) : nothing
