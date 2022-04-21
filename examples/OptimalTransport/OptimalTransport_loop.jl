@@ -123,7 +123,7 @@ if calc_ModToMod
         dt=time()-t0[1]
         println("ModToMod $(kk) $(dt)")
         t0[1]=time()
-        @save joinpath(pth_output,"ModToMod.jld2") d;
+        jldsave(joinpath(pth_output,"ModToMod_$(choice_method).jld2"); d = d.s)
     end
 end
 
@@ -139,7 +139,7 @@ if calc_SatToSat
         dt=time()-t0[1]
         println("SatToSat $(kk) $(dt)")
         t0[1]=time()
-        @save joinpath(pth_output,"SatToSat.jld2") d;
+        jldsave(joinpath(pth_output,"SatToSat.jld2"); d = d.s)
     end
 end
 
@@ -155,7 +155,7 @@ if calc_ModToSat
         dt=time()-t0[1]
         println("ModToSat $(kk) $(dt)")
         t0[1]=time()
-        @save joinpath(pth_output,"ModToSat.jld2") d;
+        jldsave(joinpath(pth_output,"ModToSat.jld2"); d = d.s)
     end
 end
     
@@ -209,6 +209,6 @@ if test_methods
         dt=time()-t0[1]
         println("ModToMod_methods $(k) $(dt)")
         t0[1]=time()
-        @save "ModToMod_methods.jld2" d;
+        jldsave(joinpath(pth_output,"ModToMod_methods.jld2"); d = d.s)
     end
 end
