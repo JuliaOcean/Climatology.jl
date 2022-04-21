@@ -16,9 +16,9 @@ end
 
 # ╔═╡ db98d796-c0d2-11ec-2c96-f7510a6d771c
 begin
-	using OptimalTransport,  Tulip, LinearAlgebra
+	using OptimalTransport,  LinearAlgebra
 	using Tables, DataFrames
-	import PlutoUI, CSV
+	import PlutoUI, CSV, Downloads, Tulip
 	import CairoMakie as Makie
 	"Done with packages"
 end
@@ -66,8 +66,10 @@ begin
 	lats=-19.75:0.5:49.75
 	
 	pth=joinpath(tempdir(),"OptimalTransport_example")
-	S=Tables.matrix(CSV.read(joinpath(pth,"S.csv"),DataFrame))
-	M=Tables.matrix(CSV.read(joinpath(pth,"M.csv"),DataFrame))
+	url="https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/OptimalTransport/M.csv"
+	M=Tables.matrix(CSV.read(Downloads.download(url),DataFrame))
+	url="https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/OptimalTransport/S.csv"
+	S=Tables.matrix(CSV.read(Downloads.download(url),DataFrame))
 
 	nx=size(M,1)
 	Cost=Float64.([abs(i-j) for i in 1:nx, j in 1:nx])
@@ -97,7 +99,7 @@ end
 # ╔═╡ 7796c8e9-a090-4aab-a073-50f839ceab22
 begin
 	ε = 0.01
-#    γ = sinkhorn(M[:,m1], S[:,m2], Cost, ε, SinkhornStabilized(); maxiter=5_000)
+#    γ = sinkhorn(M[:,m1], S[:,m2], Cost, ε, SinkhornGibbs(); maxiter=5_000)
 #    γ = sinkhorn(M[:,m1], S[:,m2], Cost, ε, SinkhornStabilized(); maxiter=5_000)
 	γ = sinkhorn(M[:,m1], M[:,m2], Cost, ε, SinkhornEpsilonScaling(SinkhornStabilized()); maxiter=5_000)
 	Db=dot(γ, Cost) #compute optimal cost, directly
@@ -122,6 +124,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 OptimalTransport = "7e02d93a-ae51-4f58-b602-d97af76e3b33"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
