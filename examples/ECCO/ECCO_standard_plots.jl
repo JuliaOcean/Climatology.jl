@@ -41,6 +41,22 @@ md"""#  Ocean State Estimate : Standard Plots
 # ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 md"""## Climatology Maps"""
 
+# ╔═╡ 0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
+function longname(n)
+	if occursin("_k",n)
+		ln=split(n,"_k")[1]*" at level "*split(n,"_k")[2]
+	else
+		ln=n
+	end
+	occursin("BSF",ln) ? ln=replace(ln, "BSF" => "Horizontal Streamfunction (m3/s)") : nothing
+	occursin("MXLDEPTH",ln) ? ln=replace(ln, "MXLDEPTH" => "Mixed Layer Depth (m)") : nothing
+	occursin("SIarea",ln) ? ln=replace(ln, "SIarea" => "Ice Concentration (0 to 1)") : nothing
+	occursin("SSH",ln) ? ln=replace(ln, "SSH" => "Free Surface Height (m)") : nothing
+	occursin("THETA",ln) ? ln=replace(ln, "THETA" => "Potential Temperature (degree C)") : nothing
+	occursin("SALT",ln) ? ln=replace(ln, "SALT" => "Salinity (psu)") : nothing
+	return ln
+end
+
 # ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
 md"""## Select a Solution"""
 
@@ -122,9 +138,7 @@ begin
 	
 	- variable for global mean vs time : $(ngl1_select)
 	- depth index, k, for time series : $(kgl1_select)
-	
-	!!! note
-	    k=0 for volume integral; k>0 for level temperature
+	  - _(k=0 for volume average; k>0 for area average at level k)_
 	"""
 end
 
@@ -287,9 +301,9 @@ end
 begin
 	pth_tmp1=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis")
 	clim_files=climatology_files(pth_tmp1)	
-	clim_names=[split(basename(f),'.')[1] for f in clim_files]
-	#clim_names=clim_files
-	nammap_select = @bind nammap Select(clim_names)
+	clim_name=[split(basename(f),'.')[1] for f in clim_files]
+	clim_longname=longname.(clim_name) 
+	nammap_select = @bind nammap Select(clim_longname)
 	statmap_select = @bind statmap Select(["mean","std","mon"])	
 	timemap_select = @bind timemap Select(1:12)
 	md"""
@@ -312,7 +326,8 @@ end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 let
-	ii=findall(clim_names.==nammap)[1]
+	ii=findall(clim_longname.==nammap)[1]
+	nam=clim_name[ii]
 	
 	fil=joinpath(pth_out,clim_files[ii])
 	if statmap!=="mon"
@@ -324,12 +339,11 @@ let
 	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
 	DD=reshape(DD,size(λ.lon))
 	#DD[findall(DD.==0.0)].=NaN
-	kk3=nammap
-	statmap=="std" ? rng=clim_colors2[kk3] : rng=clim_colors1[kk3]
+	statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
 	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
 	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
-	ax = Mkie.Axis(fig[1,1], title="file is "*basename(nammap),xlabel="longitude",ylabel="latitude")
+	ax = Mkie.Axis(fig[1,1], title=clim_longname[ii],xlabel="longitude",ylabel="latitude")
 	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	fig	
@@ -377,7 +391,7 @@ begin
 		end
 
 		x=1992.0 .+ x./12.0
-		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)$(addon1)",ylabel="latitude",
+		ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) : Zonal Mean $(addon1)",ylabel="latitude",
 			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0))
 		hm1 = Mkie.contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs),colormap=cm)
 		Mkie.xlims!(ax1,1992.0,2021.0)
@@ -390,25 +404,25 @@ end
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
 let
 	pth_out
-	fn(x)=transpose(x)
 
 	namzm=namzmanom2d
 	if namzm=="MXLDEPTH"
-		levs=(-100.0:25.0:100.0)/2.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
 	elseif namzm=="SIarea"
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
 	elseif namzm=="THETA"
-		levs=(-2.0:0.25:2.0)/5.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
 	elseif namzm=="SALT"
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
 	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=(-0.5:0.1:0.5)/2.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
 	else
+		fn=transpose
 		levs=missing
 	end
 
@@ -416,7 +430,7 @@ let
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm2d,:])
 		x=vec(0.5:size(tmp,3)); 
-		addon1=" at $(Int(round(Γ.RC[k_zm2d])))m "
+		addon1=" -- at $(Int(round(Γ.RC[k_zm2d])))m "
 	else
 		z=fn(tmp[:,:])
 		x=vec(0.5:size(tmp,2)); 
@@ -442,7 +456,7 @@ let
 
 	x=1992.0 .+ x./12.0
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzm)$(addon1) ; deviation from $(ref1)",
+	ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) -- minus $(ref1) $(addon1)",
 		xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=cmap_fac*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
@@ -454,7 +468,6 @@ end
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
 let
 	pth_out
-	fn(x)=transpose(x)
 	if namzmanom=="THETA"
 		levs=(-3.0:0.4:3.0)/8.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
@@ -462,7 +475,7 @@ let
 		levs=(-0.5:0.1:0.5)/10.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
 	else
-		levs=missing
+		levs=missing; 	fn(x)=transpose(x)
 	end
 
 	dlat=2.0
@@ -470,7 +483,7 @@ let
 
 	tmp=load(fil,"single_stored_object")
 	z=fn(tmp[l_Tzm,:,:])
-	addon1=" at $(lats[l_Tzm])N "
+	addon1=" -- at $(lats[l_Tzm])N "
 	x=vec(0.5:size(tmp,3)); 
 	y=vec(Γ.RC)
 	nt=size(tmp,3)
@@ -489,8 +502,8 @@ let
 	x=1992.0 .+ x./12.0
 
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzmanom)$(addon1) ; deviation from $(ref1)"
-		,xticks=collect(1992.0:4:2021.0))
+	ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) -- minus $(ref1) $(addon1)",
+		xticks=collect(1992.0:4:2021.0))
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=facA*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	Mkie.xlims!(ax1,1992.0,2021.0)
@@ -508,17 +521,18 @@ begin
 			fil=joinpath(pth_out,nam*"_glo3d/glo3d.jld2")
 		end
 		tmp=vec(load(fil,"single_stored_object"))
+		occursin("THETA",fil) ? ln=longname("THETA") : ln=longname("SALT")
 		if k>0
 			nt=Int(length(tmp[:])./50.0)
 		    tmp=reshape(tmp,(nt,50))
 			tmp=tmp[:,k]
 			occursin("THETA",fil) ? rng=(18.0,19.0) : rng=(34.5,35.0)
-			occursin("THETA",fil) ? txt="Temperature (degree C, level $(k))" : txt="Salinity (psu), level $(k)"
+			txt=ln*" -- level $(k)" 
 			k>1 ? rng=extrema(tmp) : nothing
 		else
 			nt=length(tmp[:])
 			occursin("THETA",fil) ? rng=(3.55,3.65) : rng=(34.72,34.73)
-			occursin("THETA",fil) ? txt="Temperature  (degree C)" : txt="Salinity (psu)"
+			txt=ln
 		end
 
 		x=vec(0.5:nt)
@@ -608,6 +622,8 @@ begin
 		for ll in 115:10:145
 			ov=tmp[ll,kk,:]
 			ov=runmean(ov, 12)
+			ov[1:5].=NaN
+			ov[end-4:end].=NaN
 			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
 		end
 		Mkie.xlims!(ax1,(1992.0,2021.0))
@@ -640,6 +656,8 @@ begin
 		x=1992.0 .+ x./12.0
 
 		hm1=Mkie.lines!(ax,x,val,label="ECCO estimate")
+		valsmo[1:5].=NaN
+		valsmo[end-4:end].=NaN
 		Mkie.lines!(ax,x,valsmo,linewidth=4.0,color=:red)
 		Mkie.xlims!(ax,(1992.0,2021.0))
 	end
@@ -2201,6 +2219,7 @@ version = "3.5.0+0"
 # ╟─8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
+# ╟─0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
 # ╟─c46f0656-3627-448b-a779-dad2d980e3cf
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
 # ╟─1df3bd3c-1396-4cd0-bfd2-3a05dec68261
