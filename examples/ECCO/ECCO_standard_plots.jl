@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.18.0
+# v0.19.3
 
 using Markdown
 using InteractiveUtils
@@ -23,31 +23,52 @@ begin
 	"Done with packages"
 end
 
+# ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
+PlutoUI.TableOfContents()
+
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
-md"""#  ECCO Solutions : Standard Plots
+md"""#  Ocean State Estimate : Standard Plots
 
 
 !!! introduction
-	This notebook let's you explore and compare ocean state estimates from the [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) series ([releases 1 to 4](https://ecco-group.org/products.htm), for now, with _release 5_ coming soon) using [Julia](https://julialang.org). If you are running a live version of the notebook via Pluto.jl (`instructions provided at bottom of this page`) then the various plots will update when you use the drow down menus, as seen in [this video](https://youtu.be/UEmBnzspSRg). If instead you are viewing the html page hosted online then this interactivity is disabled.
+	This [Julia](https://julialang.org) [notebook](https://github.com/fonsp/Pluto.jl) let's you explore [ECCO](https://ecco-group.org) ocean state estimates interactively -- [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) [releases 1 to 4](https://ecco-group.org/products.htm) initially. 
+
+!!! note
+    - In you are viewing a live version of the notebook, plots will update according to drop down menus as seen in this [video demo](https://youtu.be/UEmBnzspSRg). Directions to run the notebook via [Pluto.jl](https://github.com/fonsp/Pluto.jl), are provided at the bottom of the page. 
+    - If instead you are viewing the static html version hosted online, then this interactivity is disabled.
 """
 
-# ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
-PlutoUI.TableOfContents()
+# ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
+md"""## Climatology Maps"""
+
+# ╔═╡ 0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
+function longname(n)
+	if occursin("_k",n)
+		ln=split(n,"_k")[1]*" at level "*split(n,"_k")[2]
+	else
+		ln=n
+	end
+	occursin("BSF",ln) ? ln=replace(ln, "BSF" => "Horizontal Streamfunction (m3/s)") : nothing
+	occursin("MXLDEPTH",ln) ? ln=replace(ln, "MXLDEPTH" => "Mixed Layer Depth (m)") : nothing
+	occursin("SIarea",ln) ? ln=replace(ln, "SIarea" => "Ice Concentration (0 to 1)") : nothing
+	occursin("SSH",ln) ? ln=replace(ln, "SSH" => "Free Surface Height (m)") : nothing
+	occursin("THETA",ln) ? ln=replace(ln, "THETA" => "Potential Temperature (degree C)") : nothing
+	occursin("SALT",ln) ? ln=replace(ln, "SALT" => "Salinity (psu)") : nothing
+	return ln
+end
 
 # ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
 md"""## Select a Solution"""
 
-# ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
-md"""## Climatology Maps"""
+# ╔═╡ 1df3bd3c-1396-4cd0-bfd2-3a05dec68261
+md"""## Zonal Means"""
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
 	k_zm_select = @bind k_zm Slider(1:50, default=1, show_value=true)
 	namzm_select = @bind namzm Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
 	
-	md"""## Zonal Means 
-	
-	Here we select a quantity and plot it as a function of time and latitude.
+	md"""Select a quantity and plot it as a function of time and latitude.
 	
 	- variable for zonal mean vs time : $(namzm_select)
 	- level for zonal mean vs time : $(k_zm_select)
@@ -57,6 +78,9 @@ begin
 
 	"""
 end
+
+# ╔═╡ 31e97c10-69a6-4074-8b51-89d845620548
+md"""## Zonal Mean Anomalies"""
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
@@ -68,9 +92,7 @@ begin
 
 	#cmap_fac_select = @bind cmap_fac Select(string.([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0])[:])
 	#cmap_fac_select = @bind cmap_fac Select([1 2])
-md"""## Zonal Mean Anomalies
-
-Here we select a quantity and plot it's anomaly as a function of time and latitude.
+md"""Select a quantity and plot it's anomaly as a function of time and latitude.
 
 - variable for zonal mean anomaly vs time : $(namzmanom2d_select)
 - depth level for zonal mean vs time : $(k_zm2d_select)
@@ -83,6 +105,9 @@ Here we select a quantity and plot it's anomaly as a function of time and latitu
 """
 end
 
+# ╔═╡ 7dbbb44c-22db-4c30-b71c-58fbab3f78b6
+md"""### Depth vs Time Anomalies"""
+
 # ╔═╡ 302c84ce-c39d-456b-b748-e3f5ddec0eda
 begin
 	namzmanom_select = @bind namzmanom Select(["THETA","SALT"])
@@ -91,7 +116,7 @@ begin
 	k1_select = @bind k1 Slider(1:50;default=30, show_value=true)
 	facA_select = @bind facA Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
 
-	md"""### Depth vs Time Anomalies
+	md"""Settings:
 	
 	- variable for depth vs time anomaly : $(namzmanom_select)
 	- latitude index for depth vs time : $(l_zm_select)
@@ -101,18 +126,19 @@ begin
 	"""
 end
 
+# ╔═╡ 6d9cdea2-272b-4953-8af7-1425817f07a2
+md"""## Global Means"""
+
 # ╔═╡ 92d1fc2f-9bdc-41dc-af49-9412f931d882
 begin
 	ngl1_select = @bind ngl1 Select(["THETA","SALT"];default="THETA")
 	kgl1_select = @bind kgl1 Slider(0:50;default=0, show_value=true)
 
-	md"""## Global Means
+	md"""Settings
 	
 	- variable for global mean vs time : $(ngl1_select)
 	- depth index, k, for time series : $(kgl1_select)
-	
-	!!! note
-	    k=0 for volume integral; k>0 for level temperature
+	  - _(k=0 for volume average; k>0 for area average at level k)_
 	"""
 end
 
@@ -127,16 +153,26 @@ Here we look at a few aspects of the ocean circulation as estimated in ECCO.
 # ╔═╡ c2cd21d9-3fe7-42ec-b6a8-ce34d0770d63
 md"""### Overturning Streamfunction"""
 
+# ╔═╡ 215cf4aa-e540-4882-8a33-b7976a6e1b04
+md"""### Overturning Time Series"""
+
 # ╔═╡ 7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 begin
 	ktr1_select = @bind ktr1 Slider(1:50;default=29, show_value=true)
 	low1_select = @bind low1 Select(["auto",-10.0,0.0,5.0,10.0];default="auto")
 	
-	md"""### Overturning Time Series
+	md"""Seetings:
+	
 	- level for overturning vs time : $(ktr1_select)
 	- lower limit for overturning plot : $(low1_select)
 	"""
 end
+
+# ╔═╡ ac1cb355-5d59-4d98-9b0a-181a89625b21
+md"""### Transport Across One Section"""
+
+# ╔═╡ 0b8ce7b9-8f41-451f-9ec5-5bff418bcafb
+md"""### Transport Across Multiple Sections"""
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
 md"""## Appendices"""
@@ -197,9 +233,6 @@ begin
 	md"""select a solution : $(sol_select)"""
 end
 
-# ╔═╡ b6978bbe-7de6-4827-8b0e-43ceb70e0b52
-md"""select a solution : $(sol_select)"""
-
 # ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
 md"""select a solution : $(sol_select)"""
 
@@ -231,7 +264,7 @@ md"""select a solution : $(sol_select)"""
 begin
 	ntr1_select = @bind ntr1 Select(list_trsp)
 	
-	md"""### Transport Across One Section
+	md"""Settings:
 	
 	- transect for transport vs time : $(ntr1_select)	
 	"""
@@ -241,12 +274,13 @@ end
 begin
 	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
 	
-	md"""### Transport Across Multiple Sections
+	md"""Select Sections:
+	
+$(ntr2_select)	
 
 !!! note
     The layout of this multiple-panel display should update as you select and unselect sections.
 	
-$(ntr2_select)	
 	"""
 end
 
@@ -267,7 +301,9 @@ end
 begin
 	pth_tmp1=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis")
 	clim_files=climatology_files(pth_tmp1)	
-	nammap_select = @bind nammap Select(clim_files)
+	clim_name=[split(basename(f),'.')[1] for f in clim_files]
+	clim_longname=longname.(clim_name) 
+	nammap_select = @bind nammap Select(clim_longname)
 	statmap_select = @bind statmap Select(["mean","std","mon"])	
 	timemap_select = @bind timemap Select(1:12)
 	md"""
@@ -290,7 +326,10 @@ end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 let
-	fil=joinpath(pth_out,nammap)
+	ii=findall(clim_longname.==nammap)[1]
+	nam=clim_name[ii]
+	
+	fil=joinpath(pth_out,clim_files[ii])
 	if statmap!=="mon"
 		tmp=load(fil,statmap)
 	else
@@ -300,12 +339,11 @@ let
 	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
 	DD=reshape(DD,size(λ.lon))
 	#DD[findall(DD.==0.0)].=NaN
-	kk3=basename(nammap)[1:end-5]
-	statmap=="std" ? rng=clim_colors2[kk3] : rng=clim_colors1[kk3]
+	statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
 	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
 	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
-	ax = Mkie.Axis(fig[1,1], title="file is "*basename(nammap),xlabel="longitude",ylabel="latitude")
+	ax = Mkie.Axis(fig[1,1], title=clim_longname[ii],xlabel="longitude",ylabel="latitude")
 	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
 	fig	
@@ -353,7 +391,7 @@ begin
 		end
 
 		x=1992.0 .+ x./12.0
-		ax1 = Mkie.Axis(fig1[1,1], title="Zonal Mean $(namzm)$(addon1)",ylabel="latitude",
+		ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) : Zonal Mean $(addon1)",ylabel="latitude",
 			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0))
 		hm1 = Mkie.contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs),colormap=cm)
 		Mkie.xlims!(ax1,1992.0,2021.0)
@@ -366,25 +404,25 @@ end
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
 let
 	pth_out
-	fn(x)=transpose(x)
 
 	namzm=namzmanom2d
 	if namzm=="MXLDEPTH"
-		levs=(-100.0:25.0:100.0)/2.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
 	elseif namzm=="SIarea"
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
 	elseif namzm=="THETA"
-		levs=(-2.0:0.25:2.0)/5.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
 	elseif namzm=="SALT"
-		levs=(-0.5:0.1:0.5)/5.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
 	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=(-0.5:0.1:0.5)/2.0; fn(x)=transpose(x); cm=:turbo
+		levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
 		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
 	else
+		fn=transpose
 		levs=missing
 	end
 
@@ -392,7 +430,7 @@ let
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm2d,:])
 		x=vec(0.5:size(tmp,3)); 
-		addon1=" at $(Int(round(Γ.RC[k_zm2d])))m "
+		addon1=" -- at $(Int(round(Γ.RC[k_zm2d])))m "
 	else
 		z=fn(tmp[:,:])
 		x=vec(0.5:size(tmp,2)); 
@@ -418,7 +456,7 @@ let
 
 	x=1992.0 .+ x./12.0
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzm)$(addon1) ; deviation from $(ref1)",
+	ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) -- minus $(ref1) $(addon1)",
 		xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=cmap_fac*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
@@ -430,7 +468,6 @@ end
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
 let
 	pth_out
-	fn(x)=transpose(x)
 	if namzmanom=="THETA"
 		levs=(-3.0:0.4:3.0)/8.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
@@ -438,7 +475,7 @@ let
 		levs=(-0.5:0.1:0.5)/10.0; fn(x)=transpose(x); cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
 	else
-		levs=missing
+		levs=missing; 	fn(x)=transpose(x)
 	end
 
 	dlat=2.0
@@ -446,7 +483,7 @@ let
 
 	tmp=load(fil,"single_stored_object")
 	z=fn(tmp[l_Tzm,:,:])
-	addon1=" at $(lats[l_Tzm])N "
+	addon1=" -- at $(lats[l_Tzm])N "
 	x=vec(0.5:size(tmp,3)); 
 	y=vec(Γ.RC)
 	nt=size(tmp,3)
@@ -465,8 +502,8 @@ let
 	x=1992.0 .+ x./12.0
 
 	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Anomaly of $(namzmanom)$(addon1) ; deviation from $(ref1)"
-		,xticks=collect(1992.0:4:2021.0))
+	ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) -- minus $(ref1) $(addon1)",
+		xticks=collect(1992.0:4:2021.0))
 	hm1=Mkie.contourf!(ax1,x,y,z,levels=facA*levs,colormap=:turbo)
 	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
 	Mkie.xlims!(ax1,1992.0,2021.0)
@@ -484,17 +521,18 @@ begin
 			fil=joinpath(pth_out,nam*"_glo3d/glo3d.jld2")
 		end
 		tmp=vec(load(fil,"single_stored_object"))
+		occursin("THETA",fil) ? ln=longname("THETA") : ln=longname("SALT")
 		if k>0
 			nt=Int(length(tmp[:])./50.0)
 		    tmp=reshape(tmp,(nt,50))
 			tmp=tmp[:,k]
 			occursin("THETA",fil) ? rng=(18.0,19.0) : rng=(34.5,35.0)
-			occursin("THETA",fil) ? txt="Temperature (degree C, level $(k))" : txt="Salinity (psu), level $(k)"
+			txt=ln*" -- level $(k)" 
 			k>1 ? rng=extrema(tmp) : nothing
 		else
 			nt=length(tmp[:])
 			occursin("THETA",fil) ? rng=(3.55,3.65) : rng=(34.72,34.73)
-			occursin("THETA",fil) ? txt="Temperature  (degree C)" : txt="Salinity (psu)"
+			txt=ln
 		end
 
 		x=vec(0.5:nt)
@@ -584,6 +622,8 @@ begin
 		for ll in 115:10:145
 			ov=tmp[ll,kk,:]
 			ov=runmean(ov, 12)
+			ov[1:5].=NaN
+			ov[end-4:end].=NaN
 			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
 		end
 		Mkie.xlims!(ax1,(1992.0,2021.0))
@@ -616,6 +656,8 @@ begin
 		x=1992.0 .+ x./12.0
 
 		hm1=Mkie.lines!(ax,x,val,label="ECCO estimate")
+		valsmo[1:5].=NaN
+		valsmo[end-4:end].=NaN
 		Mkie.lines!(ax,x,valsmo,linewidth=4.0,color=:red)
 		Mkie.xlims!(ax,(1992.0,2021.0))
 	end
@@ -2172,25 +2214,28 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
+# ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
+# ╟─8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
+# ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
+# ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
 # ╟─c46f0656-3627-448b-a779-dad2d980e3cf
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
-# ╟─8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
-# ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
-# ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-# ╟─b6978bbe-7de6-4827-8b0e-43ceb70e0b52
-# ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
+# ╟─1df3bd3c-1396-4cd0-bfd2-3a05dec68261
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
+# ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
 # ╟─0477e49b-d8b2-4308-b692-cadcdfe28892
-# ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
+# ╟─31e97c10-69a6-4074-8b51-89d845620548
 # ╟─2d819d3e-f62e-4a73-b51c-0e1204da2369
+# ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
 # ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
-# ╟─302c84ce-c39d-456b-b748-e3f5ddec0eda
+# ╟─7dbbb44c-22db-4c30-b71c-58fbab3f78b6
 # ╟─3f73757b-bab9-4d72-9fff-8884e96e76cd
+# ╟─302c84ce-c39d-456b-b748-e3f5ddec0eda
 # ╟─3088bca4-0db3-4e4d-a7e5-8afb0f356271
-# ╟─92d1fc2f-9bdc-41dc-af49-9412f931d882
+# ╟─6d9cdea2-272b-4953-8af7-1425817f07a2
 # ╟─5d320375-0a3c-4197-b35d-f6610173329d
+# ╟─92d1fc2f-9bdc-41dc-af49-9412f931d882
 # ╟─e88a17f0-5e42-4d0b-8253-e83cabfec4d2
 # ╟─d9c2d8a0-4e5b-4fb5-84cd-c7c989608af5
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
@@ -2198,14 +2243,17 @@ version = "3.5.0+0"
 # ╟─c2cd21d9-3fe7-42ec-b6a8-ce34d0770d63
 # ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
 # ╟─347dc728-2224-4e91-9d7b-45badef8f9a0
-# ╟─7a9269b9-b7aa-4dec-bc86-636a0be6ad01
+# ╟─215cf4aa-e540-4882-8a33-b7976a6e1b04
 # ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
+# ╟─7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 # ╟─53069bcc-9b28-40bf-9053-4ec0c6099611
-# ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
+# ╟─ac1cb355-5d59-4d98-9b0a-181a89625b21
 # ╟─030dab23-18ed-4e1e-9074-4da8bb9e3ee8
+# ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 # ╟─edf6e079-9aad-4969-b6e3-06dd45b99d68
-# ╟─8b286e86-692f-419c-83c1-f9120e4e35de
+# ╟─0b8ce7b9-8f41-451f-9ec5-5bff418bcafb
 # ╟─8702a6cf-69de-4e9c-8e77-81f39b55efc7
+# ╟─8b286e86-692f-419c-83c1-f9120e4e35de
 # ╟─339c792e-7ef1-4554-9f12-d616bc9a7e5b
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
@@ -2214,6 +2262,7 @@ version = "3.5.0+0"
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─758e43bf-e60b-42a3-a3e0-5b928c330892
 # ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
