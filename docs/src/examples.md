@@ -3,9 +3,7 @@
 
 [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) depicts a few climate-relevant variables and indices as an example. These quantities were derived from estimates of the ocean state (ECCO) that provide gridded fields for physical variables like temperature, salinity, and currents (see [this notebook](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_analysis.jl)) and retrieved from the [ECCO dataverse](https://dataverse.harvard.edu/dataverse/ECCO) or [zenodo.org folders](https://zenodo.org).
 
-If you want to run the notebook on your local computer or in the cloud, please refer to the directions provided at the [notebook final section](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html). 
-
-Or more generally to : 
+If you want to run the notebook on your local computer or in the cloud, please refer to the directions provided at the [notebook final section](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html). Or more generally, to : 
 
 - [JuliaClimate Notebooks How-To](https://juliaclimate.github.io/Notebooks/#directions) 
 - [ecco-group.org story map](https://ecco-group.org/storymaps.htm?id=69)
@@ -13,9 +11,9 @@ Or more generally to :
 	
 For more notebooks on these gridded estimates, and how to analyze them, see :
 
-- [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/) : gridded Earth variables, domain decomposition, and C-grid support. See [Ocean Circulation](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/vectors.html) and [Geography](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/geography.html) tutorials.
-- [IndividualDisplacements.jl](https://juliaclimate.github.io/IndividualDisplacements.jl/dev/) : simulation and analysis of materials moving through oceanic and atmospheric flows on C-grids.
-- [MITgcmTools.jl](https://juliaclimate.github.io/MiTgcmTools.jl/dev/) : framework to interact with MITgcm (setup, run, output, plot, etc) which generates the ECCO solutions.
+- [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/) : gridded Earth variables, domain decomposition, C-grid support; [Ocean Circulation](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/vectors.html), [Geography](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/geography.html) tutorials.
+- [IndividualDisplacements.jl](https://juliaclimate.github.io/IndividualDisplacements.jl/dev/) : simulation and analysis of materials moving through oceanic and atmospheric flows.
+- [MITgcmTools.jl](https://juliaclimate.github.io/MiTgcmTools.jl/dev/) : framework to interact with MITgcm (setup, run, output, plot, etc) and ECCO.
 
 ## Marine Ecosystems
 
