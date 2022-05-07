@@ -18,9 +18,10 @@ MITPROFclim_path=downloads.MITPROFclim_path
 CBIOMESclim_path=downloads.CBIOMESclim_path
 ECCOdiags_path=downloads.ECCOdiags_path
 
-ECCOdiags_download=downloads.ECCOdiags_download
 CBIOMESclim_download=downloads.CBIOMESclim_download
 MITPROFclim_download=downloads.MITPROFclim_download
+ECCOdiags_download=downloads.ECCOdiags_download
+ECCOdiags_add=downloads.ECCOdiags_add
 
 export dataverse_lists, get_from_dataverse
 export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
