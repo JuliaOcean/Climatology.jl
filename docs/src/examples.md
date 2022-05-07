@@ -22,6 +22,7 @@ CBIOMES-global (alpha version) is a global ocean state estimate that covers the 
 
 - [CBIOMES\_climatology\_plot](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl)) : visualize the climatology maps interactively using [Pluto.jl](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto)
 - [CBIOMES\_climatology\_create](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_create.jl)) : recreate the climatology file. The original is archived [here in zenodo](https://doi.org/10.5281/zenodo.5598417).
+- [OptimalTransport\_demo](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/OptimalTransport_demo.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/OptimalTransport/OptimalTransport_demo.jl)) :  tbd
 
 To retrieve this climatology, in the `julia REPL` for example :
 
