@@ -279,10 +279,10 @@ function read_monthly_SSH(sol,nam,t,list_steps; pth_in="", pth_out="")
 end
 
 function read_monthly_MHT(sol,nam,t,list_steps; pth_in="", pth_out="")
-    U=read_monthly(sol,"ADVx_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=read_monthly(sol,"ADVy_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    U=U+read_monthly(sol,"DFxE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=V+read_monthly(sol,"DFyE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    U=read_monthly_default(sol,"ADVx_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    V=read_monthly_default(sol,"ADVy_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    U=U+read_monthly_default(sol,"DFxE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    V=V+read_monthly_default(sol,"DFyE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
 
     [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
     [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
@@ -296,8 +296,8 @@ function read_monthly_MHT(sol,nam,t,list_steps; pth_in="", pth_out="")
 end
 
 function read_monthly_BSF(sol,nam,t,list_steps; pth_in="", pth_out="")
-    U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    U=read_monthly_default(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    V=read_monthly_default(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
     
     nz=size(Γ.hFacC,2)
