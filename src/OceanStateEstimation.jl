@@ -3,6 +3,7 @@ module OceanStateEstimation
 pkg_pth=dirname(pathof(OceanStateEstimation))
 
 include("downloads.jl")
+include("ECCO.jl")
 
 get_ecco_files=downloads.get_ecco_files
 dataverse_lists=downloads.dataverse_lists
@@ -28,5 +29,7 @@ export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 export get_occa_variable_if_needed, get_occa_velocity_if_needed
 export ECCOclim_path, OCCAclim_path
 export MITPROFclim_path, CBIOMESclim_path, ECCOdiags_path
+
+export ECCO
 
 end # module
