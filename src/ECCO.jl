@@ -448,7 +448,8 @@ include("ECCO_standard_analysis.jl")
 
 ## climatological mean
 
-function comp_clim(tmp_m,tmp_s1,tmp_s2,kk,m)
+function comp_clim(sol,nam,tmp_m,tmp_s1,tmp_s2,kk,m; pth_in="", pth_out="")
+    list_steps=list_time_steps(pth_in)
     nm=length(m:12:nt)
     tmp_m[:,:,m].=0.0
     tmp_s1[:,:,m].=0.0
@@ -463,6 +464,7 @@ function comp_clim(tmp_m,tmp_s1,tmp_s2,kk,m)
 end
 
 function main_clim(sol,nam,kk=1; pth_in="", pth_out="")
+    list_steps=list_time_steps(pth_in)
 
     tmp_s1 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
@@ -474,7 +476,7 @@ function main_clim(sol,nam,kk=1; pth_in="", pth_out="")
     nz>1 ? suff=Printf.@sprintf("_k%02d",kk) : suff=""
 
     @sync @distributed for m in 1:12
-        comp_clim(tmp_m,tmp_s1,tmp_s2,kk,m)
+        comp_clim(sol,nam,tmp_m,tmp_s1,tmp_s2,kk,m; pth_in=pth_in, pth_out=pth_out)
     end
 
     tmp0=read(tmp_m[:],γ)
@@ -500,7 +502,8 @@ nansum(x,y) = mapslices(nansum,x,dims=y)
 
 ## global mean
 
-function comp_glo(glo,t)
+function comp_glo(sol,nam,calc,glo,t; pth_in="", pth_out="")
+    list_steps=list_time_steps(pth_in)
     tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
     if calc=="glo2d"
         tmp=[nansum(tmp[i,j].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
@@ -510,11 +513,11 @@ function comp_glo(glo,t)
     glo[:,t]=nansum(tmp,2)
 end
     
-function main_glo(sol,nam; pth_in="", pth_out="")
+function main_glo(sol,nam,calc; pth_in="", pth_out="")
 
     glo = SharedArray{Float64}(nr,nt)
     @sync @distributed for t in 1:nt
-        comp_glo(glo,t)
+        comp_glo(sol,nam,calc,glo,t; pth_in=pth_in, pth_out=pth_out)
     end
 
     if calc=="glo2d"
@@ -609,7 +612,8 @@ end
 
 ##
 
-function comp_overturn(ov,t)
+function comp_overturn(sol,ov,t; pth_in="", pth_out="")
+    list_steps=list_time_steps(pth_in)
     U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
@@ -624,10 +628,10 @@ function comp_overturn(ov,t)
     true
 end
 
-function main_overturn(sol,nam; pth_in="", pth_out="")  
+function main_overturn(sol,nam,calc; pth_in="", pth_out="")  
     ov = SharedArray{Float64}(nl,nr,nt)
     @sync @distributed for t in 1:nt
-        comp_overturn(ov,t)
+        comp_overturn(sol,ov,t; pth_in=pth_in, pth_out=pth_out)
     end
     
     save_object(joinpath(pth_out,calc*".jld2"),collect(ov))
@@ -636,7 +640,8 @@ end
 
 ##
 
-function comp_MHT(MHT,t; pth_in="", pth_out="")
+function comp_MHT(sol,nam,MHT,t; pth_in="", pth_out="")
+    list_steps=list_time_steps(pth_in)
     U=read_monthly(sol,"ADVx_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     V=read_monthly(sol,"ADVy_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     U=U+read_monthly(sol,"DFxE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
@@ -654,10 +659,10 @@ function comp_MHT(MHT,t; pth_in="", pth_out="")
     [MHT[l,t]=1e-15*4e6*ThroughFlow(UV,LC[l],Γ) for l=1:nl]
 end
 
-function main_MHT(sol,nam; pth_in="", pth_out="")  
+function main_MHT(sol,nam,calc; pth_in="", pth_out="")  
     MHT = SharedArray{Float64}(nl,nt)
     @sync @distributed for t in 1:nt
-        comp_MHT(MHT,t)
+        comp_MHT(sol,nam,MHT,t; pth_in=pth_in, pth_out=pth_out)
     end
     save_object(joinpath(pth_out,calc*".jld2"),collect(MHT))
 	"Done with MHT"
@@ -683,7 +688,7 @@ function comp_trsp(sol,nam,trsp,t; pth_in="", pth_out="")
     end
 end
 
-function main_trsp(sol,nam; pth_in="", pth_out="") 
+function main_trsp(sol,nam,calc; pth_in="", pth_out="") 
     list_trsp=readdir(joinpath(pth_out,"..","ECCO_transport_lines"))
     ntr=length(list_trsp)
  
@@ -698,18 +703,19 @@ function main_trsp(sol,nam; pth_in="", pth_out="")
 end
 
 function main_function(calc,sol,nam,kk; pth_in="", pth_out="")
+    println("starting calc,sol,nam=$(calc),$(sol),$(nam) ...")
     if calc=="clim"
         main_clim(sol,nam,kk; pth_in=pth_in, pth_out=pth_out)
     elseif (calc=="glo2d")||(calc=="glo3d")
-        main_glo(sol,nam; pth_in=pth_in, pth_out=pth_out)
+        main_glo(sol,nam,calc; pth_in=pth_in, pth_out=pth_out)
     elseif (calc=="zonmean")||(calc=="zonmean2d")
         main_zonmean(sol,nam,calc; pth_in=pth_in, pth_out=pth_out)
     elseif (calc=="overturn")
-        main_overturn(sol,nam; pth_in=pth_in, pth_out=pth_out)
+        main_overturn(sol,nam,calc; pth_in=pth_in, pth_out=pth_out)
     elseif (calc=="MHT")
-        main_MHT(sol,nam; pth_in=pth_in, pth_out=pth_out)
+        main_MHT(sol,nam,calc; pth_in=pth_in, pth_out=pth_out)
     elseif (calc=="trsp")
-        main_trsp(sol,nam; pth_in=pth_in, pth_out=pth_out)
+        main_trsp(sol,nam,calc; pth_in=pth_in, pth_out=pth_out)
     else
         println("unknown calc")
     end
