@@ -1,4 +1,7 @@
 
+#temporary fix:
+read_monthly=ECCO_read_monthly.main
+
 """
 List of variables derived in this notebook:
 
@@ -37,7 +40,7 @@ include("ECCO_standard_analysis.jl")
     tmp_s1[:,:,m].=0.0
     tmp_s2[:,:,m].=0.0
     for t in m:12:nt
-        tmp=read_monthly(sol,nam,t,list_steps)
+        tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
         ndims(tmp)>1 ? tmp=tmp[:,kk] : nothing
         tmp_m[:,:,m]=tmp_m[:,:,m]+1.0/nm*γ.write(tmp)
         tmp_s1[:,:,m]=tmp_s1[:,:,m]+γ.write(tmp)
@@ -51,7 +54,7 @@ function main_clim(sol,nam,kk=1)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_m = SharedArray{Float64}(γ.ioSize...,12)
 
-    tmp=read_monthly(sol,nam,1,list_steps)
+    tmp=read_monthly(sol,nam,1,list_steps; pth_in=pth_in, pth_out=pth_tmp)
     ndims(tmp)>1 ? nz=size(tmp,2) : nz=1
     nz==1 ? kk=1 : nothing
     nz>1 ? suff=Printf.@sprintf("_k%02d",kk) : suff=""
@@ -76,10 +79,15 @@ function main_clim(sol,nam,kk=1)
     return true
 end
 
+##
+
+nansum(x) = sum(filter(!isnan,x))
+nansum(x,y) = mapslices(nansum,x,dims=y)
+
 ## global mean
 
 @everywhere function comp_glo(glo,t)
-    tmp=read_monthly(sol,nam,t,list_steps)
+    tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
     if calc=="glo2d"
         tmp=[nansum(tmp[i,j].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
     else
@@ -127,7 +135,7 @@ end
 @everywhere function comp_zonmean(zm,t)
     lats=load(joinpath(pth_tmp,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
-    tmp=read_monthly(sol,nam,t,list_steps)
+    tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
     for l in 1:nl
         mskrac=read(msk0[:,:,l],γ)
         tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
@@ -138,7 +146,7 @@ end
 @everywhere function comp_zonmean2d(zm,t)
     lats=load(joinpath(pth_tmp,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
-    tmp=read_monthly(sol,nam,t,list_steps)
+    tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
     for l in 1:nl
         mskrac=read(msk0[:,:,l],γ)
         tmp1=[nansum(tmp[i].*mskrac[i]) for i in eachindex(Γ.RAC)]
@@ -186,8 +194,8 @@ end
 ##
 
 @everywhere function comp_overturn(ov,t)
-    U=read_monthly(sol,"UVELMASS",t,list_steps)
-    V=read_monthly(sol,"VVELMASS",t,list_steps)
+    U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
+    V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
     #integrate across latitude circles
     for z=1:nr
@@ -213,10 +221,10 @@ end
 ##
 
 @everywhere function comp_MHT(MHT,t)
-    U=read_monthly(sol,"ADVx_TH",t,list_steps)
-    V=read_monthly(sol,"ADVy_TH",t,list_steps)
-    U=U+read_monthly(sol,"DFxE_TH",t,list_steps)
-    V=V+read_monthly(sol,"DFyE_TH",t,list_steps)
+    U=read_monthly(sol,"ADVx_TH",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
+    V=read_monthly(sol,"ADVy_TH",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
+    U=U+read_monthly(sol,"DFxE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
+    V=V+read_monthly(sol,"DFyE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
 
     [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
     [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
@@ -242,8 +250,8 @@ end
 ##
 
 @everywhere function comp_trsp(trsp,t)
-    U=read_monthly(sol,"UVELMASS",t,list_steps)
-    V=read_monthly(sol,"VVELMASS",t,list_steps)
+    U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
+    V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_tmp)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
     #integrate across transport lines
     for z=1:nr

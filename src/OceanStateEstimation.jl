@@ -30,6 +30,6 @@ export get_occa_variable_if_needed, get_occa_velocity_if_needed
 export ECCOclim_path, OCCAclim_path
 export MITPROFclim_path, CBIOMESclim_path, ECCOdiags_path
 
-export ECCO
+export ECCO, ECCO_helper_functions, ECCO_read_monthly
 
 end # module
