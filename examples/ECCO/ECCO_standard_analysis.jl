@@ -100,7 +100,7 @@ function main_glo(sol,nam)
     else
         tmp=[nansum(glo[:,t])/nansum(Γ.tot_VOL) for t in 1:nt]
     end
-    save_object(joinpath(pth_tmp,calc*".jld2"),tmp)
+    save_object(joinpath(pth_tmp,calc*".jld2"),collect(tmp))
 end
 
 ##
@@ -149,7 +149,7 @@ end
 function main_zonmean(sol,nam)
     dlat=2.0
     lats=(-90+dlat/2:dlat:90-dlat/2)
-    save_object(joinpath(pth_tmp,calc*"_lats.jld2"),lats)
+    save_object(joinpath(pth_tmp,calc*"_lats.jld2"),collect(lats))
     nl=length(lats)
 
     msk0 = SharedArray{Float64}(γ.ioSize...,nl)
@@ -157,8 +157,8 @@ function main_zonmean(sol,nam)
     @sync @distributed for l in 1:nl
         comp_msk0(msk0,zm0,l)
     end
-    save_object(joinpath(pth_tmp,calc*"_zm0.jld2"),zm0)
-    save_object(joinpath(pth_tmp,calc*"_msk0.jld2"),msk0)
+    save_object(joinpath(pth_tmp,calc*"_zm0.jld2"),collect(zm0))
+    save_object(joinpath(pth_tmp,calc*"_msk0.jld2"),collect(msk0))
 
     #to speed up main loop, reuse:
     #- precomputed msk*RAC once and for all
@@ -178,7 +178,7 @@ function main_zonmean(sol,nam)
             comp_zonmean2d(zm,t)
         end
     end
-    save_object(joinpath(pth_tmp,calc*".jld2"),zm)
+    save_object(joinpath(pth_tmp,calc*".jld2"),collect(zm))
 
     return true
 end
@@ -206,7 +206,7 @@ function main_overturn(sol,nam)
         comp_overturn(ov,t)
     end
     
-    save_object(joinpath(pth_tmp,calc*".jld2"),ov)
+    save_object(joinpath(pth_tmp,calc*".jld2"),collect(ov))
 	"Done with overturning"
 end
 
@@ -235,7 +235,7 @@ function main_MHT(sol,nam)
     @sync @distributed for t in 1:nt
         comp_MHT(MHT,t)
     end
-    save_object(joinpath(pth_tmp,calc*".jld2"),MHT)
+    save_object(joinpath(pth_tmp,calc*".jld2"),collect(MHT))
 	"Done with MHT"
 end
 
@@ -259,7 +259,7 @@ function main_trsp(sol,nam)
     end
     
     trsp=[(nam=list_trsp[itr],val=trsp[itr,:,:]) for itr=1:ntr]
-    save_object(joinpath(pth_tmp,calc*".jld2"),trsp)
+    save_object(joinpath(pth_tmp,calc*".jld2"),collect(trsp))
 	"Done with transports"
 end
 
