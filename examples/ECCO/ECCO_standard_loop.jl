@@ -1,12 +1,5 @@
 
-#tmp=readlines("ECCO_standard_Project.toml")[2:end];
-#tmp=[split(i," = ")[1] for i in tmp];
-#[Pkg.add(i) for i in tmp]
-
-#import MeshArrays
-#MeshArrays.GRID_LLC90_download()
-
-#mkdir("ECCO_diags")
+using Distributed
 
 @everywhere include("ECCO_pkg_grid_etc.jl")
 @everywhere include("ECCO_standard_analysis.jl")
