@@ -52,10 +52,6 @@ module ECCO_helper_functions
 
 using MeshArrays, TOML, JLD2
 
-#temporary fix:
-import OceanStateEstimation: ECCO_helper_functions
-γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
-
 function path_etc(pth0::String,sol0::String,calc::String,nam::String)
     sol="ECCOv4"*sol0*"_analysis"
 
@@ -195,6 +191,9 @@ function standard_list_toml(fil)
 end
 
 ##
+
+#temporary fix:
+γ,Γ,LC=GridLoad_Main()
 
 function transport_lines()
     lonPairs=[]    
