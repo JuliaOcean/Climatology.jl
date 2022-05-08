@@ -1,5 +1,5 @@
 
-function ECCO_path_etc(sol0::String,calc::String,nam::String)
+function ECCO_path_etc(pth0::String,sol0::String,calc::String,nam::String)
     sol="ECCOv4"*sol0*"_analysis"
 
     if sol0=="r1"||sol0=="r2"
@@ -13,13 +13,13 @@ function ECCO_path_etc(sol0::String,calc::String,nam::String)
     end
 
     if sol0!=="r5"
-        pth_in="ECCOv4"*sol0*"/nctiles_monthly/"
+        pth_in=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly")
     else
-        pth_in="ECCOv4"*sol0*"/diags/"
+        pth_in=joinpath(pth0,"ECCOv4"*sol0,"diags")
     end
     list_steps=list_time_steps(pth_in)
 
-    pth_out=joinpath("ECCO_diags",sol)
+    pth_out=joinpath(pth0,sol)
 
     if sum(calc.==("overturn","MHT","trsp"))==0
         pth_tmp=joinpath(pth_out,nam*"_"*calc)
