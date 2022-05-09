@@ -92,8 +92,10 @@ function parameters(pth0::String,sol0::String,list0,gg)
         pth_out=joinpath(pth_out,calc)
     end    
 
+    γ,Γ,LC=GridLoad_Main()
+
     P=(pth_in=pth_in,pth_out=pth_out,list_steps=list_steps,nt=nt,
-    calc=calc,nam=nam,kk=kk,sol=sol)
+    calc=calc,nam=nam,kk=kk,sol=sol,γ=γ,Γ=Γ,LC=LC)
 end
 
 #STATE/state_3d_set1.0000241020.meta
@@ -205,9 +207,6 @@ end
 
 ##
 
-#temporary fix:
-γ,Γ,LC=GridLoad_Main()
-
 function transport_lines()
     lonPairs=[]    
     latPairs=[]    
@@ -240,7 +239,7 @@ function transport_lines()
     lonPairs,latPairs,namPairs
 end
 
-function transport_lines(pth_trsp)
+function transport_lines(Γ,pth_trsp)
     mkdir(pth_trsp)
     lonPairs,latPairs,namPairs=transport_lines()
     for ii in 1:length(lonPairs)
@@ -269,8 +268,8 @@ module ECCO_read_monthly
 
 using MeshArrays, MITgcmTools
 
-#temporary fix:
 import OceanStateEstimation: ECCO_helper_functions
+#γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
 γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
 
 function main(sol,nam,t,list_steps; pth_in="", pth_out="") 
@@ -413,21 +412,11 @@ end #module ECCO_read_monthly
 module ECCO_diagnostics
 
 using SharedArrays, Distributed, Printf, JLD2, MeshArrays
-import OceanStateEstimation: ECCO_read_monthly
+import OceanStateEstimation: ECCO_read_monthly, ECCO_helper_functions
 
 #temporary fix:
 read_monthly=ECCO_read_monthly.main
-
-#temporary fix:
-import OceanStateEstimation: ECCO_helper_functions
-γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
-nr=length(Γ.DRF)
-nl=length(LC)
-#nt=12
-
 list_time_steps=ECCO_helper_functions.list_time_steps
-
-#list_trsp,msk_trsp,ntr=ECCO_helper_functions.reload_transport_lines(pth0)
 
 """
 List of variables derived in this module:
@@ -462,7 +451,7 @@ include("ECCO_standard_analysis.jl")
 ## climatological mean
 
 function comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
-    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
 
     nm=length(m:12:nt)
     tmp_m[:,:,m].=0.0
@@ -478,7 +467,7 @@ function comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
 end
 
 function main_clim(P)
-    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
 
     tmp_s1 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
@@ -517,7 +506,8 @@ nansum(x,y) = mapslices(nansum,x,dims=y)
 ## global mean
 
 function comp_glo(P,glo,t)
-    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
+    nr=length(Γ.DRF)
 
     tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
     if calc=="glo2d"
@@ -529,7 +519,8 @@ function comp_glo(P,glo,t)
 end
     
 function main_glo(P)
-    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
+    nr=length(Γ.DRF)
 
     glo = SharedArray{Float64}(nr,nt)
     @sync @distributed for t in 1:nt
@@ -546,7 +537,10 @@ end
 
 ##
 
-function comp_msk0(msk0,zm0,l,calc; pth_in="", pth_out="")
+function comp_msk0(P,msk0,zm0,l)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
+    nr=length(Γ.DRF)
+
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     dlat=lats[2]-lats[1]
     la0=lats[l]-dlat/2
@@ -565,7 +559,10 @@ function comp_msk0(msk0,zm0,l,calc; pth_in="", pth_out="")
     zm0[l,:]=1.0 ./nansum(tmp2,2)
 end
 
-function comp_zonmean(sol,nam,calc,zm,t,msk0,zm0; pth_in="", pth_out="")
+function comp_zonmean(P,zm,t,msk0,zm0)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
+    nr=length(Γ.DRF)
+
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
     list_steps=list_time_steps(pth_in)
@@ -577,7 +574,9 @@ function comp_zonmean(sol,nam,calc,zm,t,msk0,zm0; pth_in="", pth_out="")
     end
 end
 
-function comp_zonmean2d(sol,nam,calc,zm,t,msk0,zm0; pth_in="", pth_out="")
+function comp_zonmean2d(P,zm,t,msk0,zm0)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
+
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
     list_steps=list_time_steps(pth_in)
@@ -590,7 +589,8 @@ function comp_zonmean2d(sol,nam,calc,zm,t,msk0,zm0; pth_in="", pth_out="")
 end
 
 function main_zonmean(P)
-    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
+    nr=length(Γ.DRF)
 
     dlat=2.0
     lats=(-90+dlat/2:dlat:90-dlat/2)
@@ -600,7 +600,7 @@ function main_zonmean(P)
     msk0 = SharedArray{Float64}(γ.ioSize...,nl)
     zm0 = SharedArray{Float64}(nl,nr)
     @sync @distributed for l in 1:nl
-        comp_msk0(msk0,zm0,l,calc; pth_in=pth_in, pth_out=pth_out)
+        comp_msk0(P,msk0,zm0,l)
     end
     save_object(joinpath(pth_out,calc*"_zm0.jld2"),collect(zm0))
     save_object(joinpath(pth_out,calc*"_msk0.jld2"),collect(msk0))
@@ -615,12 +615,12 @@ function main_zonmean(P)
     if (calc=="zonmean")
         zm = SharedArray{Float64}(nl,nr,nt)
         @sync @distributed for t in 1:nt
-            comp_zonmean(sol,nam,calc,zm,t,msk0,zm0; pth_in=pth_in, pth_out=pth_out)
+            comp_zonmean(P,zm,t,msk0,zm0)
         end
     else
         zm = SharedArray{Float64}(nl,nt)
         @sync @distributed for t in 1:nt
-            comp_zonmean2d(sol,nam,calc,zm,t,msk0,zm0; pth_in=pth_in, pth_out=pth_out)
+            comp_zonmean2d(P,zm,t,msk0,zm0)
         end
     end
     save_object(joinpath(pth_out,calc*".jld2"),collect(zm))
@@ -630,7 +630,12 @@ end
 
 ##
 
-function comp_overturn(sol,ov,t; pth_in="", pth_out="")
+function comp_overturn(P,ov,t)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
+
+    nr=length(Γ.DRF)
+    nl=length(LC)
+
     list_steps=list_time_steps(pth_in)
     U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
@@ -647,11 +652,14 @@ function comp_overturn(sol,ov,t; pth_in="", pth_out="")
 end
 
 function main_overturn(P)  
-    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
+
+    nr=length(Γ.DRF)
+    nl=length(LC)
 
     ov = SharedArray{Float64}(nl,nr,nt)
     @sync @distributed for t in 1:nt
-        comp_overturn(sol,ov,t; pth_in=pth_in, pth_out=pth_out)
+        comp_overturn(P,ov,t)
     end
     
     save_object(joinpath(pth_out,calc*".jld2"),collect(ov))
@@ -660,8 +668,12 @@ end
 
 ##
 
-function comp_MHT(sol,nam,MHT,t; pth_in="", pth_out="")
-    list_steps=list_time_steps(pth_in)
+function comp_MHT(P,MHT,t)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
+
+    nr=length(Γ.DRF)
+    nl=length(LC)
+
     U=read_monthly(sol,"ADVx_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     V=read_monthly(sol,"ADVy_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     U=U+read_monthly(sol,"DFxE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
@@ -680,11 +692,12 @@ function comp_MHT(sol,nam,MHT,t; pth_in="", pth_out="")
 end
 
 function main_MHT(P)  
-    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC) = P
 
+    nl=length(LC)
     MHT = SharedArray{Float64}(nl,nt)
     @sync @distributed for t in 1:nt
-        comp_MHT(sol,nam,MHT,t; pth_in=pth_in, pth_out=pth_out)
+        comp_MHT(P,MHT,t)
     end
     save_object(joinpath(pth_out,calc*".jld2"),collect(MHT))
 	"Done with MHT"
@@ -692,8 +705,9 @@ end
 
 ##
 
-function comp_trsp(sol,nam,trsp,t; pth_in="", pth_out="")
-    list_steps=list_time_steps(pth_in)
+function comp_trsp(P,trsp,t)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
+
     U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
@@ -704,7 +718,7 @@ function comp_trsp(sol,nam,trsp,t; pth_in="", pth_out="")
     list_trsp,msk_trsp,ntr=ECCO_helper_functions.reload_transport_lines(pth_trsp)
 
     #integrate across transport lines
-    for z=1:nr
+    for z=1:length(Γ.DRF)
         UV=Dict("U"=>Utr[:,z],"V"=>Vtr[:,z],"dimensions"=>["x","y"])
         [trsp[itr,z,t]=ThroughFlow(UV,msk_trsp[itr],Γ) for itr=1:ntr]
     end
@@ -716,9 +730,10 @@ function main_trsp(P)
     list_trsp=readdir(joinpath(pth_out,"..","ECCO_transport_lines"))
     ntr=length(list_trsp)
  
+    nr=length(P.Γ.DRF)
     trsp = SharedArray{Float64}(ntr,nr,nt)
     @sync @distributed for t in 1:nt
-        comp_trsp(sol,nam,trsp,t; pth_in=pth_in, pth_out=pth_out)
+        comp_trsp(P,trsp,t)
     end
     
     trsp=[(nam=list_trsp[itr],val=trsp[itr,:,:]) for itr=1:ntr]

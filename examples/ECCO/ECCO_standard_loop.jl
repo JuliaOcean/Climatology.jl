@@ -1,13 +1,12 @@
-
-using Distributed, SharedArrays, JLD2
-
-#@everywhere include("ECCO_pkg_grid_etc.jl")
-#@everywhere include("ECCO_standard_analysis.jl")
+using Distributed, OceanStateEstimation
 
 @everywhere begin
+    using Pkg; Pkg.activate("./")
+    
     using OceanStateEstimation, Printf, TOML, MeshArrays
+    using Distributed, SharedArrays, JLD2
 
-    #γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
+    pth=joinpath(tempdir(),"ECCO_diags_dev")
 
     sol0="r2"
     sol="ECCOv4"*sol0*"_analysis" 
@@ -19,10 +18,10 @@ end
 !isdir(joinpath(pth,sol)) ? mkdir(joinpath(pth,sol)) : nothing
 
 !isfile(fil) ? ECCO_helper_functions.standard_list_toml(fil) : nothing
-list0=TOML.parsefile(joinpath(pth,sol,"ECCO_standard_list.toml"))
+@everywhere list0=TOML.parsefile(joinpath(pth,sol,"ECCO_standard_list.toml"))
 
-!isdir(pth_trsp) ? ECCO_helper_functions.transport_lines(pth_trsp) : nothing
-#@everywhere list_trsp,msk_trsp,ntr=ECCO_helper_functions.reload_transport_lines(pth_trsp)
+P0=ECCO_helper_functions.parameters(pth,sol0,list0,1)
+!isdir(pth_trsp) ? ECCO_helper_functions.transport_lines(P0.Γ,pth_trsp) : nothing
 
 list1=collect(1:length(list0["kk"]))
 #list1=collect(1:6)
@@ -30,14 +29,10 @@ list1=collect(1:length(list0["kk"]))
 #list1=[25,26,27,28]
 
 for ff in list1
-    save(joinpath(pth,sol,"taskID.jld2"),"ID",ff)
-    
-    @sync @everywhere gg=load(joinpath(pth,sol,"taskID.jld2"),"ID")
-    @everywhere P=ECCO_helper_functions.parameters(pth,sol0,list0,gg)            
-    
+#    save(joinpath(pth,sol,"taskID.jld2"),"ID",ff)
+#    @sync @everywhere gg=load(joinpath(pth,sol,"taskID.jld2"),"ID")
+    P=ECCO_helper_functions.parameters(pth,sol0,list0,ff)
     !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
-
     ECCO_diagnostics.main_function(P)
-
 end
 
