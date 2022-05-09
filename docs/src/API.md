@@ -30,5 +30,5 @@ readdir(OCCAclim_path)
 ## Functions Reference
 
 ```@autodocs
-Modules = [OceanStateEstimation,ECCO,ECCO_helper_functions,ECCO_read_monthly,ECCO_diagnostics]
+Modules = [OceanStateEstimation,ECCO,ECCO_helpers,ECCO_io,ECCO_diagnostics]
 ```

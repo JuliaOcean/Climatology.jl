@@ -21,7 +21,7 @@ pth=ECCO.standard_analysis_setup(pth0)
 Pkg.activate(pth)
 Pkg.instantiate()
 
-include("ECCO_standard_loop.jl")
+#include("ECCO_standard_loop.jl")
 ```
 """
 function standard_analysis_setup(pth0)
@@ -49,15 +49,20 @@ end
 
 ##
 
-module ECCO_helper_functions
+module ECCO_helpers
 
 using MeshArrays, TOML, JLD2
 
-function parameters(pth0::String,sol0::String,list0,gg)
+"""
+    parameters(pth0::String,sol0::String,list0,index)
 
-    calc=list0["calc"][gg]
-    nam=list0["nam"][gg]
-    kk=list0["kk"][gg]
+Prepare parameter NamedTuple for use in `ECCO_diagnostics.driver`.
+"""
+function parameters(pth0::String,sol0::String,list0,index)
+
+    calc=list0["calc"][index]
+    nam=list0["nam"][index]
+    kk=list0["kk"][index]
     sol="ECCOv4"*sol0*"_analysis"
 
     if sol0=="r1"||sol0=="r2"
@@ -260,19 +265,22 @@ function reload_transport_lines(pth_trsp)
     return list_trsp,MeshArrays.Dict_to_NamedTuple.(TR),ntr
 end
 
-end #module ECCO_helper_functions
+end #module ECCO_helpers
 
 ## generic read function
 
-module ECCO_read_monthly
+module ECCO_io
 
 using MeshArrays, MITgcmTools
 
-#import OceanStateEstimation: ECCO_helper_functions
-#γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-#γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
+"""
+    read_monthly(P,nam,t)
 
-function main(P,nam,t) 
+Read record `t` for variable `nam` from file locations specified via P.
+
+Depending on `nam` this will call `read_monthly_default`, `read_monthly_SSH`, `read_monthly_MHT`, or `read_monthly_BSF`.
+"""
+function read_monthly(P,nam,t) 
     if nam=="SSH"
         read_monthly_SSH(P,t)
     elseif nam=="MHT"
@@ -412,14 +420,14 @@ function read_monthly_default(P,nam,t)
     end
 end
 
-end #module ECCO_read_monthly
+end #module ECCO_io
 
 ##
 
 module ECCO_diagnostics
 
 using SharedArrays, Distributed, Printf, JLD2, MeshArrays
-import OceanStateEstimation: ECCO_read_monthly, ECCO_helper_functions
+import OceanStateEstimation: ECCO_io, ECCO_helpers
 
 """
 List of variables derived in this module:
@@ -461,7 +469,7 @@ function comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
     tmp_s1[:,:,m].=0.0
     tmp_s2[:,:,m].=0.0
     for t in m:12:nt
-        tmp=ECCO_read_monthly.main(P,nam,t)
+        tmp=ECCO_io.read_monthly(P,nam,t)
         ndims(tmp)>1 ? tmp=tmp[:,kk] : nothing
         tmp_m[:,:,m]=tmp_m[:,:,m]+1.0/nm*γ.write(tmp)
         tmp_s1[:,:,m]=tmp_s1[:,:,m]+γ.write(tmp)
@@ -476,7 +484,7 @@ function main_clim(P)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_m = SharedArray{Float64}(γ.ioSize...,12)
 
-    tmp=ECCO_read_monthly.main(P,nam,1)
+    tmp=ECCO_io.read_monthly(P,nam,1)
     ndims(tmp)>1 ? nz=size(tmp,2) : nz=1
     nz==1 ? kk=1 : nothing
     nz>1 ? suff=Printf.@sprintf("_k%02d",kk) : suff=""
@@ -512,7 +520,7 @@ function comp_glo(P,glo,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
     nr=length(Γ.DRF)
 
-    tmp=ECCO_read_monthly.main(P,nam,t)
+    tmp=ECCO_io.read_monthly(P,nam,t)
     if calc=="glo2d"
         tmp=[nansum(tmp[i,j].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
     else
@@ -569,7 +577,7 @@ function comp_zonmean(P,zm,t,msk0,zm0)
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
 
-    tmp=ECCO_read_monthly.main(P,nam,t)
+    tmp=ECCO_io.read_monthly(P,nam,t)
     for l in 1:nl
         mskrac=read(msk0[:,:,l],γ)
         tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
@@ -583,7 +591,7 @@ function comp_zonmean2d(P,zm,t,msk0,zm0)
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
 
-    tmp=ECCO_read_monthly.main(P,nam,t)
+    tmp=ECCO_io.read_monthly(P,nam,t)
     for l in 1:nl
         mskrac=read(msk0[:,:,l],γ)
         tmp1=[nansum(tmp[i].*mskrac[i]) for i in eachindex(Γ.RAC)]
@@ -639,8 +647,8 @@ function comp_overturn(P,ov,t)
     nr=length(Γ.DRF)
     nl=length(LC)
 
-    U=ECCO_read_monthly.main(P,"UVELMASS",t)
-    V=ECCO_read_monthly.main(P,"VVELMASS",t)
+    U=ECCO_io.read_monthly(P,"UVELMASS",t)
+    V=ECCO_io.read_monthly(P,"VVELMASS",t)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
     #integrate across latitude circles
     for z=1:nr
@@ -676,10 +684,10 @@ function comp_MHT(P,MHT,t)
     nr=length(Γ.DRF)
     nl=length(LC)
 
-    U=ECCO_read_monthly.main(P,"ADVx_TH",t)
-    V=ECCO_read_monthly.main(P,"ADVy_TH",t)
-    U=U+ECCO_read_monthly.main(P,"DFxE_TH",t)
-    V=V+ECCO_read_monthly.main(P,"DFyE_TH",t)
+    U=ECCO_io.read_monthly(P,"ADVx_TH",t)
+    V=ECCO_io.read_monthly(P,"ADVy_TH",t)
+    U=U+ECCO_io.read_monthly(P,"DFxE_TH",t)
+    V=V+ECCO_io.read_monthly(P,"DFyE_TH",t)
 
     [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
     [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
@@ -710,12 +718,12 @@ end
 function comp_trsp(P,trsp,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
 
-    U=ECCO_read_monthly.main(P,"UVELMASS",t)
-    V=ECCO_read_monthly.main(P,"VVELMASS",t)
+    U=ECCO_io.read_monthly(P,"UVELMASS",t)
+    V=ECCO_io.read_monthly(P,"VVELMASS",t)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
 
     pth_trsp=joinpath(pth_out,"..","ECCO_transport_lines")
-    list_trsp,msk_trsp,ntr=ECCO_helper_functions.reload_transport_lines(pth_trsp)
+    list_trsp,msk_trsp,ntr=ECCO_helpers.reload_transport_lines(pth_trsp)
 
     #integrate across transport lines
     for z=1:length(Γ.DRF)
@@ -741,7 +749,14 @@ function main_trsp(P)
 	"Done with transports"
 end
 
-function main_function(P)
+"""
+    driver(P)
+
+Call main loop from computation, files, etc specified via P.
+
+Depending on `P` this will call `main_clim`, `main_glo`, `main_zonmean`, `main_overturn`, `main_MHT`, or `main_trsp`.
+"""
+function driver(P)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     println("starting calc,sol,nam=$(calc),$(sol),$(nam) ...")

@@ -17,11 +17,11 @@ end
 
 !isdir(joinpath(pth,sol)) ? mkdir(joinpath(pth,sol)) : nothing
 
-!isfile(fil) ? ECCO_helper_functions.standard_list_toml(fil) : nothing
+!isfile(fil) ? ECCO_helpers.standard_list_toml(fil) : nothing
 @everywhere list0=TOML.parsefile(joinpath(pth,sol,"ECCO_standard_list.toml"))
 
-P0=ECCO_helper_functions.parameters(pth,sol0,list0,1)
-!isdir(pth_trsp) ? ECCO_helper_functions.transport_lines(P0.Γ,pth_trsp) : nothing
+P0=ECCO_helpers.parameters(pth,sol0,list0,1)
+!isdir(pth_trsp) ? ECCO_helpers.transport_lines(P0.Γ,pth_trsp) : nothing
 
 list1=collect(1:length(list0["kk"]))
 #list1=collect(1:6)
@@ -31,8 +31,8 @@ list1=collect(1:length(list0["kk"]))
 for ff in list1
 #    save(joinpath(pth,sol,"taskID.jld2"),"ID",ff)
 #    @sync @everywhere gg=load(joinpath(pth,sol,"taskID.jld2"),"ID")
-    P=ECCO_helper_functions.parameters(pth,sol0,list0,ff)
+    P=ECCO_helpers.parameters(pth,sol0,list0,ff)
     !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
-    ECCO_diagnostics.main_function(P)
+    ECCO_diagnostics.driver(P)
 end
 
