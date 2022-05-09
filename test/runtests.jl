@@ -22,11 +22,23 @@ p=dirname(pathof(OceanStateEstimation))
     get_ecco_variable_if_needed("UVELMASS")
     @test isdir(joinpath(ECCOclim_path,"UVELMASS"))
 
+    ##
+
     isdir(MITPROFclim_path)
     isdir(CBIOMESclim_path)
     @test true 
 
-    if false
+    ##
+
+    OceanStateEstimation.CBIOMESclim_download()
+    OceanStateEstimation.ECCOdiags_download()
+    OceanStateEstimation.ECCOdiags_add("release4")
+    OceanStateEstimation.ECCOdiags_add("interp_coeffs")
+    @test true 
+
+    ##
+
+    if true
         var_list3d=("THETA","SALT","UVELMASS","VVELMASS",
         "ADVx_TH","ADVy_TH","DFxE_TH","DFyE_TH")
         var_list2d=("MXLDEPTH","SIarea","sIceLoad","ETAN")
@@ -39,16 +51,19 @@ p=dirname(pathof(OceanStateEstimation))
     MeshArrays.GRID_LLC90_download()
     pth=ECCO.standard_analysis_setup(ECCOclim_path)
     list0=ECCO_helpers.standard_list_toml("")
-    P=ECCO_helpers.parameters(pth,"r2",list0,4)
+    P0=ECCO_helpers.parameters(pth,"r2",list0[4])
 
-    !isdir(dirname(P.pth_out)) ? mkdir(dirname(P.pth_out)) : nothing
-    !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
-    ECCO_diagnostics.driver(P)
+    !isdir(dirname(P0.pth_out)) ? mkdir(dirname(P0.pth_out)) : nothing
+    pth_trsp=joinpath(pth,P0.sol,"ECCO_transport_lines")
+    !isdir(pth_trsp) ? ECCO_helpers.transport_lines(P0.Γ,pth_trsp) : nothing
+    
+    for k in [collect(1:8)...,12,13,25,26,27,28]
+        P=ECCO_helpers.parameters(P0,list0[k])
+        !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
+        ECCO_diagnostics.driver(P)
+    end
 
-#    include(joinpath("..","examples","ECCO","ECCO_standard_loop.jl"))
-#    Pkg.activate(pth)
-
-    fil0=joinpath(P.pth_out,"zonmean2d.jld2")
+    fil0=joinpath(P0.pth_out,"zonmean2d.jld2")
     @test isfile(fil0)
 
 end

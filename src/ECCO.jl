@@ -5,26 +5,30 @@ using Pkg
 import OceanStateEstimation: pkg_pth
 
 """
-    ECCO.standard_analysis_setup(pth0)
+    ECCO.standard_analysis_setup(pth0::String)
 
-Create a run folder where folder `pth0` will be linked. 
+Create temporary run folder `pth` where data folder `pth0` will be linked. 
 
-Folder `pth0` (of type `String`) should be the path to the user's ECCO data folder.
+Data folder `pth0` should be the path to ECCO data.
+
+For example:
 
 ```
-using Revise
 using OceanStateEstimation, Pkg
+pth_in=ECCOclim_path
+pth=ECCO.standard_analysis_setup(pth_in)
+```
 
-#pth0="nctiles_monthly" #edit path as needed
-pth=ECCO.standard_analysis_setup(pth0)
+The `Project.toml` file found in `pth` provides an environment ready for `ECCO` analyses. 
 
+This environment can be activated and instantiated:
+
+```
 Pkg.activate(pth)
 Pkg.instantiate()
-
-#include("ECCO_standard_loop.jl")
 ```
 """
-function standard_analysis_setup(pth0)
+function standard_analysis_setup(pth0::String)
 	println(pth0)
 	
 	#1. setup run folder and create link to ECCO data folder
@@ -54,20 +58,56 @@ module ECCO_helpers
 using MeshArrays, TOML, JLD2, NCDatasets
 
 """
-    parameters(pth0::String,sol0::String,list0,index)
+    parameters(P0,params)
 
 Prepare parameter NamedTuple for use in `ECCO_diagnostics.driver`.
 
-```
-pth=ECCO.standard_analysis_setup(ECCOclim_path)
-list0=ECCO.standard_list_toml("")
-P=parameters(pth,sol0,list0,1)
-"""
-function parameters(pth0::String,sol0::String,list0,index)
+`P1=parameters(P0,p)` 
 
-    calc=list0["calc"][index]
-    nam=list0["nam"][index]
-    kk=list0["kk"][index]
+is faster than e.g. `parameters(pth,"r2",p)` as grid, etc get copied from `P0` to `P1`.
+"""
+function parameters(P,params)
+    calc=params.calc
+    nam=params.nam
+    kk=params.lev
+
+    pth_out=dirname(P.pth_out)
+    if sum(calc.==("overturn","MHT","trsp"))==0
+        pth_out=joinpath(pth_out,nam*"_"*calc)
+    else
+        pth_out=joinpath(pth_out,calc)
+    end    
+
+    return (pth_in=P.pth_in,pth_out=pth_out,list_steps=P.list_steps,nt=P.nt,
+    calc=calc,nam=nam,kk=kk,sol=P.sol,γ=P.γ,Γ=P.Γ,LC=P.LC)
+end
+
+"""
+    parameters(pth0::String,sol0::String,params)
+
+Prepare parameter NamedTuple for use in `ECCO_diagnostics.driver`.
+
+For example, to compute zonal mean temperatures at level 5:
+
+```
+p=(calc = "zonmean", nam = "THETA", lev = 5)
+pth=ECCO.standard_analysis_setup(ECCOclim_path)
+P0=parameters(pth,"r2",p)
+```
+
+or, from a predefined list:
+
+```
+list0=ECCO_helpers.standard_list_toml("")
+pth=ECCO.standard_analysis_setup(ECCOclim_path)
+P1=parameters(pth,"r2",list0[1])
+```
+"""
+function parameters(pth0::String,sol0::String,params)
+
+    calc=params.calc
+    nam=params.nam
+    kk=params.lev
     sol="ECCOv4"*sol0*"_analysis"
 
     if sol0=="r1"||sol0=="r2"
@@ -215,7 +255,9 @@ function standard_list_toml(fil)
         end
     end
 
-    return tmp1
+    out=[(calc=allcalc[i],nam=allnam[i],lev=allkk[i]) for i in 1:length(allcalc)]
+
+    return out
 end
 
 ##
@@ -284,9 +326,14 @@ using MeshArrays, MITgcmTools
 """
     read_monthly(P,nam,t)
 
-Read record `t` for variable `nam` from file locations specified via P.
+Read record `t` for variable `nam` from file locations specified via parameters `P`.
 
-Depending on `nam` this will call `read_monthly_default`, `read_monthly_SSH`, `read_monthly_MHT`, or `read_monthly_BSF`.
+The method used to read `nam` is selected based on `nam`'s value. Methods include:
+
+- `read_monthly_default`
+- `read_monthly_SSH`
+- `read_monthly_MHT`
+- `read_monthly_BSF`
 """
 function read_monthly(P,nam,t) 
     if nam=="SSH"
@@ -760,9 +807,16 @@ end
 """
     driver(P)
 
-Call main loop from computation, files, etc specified via P.
+Call main computation loop as specified by parameters `P`.
 
-Depending on `P` this will call `main_clim`, `main_glo`, `main_zonmean`, `main_overturn`, `main_MHT`, or `main_trsp`.
+The main computation loop choice depends on the `P` parameter values. Methods include:
+
+- `main_clim`
+- `main_glo`
+- `main_zonmean`
+- `main_overturn`
+- `main_MHT`
+- `main_trsp`
 """
 function driver(P)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
