@@ -28,23 +28,29 @@ pth0=joinpath(pth,sol)
 @everywhere list_trsp,msk_trsp,ntr=ECCO_helper_functions.reload_transport_lines(pth_trsp)
 
 list1=collect(1:length(list0["kk"]))
-#zz=collect(1:6)
-#zz=[7,8,12,13]
-#zz=[25,26,27,28]
+#list1=collect(1:6)
+#list1=[7,8,12,13]
+#list1=[25,26,27,28]
 
-for ff in zz
+for ff in list1
     save(joinpath(pth,sol,"taskID.jld2"),"ID",ff)
     
     @sync @everywhere gg=load(joinpath(pth,sol,"taskID.jld2"),"ID")
 
-    @everywhere calc=list0["calc"][gg]
-    @everywhere nam=list0["nam"][gg]
-    @everywhere kk=list0["kk"][gg]
+    @everywhere begin
+        calc=list0["calc"][gg]
+        nam=list0["nam"][gg]
+        kk=list0["kk"][gg]
+        pth_in,pth_out,list_steps=
+            ECCO_helper_functions.path_etc(pth,sol0,calc,nam)      
+            
+        P=(pth_in=pth_in,pth_out=pth_out,list_steps=list_steps,
+            calc=calc,nam=nam,kk=kk,sol=sol)
+    end
     
-    @everywhere pth_in,pth_out,pth_tmp,nt,list_steps=ECCO_helper_functions.path_etc(pth,sol0,calc,nam)
-    !isdir(pth_tmp) ? mkdir(pth_tmp) : nothing
+    !isdir(pth_out) ? mkdir(pth_out) : nothing
 
-    ECCO_diagnostics.main_function(calc,sol,nam,kk; pth_in=pth_in, pth_out=pth_tmp)
+    ECCO_diagnostics.main_function(P)
 
 end
 
