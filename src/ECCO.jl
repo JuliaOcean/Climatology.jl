@@ -53,11 +53,22 @@ module ECCO_helper_functions
 
 using MeshArrays, TOML, JLD2
 
-function path_etc(pth0::String,sol0::String,calc::String,nam::String)
+function parameters(pth0::String,sol0::String,list0,gg)
+
+    calc=list0["calc"][gg]
+    nam=list0["nam"][gg]
+    kk=list0["kk"][gg]
     sol="ECCOv4"*sol0*"_analysis"
 
     if sol0=="r1"||sol0=="r2"
-        nt=12
+        fil=isfile(joinpath(pth0,"THETA","THETA.0001.nc"))
+        if isfile(fil)
+            nt=NCDataset(fil) do ds
+                data = length(ds["tim"][:])
+            end
+        else
+            nt=12
+        end
     elseif sol0=="r3"
         nt=288
     elseif sol0=="r4"
@@ -81,7 +92,8 @@ function path_etc(pth0::String,sol0::String,calc::String,nam::String)
         pth_out=joinpath(pth_out,calc)
     end    
 
-    return pth_in,pth_out,list_steps
+    P=(pth_in=pth_in,pth_out=pth_out,list_steps=list_steps,nt=nt,
+    calc=calc,nam=nam,kk=kk,sol=sol)
 end
 
 #STATE/state_3d_set1.0000241020.meta
@@ -411,7 +423,7 @@ import OceanStateEstimation: ECCO_helper_functions
 γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
 nr=length(Γ.DRF)
 nl=length(LC)
-nt=12
+#nt=12
 
 list_time_steps=ECCO_helper_functions.list_time_steps
 
@@ -465,7 +477,7 @@ function comp_clim(sol,nam,tmp_m,tmp_s1,tmp_s2,kk,m; pth_in="", pth_out="")
 end
 
 function main_clim(P)
-    (; pth_in, pth_out, list_steps, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     list_steps=list_time_steps(pth_in)
 
@@ -517,7 +529,7 @@ function comp_glo(sol,nam,calc,glo,t; pth_in="", pth_out="")
 end
     
 function main_glo(P)
-    (; pth_in, pth_out, list_steps, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     glo = SharedArray{Float64}(nr,nt)
     @sync @distributed for t in 1:nt
@@ -578,7 +590,7 @@ function comp_zonmean2d(sol,nam,calc,zm,t,msk0,zm0; pth_in="", pth_out="")
 end
 
 function main_zonmean(P)
-    (; pth_in, pth_out, list_steps, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     dlat=2.0
     lats=(-90+dlat/2:dlat:90-dlat/2)
@@ -635,7 +647,7 @@ function comp_overturn(sol,ov,t; pth_in="", pth_out="")
 end
 
 function main_overturn(P)  
-    (; pth_in, pth_out, list_steps, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     ov = SharedArray{Float64}(nl,nr,nt)
     @sync @distributed for t in 1:nt
@@ -668,7 +680,7 @@ function comp_MHT(sol,nam,MHT,t; pth_in="", pth_out="")
 end
 
 function main_MHT(P)  
-    (; pth_in, pth_out, list_steps, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     MHT = SharedArray{Float64}(nl,nt)
     @sync @distributed for t in 1:nt
@@ -699,7 +711,7 @@ function comp_trsp(sol,nam,trsp,t; pth_in="", pth_out="")
 end
 
 function main_trsp(P) 
-    (; pth_in, pth_out, list_steps, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     list_trsp=readdir(joinpath(pth_out,"..","ECCO_transport_lines"))
     ntr=length(list_trsp)
@@ -715,7 +727,7 @@ function main_trsp(P)
 end
 
 function main_function(P)
-    (; pth_in, pth_out, list_steps, calc, nam, kk, sol) = P
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
     println("starting calc,sol,nam=$(calc),$(sol),$(nam) ...")
     if calc=="clim"
