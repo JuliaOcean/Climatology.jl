@@ -461,8 +461,9 @@ include("ECCO_standard_analysis.jl")
 
 ## climatological mean
 
-function comp_clim(sol,nam,tmp_m,tmp_s1,tmp_s2,kk,m; pth_in="", pth_out="")
-    list_steps=list_time_steps(pth_in)
+function comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+
     nm=length(m:12:nt)
     tmp_m[:,:,m].=0.0
     tmp_s1[:,:,m].=0.0
@@ -479,8 +480,6 @@ end
 function main_clim(P)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
-    list_steps=list_time_steps(pth_in)
-
     tmp_s1 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_m = SharedArray{Float64}(γ.ioSize...,12)
@@ -491,7 +490,7 @@ function main_clim(P)
     nz>1 ? suff=Printf.@sprintf("_k%02d",kk) : suff=""
 
     @sync @distributed for m in 1:12
-        comp_clim(sol,nam,tmp_m,tmp_s1,tmp_s2,kk,m; pth_in=pth_in, pth_out=pth_out)
+        comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
     end
 
     tmp0=read(tmp_m[:],γ)
@@ -517,8 +516,9 @@ nansum(x,y) = mapslices(nansum,x,dims=y)
 
 ## global mean
 
-function comp_glo(sol,nam,calc,glo,t; pth_in="", pth_out="")
-    list_steps=list_time_steps(pth_in)
+function comp_glo(P,glo,t)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
+
     tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
     if calc=="glo2d"
         tmp=[nansum(tmp[i,j].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
@@ -533,7 +533,7 @@ function main_glo(P)
 
     glo = SharedArray{Float64}(nr,nt)
     @sync @distributed for t in 1:nt
-        comp_glo(sol,nam,calc,glo,t; pth_in=pth_in, pth_out=pth_out)
+        comp_glo(P,glo,t)
     end
 
     if calc=="glo2d"
