@@ -24,7 +24,7 @@ p=dirname(pathof(OceanStateEstimation))
 
     isdir(MITPROFclim_path)
     isdir(CBIOMESclim_path)
-    @test true
+    @test true 
 
     if false
         var_list3d=("THETA","SALT","UVELMASS","VVELMASS",
@@ -36,6 +36,7 @@ p=dirname(pathof(OceanStateEstimation))
         get_ecco_variable_if_needed("MXLDEPTH") 
     end
 
+    GRID_LLC90_download()
     pth=ECCO.standard_analysis_setup(ECCOclim_path)
     list0=ECCO_helpers.standard_list_toml("")
     P=ECCO_helpers.parameters(pth,"r2",list0,4)
@@ -49,7 +50,5 @@ p=dirname(pathof(OceanStateEstimation))
 
     fil0=joinpath(P.pth_out,"zonmean2d.jld2")
     @test isfile(fil0)
-
-    @test isdir(P.pth_out)
 
 end
