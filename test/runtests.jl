@@ -32,7 +32,6 @@ p=dirname(pathof(OceanStateEstimation))
 
     OceanStateEstimation.CBIOMESclim_download()
     OceanStateEstimation.ECCOdiags_download()
-    OceanStateEstimation.ECCOdiags_add("release4")
     OceanStateEstimation.ECCOdiags_add("interp_coeffs")
     @test true 
 
