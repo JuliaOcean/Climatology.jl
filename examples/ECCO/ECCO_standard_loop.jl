@@ -33,6 +33,8 @@ for ff in list1
 #    @sync @everywhere gg=load(joinpath(pth,sol,"taskID.jld2"),"ID")
     P=ECCO_helpers.parameters(pth,sol0,list0,ff)
     !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
+    println("starting calc,sol,nam=$(P.calc),$(P.sol),$(P.nam) ...")
+
     ECCO_diagnostics.driver(P)
 end
 

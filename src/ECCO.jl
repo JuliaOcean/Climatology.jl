@@ -57,6 +57,11 @@ using MeshArrays, TOML, JLD2, NCDatasets
     parameters(pth0::String,sol0::String,list0,index)
 
 Prepare parameter NamedTuple for use in `ECCO_diagnostics.driver`.
+
+```
+pth=ECCO.standard_analysis_setup(ECCOclim_path)
+list0=ECCO.standard_list_toml("")
+P=parameters(pth,sol0,list0,1)
 """
 function parameters(pth0::String,sol0::String,list0,index)
 
@@ -204,10 +209,13 @@ function standard_list_toml(fil)
     push!(allcalc,allnam,allkk;calc="clim",nam="SIarea")
 
     tmp1=Dict("calc"=>allcalc,"nam"=>allnam,"kk"=>allkk)
-    open(fil, "w") do io
-        TOML.print(io, tmp1)
+    if !isempty(fil)
+        open(fil, "w") do io
+            TOML.print(io, tmp1)
+        end
     end
 
+    return tmp1
 end
 
 ##
@@ -759,7 +767,6 @@ Depending on `P` this will call `main_clim`, `main_glo`, `main_zonmean`, `main_o
 function driver(P)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
-    println("starting calc,sol,nam=$(calc),$(sol),$(nam) ...")
     if calc=="clim"
         main_clim(P)
     elseif (calc=="glo2d")||(calc=="glo3d")
