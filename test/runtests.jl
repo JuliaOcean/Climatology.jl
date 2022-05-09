@@ -54,7 +54,9 @@ p=dirname(pathof(OceanStateEstimation))
     P0=ECCO_helpers.parameters(pth,"r2",list0[4])
 
     !isdir(dirname(P0.pth_out)) ? mkdir(dirname(P0.pth_out)) : nothing
-
+    pth_trsp=joinpath(pth,P0.sol,"ECCO_transport_lines")
+    !isdir(pth_trsp) ? ECCO_helpers.transport_lines(P0.Γ,pth_trsp) : nothing
+    
     for k in [collect(1:8)...,12,13,25,26,27,28]
         P=ECCO_helpers.parameters(P0,list0[k])
         !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
