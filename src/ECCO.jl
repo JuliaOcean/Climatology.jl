@@ -58,22 +58,49 @@ module ECCO_helpers
 using MeshArrays, TOML, JLD2, NCDatasets
 
 """
+    parameters(P0,params)
+
+Prepare parameter NamedTuple for use in `ECCO_diagnostics.driver`.
+
+`P1=parameters(P0,p)` 
+
+is faster than e.g. `parameters(pth,"r2",p)` as grid, etc get copied from `P0` to `P1`.
+"""
+function parameters(P,params)
+    calc=params.calc
+    nam=params.nam
+    kk=params.lev
+
+    pth_out=dirname(P.pth_out)
+    if sum(calc.==("overturn","MHT","trsp"))==0
+        pth_out=joinpath(pth_out,nam*"_"*calc)
+    else
+        pth_out=joinpath(pth_out,calc)
+    end    
+
+    return (pth_in=P.pth_in,pth_out=pth_out,list_steps=P.list_steps,nt=P.nt,
+    calc=calc,nam=nam,kk=kk,sol=P.sol,γ=P.γ,Γ=P.Γ,LC=P.LC)
+end
+
+"""
     parameters(pth0::String,sol0::String,params)
 
 Prepare parameter NamedTuple for use in `ECCO_diagnostics.driver`.
 
-```
-list0=ECCO_helpers.standard_list_toml("")
-pth=ECCO.standard_analysis_setup(ECCOclim_path)
-P=parameters(pth,"r2",list0[1])
-```
-
-Or, as a concrete example, to compute zonal mean temperatures at level 5:
+For example, to compute zonal mean temperatures at level 5:
 
 ```
 p=(calc = "zonmean", nam = "THETA", lev = 5)
 pth=ECCO.standard_analysis_setup(ECCOclim_path)
-P=parameters(pth,"r2",p)
+P0=parameters(pth,"r2",p)
+```
+
+or, from a predefined list:
+
+```
+list0=ECCO_helpers.standard_list_toml("")
+pth=ECCO.standard_analysis_setup(ECCOclim_path)
+P1=parameters(pth,"r2",list0[1])
 ```
 """
 function parameters(pth0::String,sol0::String,params)
