@@ -36,7 +36,7 @@ p=dirname(pathof(OceanStateEstimation))
         get_ecco_variable_if_needed("MXLDEPTH") 
     end
 
-    GRID_LLC90_download()
+    MeshArrays.GRID_LLC90_download()
     pth=ECCO.standard_analysis_setup(ECCOclim_path)
     list0=ECCO_helpers.standard_list_toml("")
     P=ECCO_helpers.parameters(pth,"r2",list0,4)
