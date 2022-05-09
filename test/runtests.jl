@@ -26,4 +26,30 @@ p=dirname(pathof(OceanStateEstimation))
     isdir(CBIOMESclim_path)
     @test true
 
+    if false
+        var_list3d=("THETA","SALT","UVELMASS","VVELMASS",
+        "ADVx_TH","ADVy_TH","DFxE_TH","DFyE_TH")
+        var_list2d=("MXLDEPTH","SIarea","sIceLoad","ETAN")
+        [get_ecco_variable_if_needed(v) for v in var_list3d]
+        [get_ecco_variable_if_needed(v) for v in var_list2d]
+    else
+        get_ecco_variable_if_needed("MXLDEPTH") 
+    end
+
+    pth=ECCO.standard_analysis_setup(ECCOclim_path)
+    list0=ECCO_helpers.standard_list_toml("")
+    P=ECCO_helpers.parameters(pth,"r2",list0,4)
+
+    !isdir(dirname(P.pth_out)) ? mkdir(dirname(P.pth_out)) : nothing
+    !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
+    ECCO_diagnostics.driver(P)
+
+#    include(joinpath("..","examples","ECCO","ECCO_standard_loop.jl"))
+#    Pkg.activate(pth)
+
+    fil0=joinpath(P.pth_out,"zonmean2d.jld2")
+    @test isfile(fil0)
+
+    @test isdir(P.pth_out)
+
 end
