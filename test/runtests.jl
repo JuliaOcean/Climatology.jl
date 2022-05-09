@@ -39,7 +39,7 @@ p=dirname(pathof(OceanStateEstimation))
     MeshArrays.GRID_LLC90_download()
     pth=ECCO.standard_analysis_setup(ECCOclim_path)
     list0=ECCO_helpers.standard_list_toml("")
-    P=ECCO_helpers.parameters(pth,"r2",list0,4)
+    P=ECCO_helpers.parameters(pth,"r2",list0[4])
 
     !isdir(dirname(P.pth_out)) ? mkdir(dirname(P.pth_out)) : nothing
     !isdir(P.pth_out) ? mkdir(P.pth_out) : nothing

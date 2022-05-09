@@ -1,12 +1,17 @@
 
 ## ECCO how-to
 
-Code below provides the setup for running `ECCO_standard_loop.jl`.
+The workflow presented here is:
 
-!!! note
-    For this to work, user must indicate the path to their ECCO data folder as `pth0` (of type `String`).
+- set up recommended for running analyses of `ECCO estimates`.
+- run one computation loop on the `ECCO monthly` files.
 
 ```@docs
 ECCO.standard_analysis_setup
 ```
 
+Here is an example of parameters `P` to compute zonal mean temperatures at level 5.
+
+```@docs
+ECCO_helpers.parameters
+```
