@@ -24,6 +24,7 @@ Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 [compat]
 CodecZlib = "0.7"
 FortranFiles = "0.6"
+JLD2 = "0.4"
 MITgcmTools = "0.1, 0.2"
 MeshArrays = "0.2"
 NCDatasets = "0.12"
