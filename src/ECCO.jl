@@ -51,7 +51,7 @@ end
 
 module ECCO_helpers
 
-using MeshArrays, TOML, JLD2
+using MeshArrays, TOML, JLD2, NCDatasets
 
 """
     parameters(pth0::String,sol0::String,list0,index)
@@ -66,7 +66,7 @@ function parameters(pth0::String,sol0::String,list0,index)
     sol="ECCOv4"*sol0*"_analysis"
 
     if sol0=="r1"||sol0=="r2"
-        fil=isfile(joinpath(pth0,"THETA","THETA.0001.nc"))
+        fil=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly","THETA","THETA.0001.nc")
         if isfile(fil)
             nt=NCDataset(fil) do ds
                 data = length(ds["tim"][:])
