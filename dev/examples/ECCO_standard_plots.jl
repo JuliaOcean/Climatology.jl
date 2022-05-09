@@ -41,22 +41,6 @@ md"""#  Ocean State Estimate : Standard Plots
 # ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 md"""## Climatology Maps"""
 
-# ╔═╡ 0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
-function longname(n)
-	if occursin("_k",n)
-		ln=split(n,"_k")[1]*" at level "*split(n,"_k")[2]
-	else
-		ln=n
-	end
-	occursin("BSF",ln) ? ln=replace(ln, "BSF" => "Horizontal Streamfunction (m3/s)") : nothing
-	occursin("MXLDEPTH",ln) ? ln=replace(ln, "MXLDEPTH" => "Mixed Layer Depth (m)") : nothing
-	occursin("SIarea",ln) ? ln=replace(ln, "SIarea" => "Ice Concentration (0 to 1)") : nothing
-	occursin("SSH",ln) ? ln=replace(ln, "SSH" => "Free Surface Height (m)") : nothing
-	occursin("THETA",ln) ? ln=replace(ln, "THETA" => "Potential Temperature (degree C)") : nothing
-	occursin("SALT",ln) ? ln=replace(ln, "SALT" => "Salinity (psu)") : nothing
-	return ln
-end
-
 # ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
 md"""## Select a Solution"""
 
@@ -295,6 +279,22 @@ function climatology_files(pth_out)
 		[push!(clim_files,i) for i in tmp]
 	end
 	clim_files
+end
+
+# ╔═╡ 0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
+function longname(n)
+	if occursin("_k",n)
+		ln=split(n,"_k")[1]*" at level "*split(n,"_k")[2]
+	else
+		ln=n
+	end
+	occursin("BSF",ln) ? ln=replace(ln, "BSF" => "Horizontal Streamfunction (m3/s)") : nothing
+	occursin("MXLDEPTH",ln) ? ln=replace(ln, "MXLDEPTH" => "Mixed Layer Depth (m)") : nothing
+	occursin("SIarea",ln) ? ln=replace(ln, "SIarea" => "Ice Concentration (0 to 1)") : nothing
+	occursin("SSH",ln) ? ln=replace(ln, "SSH" => "Free Surface Height (m)") : nothing
+	occursin("THETA",ln) ? ln=replace(ln, "THETA" => "Potential Temperature (degree C)") : nothing
+	occursin("SALT",ln) ? ln=replace(ln, "SALT" => "Salinity (psu)") : nothing
+	return ln
 end
 
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
