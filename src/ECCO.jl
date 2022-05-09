@@ -268,33 +268,36 @@ module ECCO_read_monthly
 
 using MeshArrays, MITgcmTools
 
-import OceanStateEstimation: ECCO_helper_functions
+#import OceanStateEstimation: ECCO_helper_functions
 #γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
+#γ,Γ,LC=ECCO_helper_functions.GridLoad_Main()
 
-function main(sol,nam,t,list_steps; pth_in="", pth_out="") 
+function main(P,nam,t) 
     if nam=="SSH"
-        read_monthly_SSH(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+        read_monthly_SSH(P,t)
     elseif nam=="MHT"
-        read_monthly_MHT(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+        read_monthly_MHT(P,t)
     elseif nam=="BSF"
-        read_monthly_BSF(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+        read_monthly_BSF(P,t)
     else
-        read_monthly_default(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+        read_monthly_default(P,nam,t)
     end
 end
 
-function read_monthly_SSH(sol,nam,t,list_steps; pth_in="", pth_out="")
-    ETAN=read_monthly_default(sol,"ETAN",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    sIceLoad=read_monthly_default(sol,"sIceLoad",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+function read_monthly_SSH(P,t)
+    (; Γ) = P
+    ETAN=read_monthly_default(P,"ETAN",t)
+    sIceLoad=read_monthly_default(P,"sIceLoad",t)
     (ETAN+sIceLoad/1029.0)*Γ.mskC[:,1]
 end
 
-function read_monthly_MHT(sol,nam,t,list_steps; pth_in="", pth_out="")
-    U=read_monthly_default(sol,"ADVx_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=read_monthly_default(sol,"ADVy_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    U=U+read_monthly_default(sol,"DFxE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=V+read_monthly_default(sol,"DFyE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+function read_monthly_MHT(P,t)
+    (; Γ) = P
+
+    U=read_monthly_default(P,"ADVx_TH",t)
+    V=read_monthly_default(P,"ADVy_TH",t)
+    U=U+read_monthly_default(P,"DFxE_TH",t)
+    V=V+read_monthly_default(P,"DFyE_TH",t)
 
     [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
     [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
@@ -307,9 +310,11 @@ function read_monthly_MHT(sol,nam,t,list_steps; pth_in="", pth_out="")
     return Tx,Ty
 end
 
-function read_monthly_BSF(sol,nam,t,list_steps; pth_in="", pth_out="")
-    U=read_monthly_default(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=read_monthly_default(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+function read_monthly_BSF(P,t)
+    (; Γ) = P
+
+    U=read_monthly_default(P,"UVELMASS",t)
+    V=read_monthly_default(P,"VVELMASS",t)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
     
     nz=size(Γ.hFacC,2)
@@ -342,7 +347,9 @@ function read_monthly_BSF(sol,nam,t,list_steps; pth_in="", pth_out="")
     return TrspPsi
 end
 
-function read_monthly_default(sol,nam,t,list; pth_in="", pth_out="")
+function read_monthly_default(P,nam,t)
+    (; pth_in, sol, list_steps, γ) = P
+
     var_list3d=("THETA","SALT","UVELMASS","VVELMASS",
                 "ADVx_TH","ADVy_TH","DFxE_TH","DFyE_TH")
     mdsio_list3d=("STATE/state_3d_set1","STATE/state_3d_set1",
@@ -392,14 +399,14 @@ function read_monthly_default(sol,nam,t,list; pth_in="", pth_out="")
         fil=mdsio_list3d[ii]
         meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
         kk=findall(vec(meta.fldList).==nam)[1]
-        tmp=read_mdsio(joinpath(pth_in,fil*list[t][14:end]))[:,:,:,kk]
+        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]))[:,:,:,kk]
         tmp=Γ.mskC*read(tmp,γ)     
       else
         ii=findall(var_list2d.==nam)[1];
         fil=mdsio_list2d[ii]
         meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
         kk=findall(vec(meta.fldList).==nam)[1]
-        tmp=read_mdsio(joinpath(pth_in,fil*list[t][14:end]))[:,:,kk]
+        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]))[:,:,kk]
         tmp=Γ.mskC[:,1]*read(tmp,Γ.XC)
       end
     end
@@ -413,10 +420,6 @@ module ECCO_diagnostics
 
 using SharedArrays, Distributed, Printf, JLD2, MeshArrays
 import OceanStateEstimation: ECCO_read_monthly, ECCO_helper_functions
-
-#temporary fix:
-read_monthly=ECCO_read_monthly.main
-list_time_steps=ECCO_helper_functions.list_time_steps
 
 """
 List of variables derived in this module:
@@ -458,7 +461,7 @@ function comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
     tmp_s1[:,:,m].=0.0
     tmp_s2[:,:,m].=0.0
     for t in m:12:nt
-        tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+        tmp=ECCO_read_monthly.main(P,nam,t)
         ndims(tmp)>1 ? tmp=tmp[:,kk] : nothing
         tmp_m[:,:,m]=tmp_m[:,:,m]+1.0/nm*γ.write(tmp)
         tmp_s1[:,:,m]=tmp_s1[:,:,m]+γ.write(tmp)
@@ -473,7 +476,7 @@ function main_clim(P)
     tmp_s2 = SharedArray{Float64}(γ.ioSize...,12)
     tmp_m = SharedArray{Float64}(γ.ioSize...,12)
 
-    tmp=read_monthly(sol,nam,1,list_steps; pth_in=pth_in, pth_out=pth_out)
+    tmp=ECCO_read_monthly.main(P,nam,1)
     ndims(tmp)>1 ? nz=size(tmp,2) : nz=1
     nz==1 ? kk=1 : nothing
     nz>1 ? suff=Printf.@sprintf("_k%02d",kk) : suff=""
@@ -509,7 +512,7 @@ function comp_glo(P,glo,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
     nr=length(Γ.DRF)
 
-    tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    tmp=ECCO_read_monthly.main(P,nam,t)
     if calc=="glo2d"
         tmp=[nansum(tmp[i,j].*Γ.RAC[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
     else
@@ -565,8 +568,8 @@ function comp_zonmean(P,zm,t,msk0,zm0)
 
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
-    list_steps=list_time_steps(pth_in)
-    tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+
+    tmp=ECCO_read_monthly.main(P,nam,t)
     for l in 1:nl
         mskrac=read(msk0[:,:,l],γ)
         tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
@@ -579,8 +582,8 @@ function comp_zonmean2d(P,zm,t,msk0,zm0)
 
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
-    list_steps=list_time_steps(pth_in)
-    tmp=read_monthly(sol,nam,t,list_steps; pth_in=pth_in, pth_out=pth_out)
+
+    tmp=ECCO_read_monthly.main(P,nam,t)
     for l in 1:nl
         mskrac=read(msk0[:,:,l],γ)
         tmp1=[nansum(tmp[i].*mskrac[i]) for i in eachindex(Γ.RAC)]
@@ -636,9 +639,8 @@ function comp_overturn(P,ov,t)
     nr=length(Γ.DRF)
     nl=length(LC)
 
-    list_steps=list_time_steps(pth_in)
-    U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    U=ECCO_read_monthly.main(P,"UVELMASS",t)
+    V=ECCO_read_monthly.main(P,"VVELMASS",t)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
     #integrate across latitude circles
     for z=1:nr
@@ -674,10 +676,10 @@ function comp_MHT(P,MHT,t)
     nr=length(Γ.DRF)
     nl=length(LC)
 
-    U=read_monthly(sol,"ADVx_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=read_monthly(sol,"ADVy_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    U=U+read_monthly(sol,"DFxE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=V+read_monthly(sol,"DFyE_TH",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    U=ECCO_read_monthly.main(P,"ADVx_TH",t)
+    V=ECCO_read_monthly.main(P,"ADVy_TH",t)
+    U=U+ECCO_read_monthly.main(P,"DFxE_TH",t)
+    V=V+ECCO_read_monthly.main(P,"DFyE_TH",t)
 
     [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
     [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
@@ -708,13 +710,11 @@ end
 function comp_trsp(P,trsp,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
 
-    U=read_monthly(sol,"UVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
-    V=read_monthly(sol,"VVELMASS",t,list_steps; pth_in=pth_in, pth_out=pth_out)
+    U=ECCO_read_monthly.main(P,"UVELMASS",t)
+    V=ECCO_read_monthly.main(P,"VVELMASS",t)
     (Utr,Vtr)=UVtoTransport(U,V,Γ)
 
     pth_trsp=joinpath(pth_out,"..","ECCO_transport_lines")
-    #list_trsp=readdir(pth_trsp)
-    #ntr=length(list_trsp)
     list_trsp,msk_trsp,ntr=ECCO_helper_functions.reload_transport_lines(pth_trsp)
 
     #integrate across transport lines
