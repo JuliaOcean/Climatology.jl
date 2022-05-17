@@ -26,7 +26,6 @@ For more notebooks involving [CBIOMES](https://cbiomes.org) and related efforts 
 
 - [Marine Ecosystem Notebooks](https://github.com/JuliaOcean/MarineEcosystemNotebooks) : Darwin Model, Ocean Color data, Gradients field program, and more.
 - [PlanktonIndividuals.jl](https://juliaocean.github.io/PlanktonIndividuals.jl/dev/) : simulate the life cycle of ocean phytoplankton cells and their environment.
-- [OptimalTransport\_demo.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/OptimalTransport_demo.html) : application of optimal transport to compare model and data.
 - [JuliaCon2021 workshop](https://github.com/JuliaOcean/MarineEcosystemsJuliaCon2021.jl) : _Modeling Marine Ecosystems At Multiple Scales Using Julia_.
 
 To retrieve this climatology, in the `julia REPL` for example :
@@ -37,6 +36,11 @@ OceanStateEstimation.CBIOMESclim_download()
 fil_out=joinpath(CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
 nc=NCTiles.NCDataset(fil_out,"r")
 ```
+
+## Other
+
+- [OptimalTransport\_demo.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/OptimalTransport_demo.html) : using optimal transport for model-data comparison.
+- [HadIOD\_viz.jl](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/HadIOD/HadIOD_viz.jl) : download, read, and plot a subset of the [HadIOD](https://www.metoffice.gov.uk/hadobs/hadiod/) base.
 
 ## References
 
