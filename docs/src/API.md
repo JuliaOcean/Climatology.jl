@@ -1,6 +1,6 @@
-## Data Access
+## Path Variables
 
-The gridded fields used in the ECCO examples can be retrieved from [ecco-group.org](https://ecco-group.org/products.htm) and, for the `ECCOv4r2` estimate, from [Harvard Dataverse](https://dataverse.harvard.edu) or [zenodo.org](https://zenodo.org). Two monthly climatologies (`ECCOv4r2` and `OCCA`) are also readily available using the `Julia` artifact system as explained below. These can be relatively large files, compared to the package codes, so they are handled `lazily` (only downloaded when needed). 
+The gridded fields used in the ECCO examples can be retrieved from [ecco-group.org](https://ecco-group.org/products.htm) and, for the `ECCOv4r2` estimate, from [Harvard Dataverse](https://dataverse.harvard.edu) or [zenodo.org](https://zenodo.org). Two monthly climatologies (`ECCOv4r2` and `OCCA`) are also readily available using the `Julia` artifact system as explained below. These can be relatively large files, compared to the package codes, so they are handled `lazily` (only downloaded when needed). More files are handled in similar fashion.
 
 | Artifact path | File Type  | Download Method |
 |:----------------|:----------------:|-----------------:|
