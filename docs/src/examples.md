@@ -2,18 +2,12 @@
 ## Physical Oceanography
 
 [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) depicts a few climate-relevant variables and indices as an example. These quantities were derived (see [this notebook](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_calcs.jl) and [this script](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_loop.jl)) from estimates of the ocean state that provide gridded fields for physical variables like temperature, salinity, and currents. The initial fields can be retrieved from the [ECCO dataverse](https://dataverse.harvard.edu/dataverse/ECCO), and intermediate results from [zenodo.org](https://zenodo.org).
-
-If you want to run the notebook on your local computer or in the cloud, please refer to the directions provided at the [notebook final section](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html). Or more generally, to : 
-
-- [JuliaClimate Notebooks How-To](https://juliaclimate.github.io/Notebooks/#directions) 
-- [ecco-group.org story map](https://ecco-group.org/storymaps.htm?id=69)
-- [video demonstration](https://www.youtube.com/watch?v=mZevMagHatc&list=PLXO7Tdh24uhPFZ5bph6Y_Q3-CRSfk5cDU)
 	
 For more notebooks on these gridded estimates, and how to analyze them, see :
 
 - [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/) : gridded Earth variables, domain decomposition, C-grid support; [Ocean Circulation](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/vectors.html), [Geography](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/geography.html) tutorials.
+- [MITgcmTools.jl](https://juliaclimate.github.io/MiTgcmTools.jl/dev/) : framework to interact with MITgcm (setup, run, output, plot, etc) and ECCO output.
 - [IndividualDisplacements.jl](https://juliaclimate.github.io/IndividualDisplacements.jl/dev/) : simulation and analysis of materials moving through oceanic and atmospheric flows.
-- [MITgcmTools.jl](https://juliaclimate.github.io/MiTgcmTools.jl/dev/) : framework to interact with MITgcm (setup, run, output, plot, etc) and ECCO.
 
 ## Marine Ecosystems
 
@@ -25,19 +19,20 @@ The [CBIOMES-global](https://github.com/CBIOMES/global-ocean-model) climatology 
 For more notebooks involving [CBIOMES](https://cbiomes.org) and related efforts :
 
 - [Marine Ecosystem Notebooks](https://github.com/JuliaOcean/MarineEcosystemNotebooks) : Darwin Model, Ocean Color data, Gradients field program, and more.
-- [PlanktonIndividuals.jl](https://juliaocean.github.io/PlanktonIndividuals.jl/dev/) : simulate the life cycle of ocean phytoplankton cells and their environment.
 - [JuliaCon2021 workshop](https://github.com/JuliaOcean/MarineEcosystemsJuliaCon2021.jl) : _Modeling Marine Ecosystems At Multiple Scales Using Julia_.
+- [PlanktonIndividuals.jl](https://juliaocean.github.io/PlanktonIndividuals.jl/dev/) : simulate the life cycle of ocean phytoplankton cells and their environment.
 
-To retrieve this climatology, in the `julia REPL` for example :
+## Replaying Notebooks
 
-```julia
-using OceanStateEstimation, NCTiles
-OceanStateEstimation.CBIOMESclim_download()
-fil_out=joinpath(CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
-nc=NCTiles.NCDataset(fil_out,"r")
-```
+If you want to run the notebook on your local computer or in the cloud, please refer to the directions provided at the final section of [ECCO\_standard\_plots.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html). 
 
-## Other
+Or more generally, to : 
+
+- [JuliaClimate How-To](https://juliaclimate.github.io/Notebooks/#directions) 
+- [ECCO/Julia storymap](https://ecco-group.org/storymaps.htm?id=69)
+- [video demonstration](https://www.youtube.com/watch?v=mZevMagHatc&list=PLXO7Tdh24uhPFZ5bph6Y_Q3-CRSfk5cDU)
+
+## More Notebooks
 
 - [OptimalTransport\_demo.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/OptimalTransport_demo.html) : using optimal transport for model-data comparison.
 - [HadIOD\_viz.jl](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/HadIOD/HadIOD_viz.jl) : download, read, and plot a subset of the [HadIOD](https://www.metoffice.gov.uk/hadobs/hadiod/) base.
