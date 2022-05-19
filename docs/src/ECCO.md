@@ -1,7 +1,5 @@
 
-## ECCO how-to
-
-The workflow presented here is:
+The workflow presented here is as follows.
 
 - set up recommended for running analyses of `ECCO estimates`.
 - run one computation loop on the `ECCO monthly` files.
@@ -14,4 +12,14 @@ Here is an example of parameters `P` to compute zonal mean temperatures at level
 
 ```@docs
 ECCO_helpers.parameters
+```
+
+The computation loop, over all months, can then be carried out as follows.
+
+```@docs
+ECCO_diagnostics.driver
+```
+
+```@autodocs
+Modules = [OceanStateEstimation.ECCO_io]
 ```
