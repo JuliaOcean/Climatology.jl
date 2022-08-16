@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.3
+# v0.19.9
 
 using Markdown
 using InteractiveUtils
@@ -16,11 +16,173 @@ end
 
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin	
-	using MeshArrays, OceanStateEstimation
+	using MeshArrays, OceanStateEstimation, ClimateModels
 	using JLD2, PlutoUI, Glob
-	using TOML, Statistics, RollingFunctions
-	import CairoMakie as Mkie
+	using TOML
 	"Done with packages"
+end
+
+# ╔═╡ a468baa1-2e5b-40ce-b33c-2e275d720c8e
+module plots
+
+	using CairoMakie, JLD2, RollingFunctions, Statistics
+
+	function axtr1(ax,namtr,pth_out,list_trsp)
+		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
+
+		itr=findall(list_trsp.==namtr)[1]
+		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
+		
+		nt=size(tmp.val,2)
+		x=vec(0.5:nt)
+	
+		txt=tmp.nam[1:end-5]
+		val=1e-6*vec(sum(tmp.val,dims=1)[:])
+		valsmo = runmean(val, 12)
+	
+		x=vec(0.5:nt)
+		x=1992.0 .+ x./12.0
+
+		hm1=lines!(ax,x,val,label="ECCO estimate")
+		valsmo[1:5].=NaN
+		valsmo[end-4:end].=NaN
+		lines!(ax,x,valsmo,linewidth=4.0,color=:red)
+		xlims!(ax,(1992.0,2021.0))
+	end
+
+	function transport(namtrs,ncols,pth_out,list_trsp)
+		if ncols > 1
+			fig1 = Figure(resolution = (2000,1000),markersize=0.1)
+		else
+			fig1 = Figure(resolution = (900,400),markersize=0.1)
+		end
+		for na in 1:length(namtrs)
+			txt=namtrs[na]
+			jj=div.(na,ncols,RoundUp)
+			kk=na-(jj.-1)*ncols
+			ax1 = Axis(fig1[jj,kk], title=" $txt (in Sv)",
+				xticks=(1992.0:4:2021.0),ylabel="transport, in Sv")
+			axtr1(ax1,namtrs[na],pth_out,list_trsp)
+		end
+		#ylims!(ax1,rng)
+		fig1
+	end
+
+	function figov1(pth_out,kk,low1)
+		fil=joinpath(pth_out,"overturn/overturn.jld2")
+		tmp=-1e-6*load(fil,"single_stored_object")
+	
+		nt=size(tmp,3)
+		x=vec(0.5:nt)
+		x=1992.0 .+ x./12.0
+		lats=vec(-89.0:89.0)
+
+		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Axis(fig1[1,1],ylabel="Sv",
+			title="Global Overturning, in Sv, at kk=$(kk)",
+			xticks=(1992.0:4:2021.0))
+		for ll in 115:10:145
+			ov=tmp[ll,kk,:]
+			ov=runmean(ov, 12)
+			ov[1:5].=NaN
+			ov[end-4:end].=NaN
+			hm1=lines!(x,ov,label="$(lats[ll])N")
+		end
+		xlims!(ax1,(1992.0,2021.0))
+		low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
+		fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
+
+	
+		fig1
+	end
+
+	function figov2(pth_out,Γ)
+		fil=joinpath(pth_out,"overturn/overturn.jld2")
+		tmp=-1e-6*load(fil,"single_stored_object")
+		
+		ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
+			
+		x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
+		z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
+	
+		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, 92-11)",
+				xlabel="latitude",ylabel="depth (in m)")
+		hm1=contourf!(ax1,x,y,z,levels=(-40.0:5.0:40.0),clims=(-40,40))
+		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
+		fig1
+	end
+
+	function OHT(pth_out)
+		fil=joinpath(pth_out,"MHT/MHT.jld2")
+		tmp=load(fil,"single_stored_object")
+		MT=vec(mean(tmp[:,1:240],dims=2))
+	
+		x=vec(-89.0:89.0)
+		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Axis(fig1[1,1], title="Northward Heat Transport (in PW, 92-11)",
+			xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
+			xlabel="latitude",ylabel="Transport (in PW)")
+		hm1=lines!(x,MT)
+		ylims!(ax1,(-2.0,2.0))
+		fig1
+	end
+
+	function glo(gl1)
+		ttl="Global Mean $(gl1.txt)"
+		zlb=gl1.txt
+		rng=gl1.rng
+
+		if false
+			fac=4e6*1.335*10^9*10^9/1e21
+			ttl="Ocean Heat Uptake (Zetta-Joules)"
+			zlb="Zetta-Joules"
+			rng=(-100.0,300.0)
+			y=fac*(gl1.y.-gl1.y[1])
+		else
+			y=gl1.y
+		end
+
+		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Axis(fig1[1,1], title=ttl,
+			xticks=collect(1992.0:4:2021.0),ylabel=zlb)
+		hm1=lines!(ax1,gl1.x,y)
+		xlims!(ax1,(1992.0,2021.0))
+		ylims!(ax1,rng)
+		fig1
+	end
+
+	function DepthTime(x,y,z,levs,ttl,RC1,RC0)
+		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Axis(fig1[1,1], title=ttl,
+			xticks=collect(1992.0:4:2021.0))
+		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
+		xlims!(ax1,1992.0,2021.0)
+		ylims!(ax1,RC1,RC0)
+		
+		fig1
+	end
+
+	function TimeLat(x,y,z,levs,ttl,y0,y1)
+		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		ax1 = Axis(fig1[1,1], title=ttl,
+			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
+		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
+		xlims!(ax1,1992.0,2021.0)
+		ylims!(ax1,y0,y1)
+		fig1
+	end
+
+	function map(λ,DD,levs,ttl)
+		fig = Figure(resolution = (900,600), backgroundcolor = :grey95)
+		ax = Axis(fig[1,1], title=ttl,xlabel="longitude",ylabel="latitude")
+		hm1=contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
+		Colorbar(fig[1,2], hm1, height = Relative(0.65))
+		fig	
+	end
+
 end
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
@@ -49,8 +211,8 @@ md"""## Zonal Means"""
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
-	k_zm_select = @bind k_zm Slider(1:50, default=1, show_value=true)
-	namzm_select = @bind namzm Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
+	k_zm_select = @bind k_zm PlutoUI.Slider(1:50, default=1, show_value=true)
+	namzm_select = @bind namzm PlutoUI.Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
 	
 	md"""Select a quantity and plot it as a function of time and latitude.
 	
@@ -69,10 +231,10 @@ md"""## Zonal Mean Anomalies"""
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
 	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"])
-	k_zm2d_select = @bind k_zm2d Slider(1:50,show_value=true)
+	k_zm2d_select = @bind k_zm2d PlutoUI.Slider(1:50,show_value=true)
 	cmap_fac_select = @bind cmap_fac Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
-	l0_select = @bind l0 Slider(1:90;default=1, show_value=true)
-	l1_select = @bind l1 Slider(1:90;default=90, show_value=true)
+	l0_select = @bind l0 PlutoUI.Slider(1:90;default=1, show_value=true)
+	l1_select = @bind l1 PlutoUI.Slider(1:90;default=90, show_value=true)
 
 	#cmap_fac_select = @bind cmap_fac Select(string.([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0])[:])
 	#cmap_fac_select = @bind cmap_fac Select([1 2])
@@ -95,9 +257,9 @@ md"""### Depth vs Time Anomalies"""
 # ╔═╡ 302c84ce-c39d-456b-b748-e3f5ddec0eda
 begin
 	namzmanom_select = @bind namzmanom Select(["THETA","SALT"])
-	l_zm_select = @bind l_Tzm Slider(8:5:90;default=28,show_value=true)
-	k0_select = @bind k0 Slider(1:50;default=1, show_value=true)
-	k1_select = @bind k1 Slider(1:50;default=30, show_value=true)
+	l_zm_select = @bind l_Tzm PlutoUI.Slider(8:5:90;default=28,show_value=true)
+	k0_select = @bind k0 PlutoUI.Slider(1:50;default=1, show_value=true)
+	k1_select = @bind k1 PlutoUI.Slider(1:50;default=30, show_value=true)
 	facA_select = @bind facA Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
 
 	md"""Settings:
@@ -116,7 +278,7 @@ md"""## Global Means"""
 # ╔═╡ 92d1fc2f-9bdc-41dc-af49-9412f931d882
 begin
 	ngl1_select = @bind ngl1 Select(["THETA","SALT"];default="THETA")
-	kgl1_select = @bind kgl1 Slider(0:50;default=0, show_value=true)
+	kgl1_select = @bind kgl1 PlutoUI.Slider(0:50;default=0, show_value=true)
 
 	md"""Settings
 	
@@ -142,7 +304,7 @@ md"""### Overturning Time Series"""
 
 # ╔═╡ 7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 begin
-	ktr1_select = @bind ktr1 Slider(1:50;default=29, show_value=true)
+	ktr1_select = @bind ktr1 PlutoUI.Slider(1:50;default=29, show_value=true)
 	low1_select = @bind low1 Select(["auto",-10.0,0.0,5.0,10.0];default="auto")
 	
 	md"""Seetings:
@@ -158,6 +320,38 @@ md"""### Transport Across One Section"""
 # ╔═╡ 0b8ce7b9-8f41-451f-9ec5-5bff418bcafb
 md"""### Transport Across Multiple Sections"""
 
+# ╔═╡ 935cb17d-07b3-4c0c-b863-448ab327d57b
+md"""## Save Plots to Files"""
+
+# ╔═╡ 657fa106-b80f-4a80-868b-54e0bc42651f
+@bind savePlots PlutoUI.Button("Save Plots")
+
+# ╔═╡ 0a956b36-9306-42e2-a296-3a1840a4cf5b
+MC=ModelConfig(model="ECCO_plots")
+
+# ╔═╡ c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
+begin
+	savePlots
+	MC.outputs
+end
+
+# ╔═╡ ff40a006-915a-4d35-847f-5f10085f60a2
+begin
+	savePlots
+	
+	!isdir(pathof(MC)) ? setup(MC) : nothing
+	p=joinpath(pathof(MC),"plots")
+	!isdir(p) ? mkdir(p) : nothing
+
+	listplots=("overturning","overturnings","transport","transports","OHT",
+		"global","DepthTime","TimeLat","TimeLatAnom","map")
+	if !isempty(MC.outputs)
+		[plots.save(joinpath(p,f*".png"),MC.outputs[Symbol(f)]) for f in listplots]
+	end
+
+	readdir(p)
+end
+
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
 md"""## Appendices"""
 
@@ -167,11 +361,7 @@ begin
 	γ=GridSpec("LatLonCap",pth)
 	Γ=GridLoad(γ;option="full")
 	#LC=LatitudeCircles(-89.0:89.0,Γ)
-	"Done with ECCO grid"
-end
 
-# ╔═╡ 963c0bcf-5804-47a5-940e-68f348db95ea
-begin
 	function setup_interp(Γ)
 		μ =Γ.hFacC[:,1]
 		μ[findall(μ.>0.0)].=1.0
@@ -191,7 +381,8 @@ begin
 	end
 	
 	λ=setup_interp(Γ)
-	"Done with interpolation coefficients"	
+	
+	"Done with ECCO grid and interpolation"
 end
 
 # ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
@@ -208,7 +399,51 @@ begin
 	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
 	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
 
+	function longname(n)
+		if occursin("_k",n)
+			ln=split(n,"_k")[1]*" at level "*split(n,"_k")[2]
+		else
+			ln=n
+		end
+		occursin("BSF",ln) ? ln=replace(ln, "BSF" => "Horizontal Streamfunction (m3/s)") : nothing
+		occursin("MXLDEPTH",ln) ? ln=replace(ln, "MXLDEPTH" => "Mixed Layer Depth (m)") : nothing
+		occursin("SIarea",ln) ? ln=replace(ln, "SIarea" => "Ice Concentration (0 to 1)") : nothing
+		occursin("SSH",ln) ? ln=replace(ln, "SSH" => "Free Surface Height (m)") : nothing
+		occursin("THETA",ln) ? ln=replace(ln, "THETA" => "Potential Temperature (degree C)") : nothing
+		occursin("SALT",ln) ? ln=replace(ln, "SALT" => "Salinity (psu)") : nothing
+		return ln
+	end
+
+	function climatology_files(pth_out)
+		list_clim=readdir(pth_out)
+		kk=findall(occursin.(Ref("clim"),list_clim))
+		list_clim=list_clim[kk]
+		clim_files=[]
+		for ii in 1:length(list_clim)
+			tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
+			[push!(clim_files,i) for i in tmp]
+		end
+		clim_files
+	end
+	
+	pth_tmp01=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis")
+	clim_files=climatology_files(pth_tmp01)
+	clim_name=[split(basename(f),'.')[1] for f in clim_files]
+	clim_longname=longname.(clim_name) 
+
 	"Done with listing solutions, file names, color codes"
+end
+
+# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
+begin
+	nammap_select = @bind nammap Select(clim_longname)
+	statmap_select = @bind statmap Select(["mean","std","mon"])	
+	timemap_select = @bind timemap Select(1:12)
+	md"""
+	- file for time mean map : $(nammap_select)
+	- choice of statistic for time mean map : $(statmap_select)
+	- (optional) if `mon` was selected then show month # : $(timemap_select)
+	"""
 end
 
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
@@ -268,51 +503,6 @@ $(ntr2_select)
 	"""
 end
 
-# ╔═╡ 758e43bf-e60b-42a3-a3e0-5b928c330892
-function climatology_files(pth_out)
-	list_clim=readdir(pth_out)
-	kk=findall(occursin.(Ref("clim"),list_clim))
-	list_clim=list_clim[kk]
-	clim_files=[]
-	for ii in 1:length(list_clim)
-		tmp=joinpath.(Ref(list_clim[ii]),readdir(joinpath(pth_out,list_clim[ii])))
-		[push!(clim_files,i) for i in tmp]
-	end
-	clim_files
-end
-
-# ╔═╡ 0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
-function longname(n)
-	if occursin("_k",n)
-		ln=split(n,"_k")[1]*" at level "*split(n,"_k")[2]
-	else
-		ln=n
-	end
-	occursin("BSF",ln) ? ln=replace(ln, "BSF" => "Horizontal Streamfunction (m3/s)") : nothing
-	occursin("MXLDEPTH",ln) ? ln=replace(ln, "MXLDEPTH" => "Mixed Layer Depth (m)") : nothing
-	occursin("SIarea",ln) ? ln=replace(ln, "SIarea" => "Ice Concentration (0 to 1)") : nothing
-	occursin("SSH",ln) ? ln=replace(ln, "SSH" => "Free Surface Height (m)") : nothing
-	occursin("THETA",ln) ? ln=replace(ln, "THETA" => "Potential Temperature (degree C)") : nothing
-	occursin("SALT",ln) ? ln=replace(ln, "SALT" => "Salinity (psu)") : nothing
-	return ln
-end
-
-# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
-begin
-	pth_tmp1=joinpath(OceanStateEstimation.ECCOdiags_path,"ECCOv4r2_analysis")
-	clim_files=climatology_files(pth_tmp1)	
-	clim_name=[split(basename(f),'.')[1] for f in clim_files]
-	clim_longname=longname.(clim_name) 
-	nammap_select = @bind nammap Select(clim_longname)
-	statmap_select = @bind statmap Select(["mean","std","mon"])	
-	timemap_select = @bind timemap Select(1:12)
-	md"""
-	- file for time mean map : $(nammap_select)
-	- choice of statistic for time mean map : $(statmap_select)
-	- (optional) if `mon` was selected then show month # : $(timemap_select)
-	"""
-end
-
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
 begin
 	pth_out=joinpath(OceanStateEstimation.ECCOdiags_path,sol)
@@ -342,11 +532,9 @@ let
 	statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
 	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
-	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
-	ax = Mkie.Axis(fig[1,1], title=clim_longname[ii],xlabel="longitude",ylabel="latitude")
-	hm1=Mkie.contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
-	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
-	fig	
+	ttl=clim_longname[ii]
+
+	MC.outputs[:map]=plots.map(λ,DD,levs,ttl)
 end
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
@@ -377,28 +565,21 @@ begin
 		levs=missing
 	end
 
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	if !ismissing(levs)
-		tmp=load(fil,"single_stored_object")
-		if length(size(tmp))==3
-			z=fn(tmp[:,k_zm,:])
-			x=vec(0.5:size(tmp,3))
-			addon1=" at $(Int(round(Γ.RC[k_zm])))m "
-		else
-			z=fn(tmp[:,:])
-			x=vec(0.5:size(tmp,2))
-			addon1=""
-		end
-
-		x=1992.0 .+ x./12.0
-		ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) : Zonal Mean $(addon1)",ylabel="latitude",
-			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0))
-		hm1 = Mkie.contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs),colormap=cm)
-		Mkie.xlims!(ax1,1992.0,2021.0)
-		Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
+	tmp=load(fil,"single_stored_object")
+	if length(size(tmp))==3
+		z=fn(tmp[:,k_zm,:])
+		x=vec(0.5:size(tmp,3))
+		addon1=" at $(Int(round(Γ.RC[k_zm])))m "
+	else
+		z=fn(tmp[:,:])
+		x=vec(0.5:size(tmp,2))
+		addon1=""
 	end
+
+	x=1992.0 .+ x./12.0
+	ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
 	
-	fig1
+	MC.outputs[:TimeLat]=plots.TimeLat(x,y,z,cmap_fac*levs,ttl,-90.0,90.0)
 end
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
@@ -455,14 +636,9 @@ let
 	end
 
 	x=1992.0 .+ x./12.0
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) -- minus $(ref1) $(addon1)",
-		xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=cmap_fac*levs,colormap=:turbo)
-	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	Mkie.xlims!(ax1,1992.0,2021.0)
-	Mkie.ylims!(ax1,y[l0],y[l1])
-	fig1
+	ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
+
+	MC.outputs[:TimeLatAnom]=plots.TimeLat(x,y,z,cmap_fac*levs,ttl,y[l0],y[l1])
 end
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
@@ -500,16 +676,9 @@ let
 	#[z[t,:]=z[t,:]-zmean for t in 1:nt]
 
 	x=1992.0 .+ x./12.0
-
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="$(longname(namzm)) -- minus $(ref1) $(addon1)",
-		xticks=collect(1992.0:4:2021.0))
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=facA*levs,colormap=:turbo)
-	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	Mkie.xlims!(ax1,1992.0,2021.0)
-	Mkie.ylims!(ax1,Γ.RC[k1],Γ.RC[k0])
+	ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
 	
-	fig1
+	MC.outputs[:DepthTime]=plots.DepthTime(x,y,z,facA*levs,ttl,Γ.RC[k1],Γ.RC[k0])
 end
 
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
@@ -541,154 +710,27 @@ begin
 		(y=tmp,txt=txt,rng=rng,x=x)
 	end
 
-	function onegloplot(gl1)
-		ttl="Global Mean $(gl1.txt)"
-		zlb=gl1.txt
-		rng=gl1.rng
-
-		if false
-			fac=4e6*1.335*10^9*10^9/1e21
-			ttl="Ocean Heat Uptake (Zetta-Joules)"
-			zlb="Zetta-Joules"
-			rng=(-100.0,300.0)
-			y=fac*(gl1.y.-gl1.y[1])
-		else
-			y=gl1.y
-		end
-
-		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2021.0),ylabel=zlb)
-		hm1=Mkie.lines!(ax1,gl1.x,y)
-		Mkie.xlims!(ax1,(1992.0,2021.0))
-		Mkie.ylims!(ax1,rng)
-		fig1
-	end
-
 	gl1=glo(pth_out,ngl1,kgl1)
-	glfig1=onegloplot(gl1)
+	MC.outputs[:global]=plots.glo(gl1)
 end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
-let
-	fil=joinpath(pth_out,"MHT/MHT.jld2")
-	tmp=load(fil,"single_stored_object")
-	MT=vec(mean(tmp[:,1:240],dims=2))
+MC.outputs[:OHT]=plots.OHT(pth_out)
 
-	x=vec(-89.0:89.0)
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Northward Heat Transport (in PW, 92-11)",
-		xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
-		xlabel="latitude",ylabel="Transport (in PW)")
-	hm1=Mkie.lines!(x,MT)
-	Mkie.ylims!(ax1,(-2.0,2.0))
-	fig1
-end
-
-# ╔═╡ 12790dfb-5806-498b-8a08-3bfea0dac6a6
-let
-	fil=joinpath(pth_out,"overturn/overturn.jld2")
-	tmp=-1e-6*load(fil,"single_stored_object")
-	
-	ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
-		
-	x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
-	z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
-
-	fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-	ax1 = Mkie.Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, 92-11)",
-			xlabel="latitude",ylabel="depth (in m)")
-	hm1=Mkie.contourf!(ax1,x,y,z,levels=(-40.0:5.0:40.0),clims=(-40,40))
-	Mkie.Colorbar(fig1[1,2], hm1, height = Mkie.Relative(0.65))
-	fig1
-
-end
+# ╔═╡ 594c8843-f03f-4230-bdba-a943d535524d
+MC.outputs[:overturning]=plots.figov2(pth_out,Γ)
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-begin	
-	function figov1(pth_out,kk=29)
-		fil=joinpath(pth_out,"overturn/overturn.jld2")
-		tmp=-1e-6*load(fil,"single_stored_object")
-	
-		nt=size(tmp,3)
-		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
-		lats=vec(-89.0:89.0)
-
-		fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Mkie.Axis(fig1[1,1],ylabel="Sv",
-			title="Global Overturning, in Sv, at kk=$(kk)",
-			xticks=(1992.0:4:2021.0))
-		for ll in 115:10:145
-			ov=tmp[ll,kk,:]
-			ov=runmean(ov, 12)
-			ov[1:5].=NaN
-			ov[end-4:end].=NaN
-			hm1=Mkie.lines!(x,ov,label="$(lats[ll])N")
-		end
-		Mkie.xlims!(ax1,(1992.0,2021.0))
-		low1!="auto" ? Mkie.ylims!(ax1,(low1,20.0)) : nothing
-		fig1[1, 2] = Mkie.Legend(fig1, ax1, "estimate", framevisible = false)
-
-	
-		fig1
-	end
-
-	figov1(pth_out,ktr1)
-end
-
-# ╔═╡ a468baa1-2e5b-40ce-b33c-2e275d720c8e
-begin
-	function axtr1(ax,namtr)
-		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
-
-		itr=findall(list_trsp.==namtr)[1]
-		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
-		
-		nt=size(tmp.val,2)
-		x=vec(0.5:nt)
-	
-		txt=tmp.nam[1:end-5]
-		val=1e-6*vec(sum(tmp.val,dims=1)[:])
-		valsmo = runmean(val, 12)
-	
-		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
-
-		hm1=Mkie.lines!(ax,x,val,label="ECCO estimate")
-		valsmo[1:5].=NaN
-		valsmo[end-4:end].=NaN
-		Mkie.lines!(ax,x,valsmo,linewidth=4.0,color=:red)
-		Mkie.xlims!(ax,(1992.0,2021.0))
-	end
-
-	function transport_plot(namtrs,ncols)
-		if ncols > 1
-			fig1 = Mkie.Figure(resolution = (2000,1000),markersize=0.1)
-		else
-			fig1 = Mkie.Figure(resolution = (900,400),markersize=0.1)
-		end
-		for na in 1:length(namtrs)
-			txt=namtrs[na]
-			jj=div.(na,ncols,RoundUp)
-			kk=na-(jj.-1)*ncols
-			ax1 = Mkie.Axis(fig1[jj,kk], title=" $txt (in Sv)",
-				xticks=(1992.0:4:2021.0),ylabel="transport, in Sv")
-			axtr1(ax1,namtrs[na])
-		end
-		#Mkie.ylims!(ax1,rng)
-		fig1
-	end
-end
+MC.outputs[:overturnings]=plots.figov1(pth_out,ktr1,low1)
 
 # ╔═╡ 030dab23-18ed-4e1e-9074-4da8bb9e3ee8
-transport_plot([ntr1],1)
+MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,list_trsp)
 
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
 		#namtrs=[ntr1,ntr1,ntr1,ntr1]
 		ncols=Int(floor(sqrt(length(namtrs))))
-		transport_plot(namtrs,ncols)
+		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,list_trsp)
 end
 
 # ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
@@ -743,6 +785,7 @@ For more on the underlying software and additional notebooks like this, take a l
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+ClimateModels = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
@@ -754,6 +797,7 @@ TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
 CairoMakie = "~0.8.0"
+ClimateModels = "~0.2.9"
 Glob = "~1.3.0"
 JLD2 = "~0.4.22"
 MeshArrays = "~0.2.31"
@@ -904,9 +948,9 @@ version = "0.1.2"
 
 [[deps.ClimateModels]]
 deps = ["AWS", "CFTime", "CSV", "DataFrames", "Dates", "Downloads", "Git", "NetCDF", "OrderedCollections", "Pkg", "Statistics", "Suppressor", "TOML", "Test", "UUIDs", "Zarr"]
-git-tree-sha1 = "ffeb827b1ea7b9a1c29a7deafb10f9c2b7a9b0f1"
+git-tree-sha1 = "2bbc45a86dfb7ea956f0958f7d540400fa6e6775"
 uuid = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
-version = "0.2.3"
+version = "0.2.9"
 
 [[deps.CodecZlib]]
 deps = ["TranscodingStreams", "Zlib_jll"]
@@ -2242,7 +2286,7 @@ version = "3.5.0+0"
 # ╟─a19561bb-f9d6-4f05-9696-9b69bba024fc
 # ╟─b55432ac-4960-4983-8330-4ea957a05eee
 # ╟─c2cd21d9-3fe7-42ec-b6a8-ce34d0770d63
-# ╟─12790dfb-5806-498b-8a08-3bfea0dac6a6
+# ╟─594c8843-f03f-4230-bdba-a943d535524d
 # ╟─347dc728-2224-4e91-9d7b-45badef8f9a0
 # ╟─215cf4aa-e540-4882-8a33-b7976a6e1b04
 # ╟─88e85850-b09d-4f46-b104-3489ffe63fa0
@@ -2256,14 +2300,16 @@ version = "3.5.0+0"
 # ╟─8702a6cf-69de-4e9c-8e77-81f39b55efc7
 # ╟─8b286e86-692f-419c-83c1-f9120e4e35de
 # ╟─339c792e-7ef1-4554-9f12-d616bc9a7e5b
+# ╟─935cb17d-07b3-4c0c-b863-448ab327d57b
+# ╟─657fa106-b80f-4a80-868b-54e0bc42651f
+# ╟─0a956b36-9306-42e2-a296-3a1840a4cf5b
+# ╟─c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
+# ╟─ff40a006-915a-4d35-847f-5f10085f60a2
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
-# ╟─963c0bcf-5804-47a5-940e-68f348db95ea
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
-# ╟─758e43bf-e60b-42a3-a3e0-5b928c330892
 # ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
-# ╟─0d8f4f3e-f0ab-4836-959f-3907f4ee92d6
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
