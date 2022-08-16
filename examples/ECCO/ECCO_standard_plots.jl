@@ -17,8 +17,7 @@ end
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin	
 	using MeshArrays, OceanStateEstimation, ClimateModels
-	using JLD2, PlutoUI, Glob
-	using TOML
+	using JLD2, PlutoUI, Glob, TOML, Statistics
 	"Done with packages"
 end
 
