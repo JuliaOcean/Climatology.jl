@@ -18,6 +18,8 @@ end
 begin	
 	using MeshArrays, OceanStateEstimation, ClimateModels
 	using JLD2, PlutoUI, Glob, TOML, Statistics
+	OceanStateEstimation.ECCOdiags_download()
+	OceanStateEstimation.ECCOdiags_add("interp_coeffs")
 	"Done with packages"
 end
 
