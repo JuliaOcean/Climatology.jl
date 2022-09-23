@@ -6,13 +6,6 @@ lazy = true
     sha256 = "91b882197cc70809147e0609fe0ea5cdb825c2d5bced187b15b9c13a6c11208e"
     url = "https://zenodo.org/record/5598417/files/CBIOMES-global-alpha-climatology.nc.tar.gz?download=1"
 
-[ECCOclim]
-git-tree-sha1 = "ec3707d05425e2b371b5cb619383db1a3a9ab3de"
-
-    [[ECCOclim.download]]
-    sha256 = "485e5fc588bd36c755039f2d42120fca6964b80382c05276b0472faae356c4c1"
-    url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.5.tar.gz"
-
 [ECCOdiags]
 git-tree-sha1 = "88d76175cf7856091ee68ec83f03e74bc5041e96"
 lazy = true
@@ -20,13 +13,6 @@ lazy = true
     [[ECCOdiags.download]]
     sha256 = "33338d32863cda25ee43bb2614de252958929693d21a515c04a6fa04a1618bcc"
     url = "https://zenodo.org/record/6123272/files/ECCOv4r2_analysis.tar.gz?download=1"
-
-[OCCAclim]
-git-tree-sha1 = "2a81eeb195756e04bb3bd78139dbff6f6767f670"
-
-    [[OCCAclim.download]]
-    sha256 = "bb774f35caf9bc53dd01954b7d856e85543183a1e736f7fcab2e657cd968e002"
-    url = "https://github.com/gaelforget/OceanStateEstimation.jl/archive/v0.1.4.tar.gz"
 
 [MITPROFclim]
 git-tree-sha1 = "45cd2fe179cf6dcdaa7e963b7b8eb19ba3444be8"
