@@ -14,15 +14,13 @@ p=dirname(pathof(OceanStateEstimation))
     lst=joinpath(p,"../examples/nctiles_climatology.csv")
     lists=dataverse_lists(lst)
 
-    path0=OceanStateEstimation.ScratchSpace.download_cache
-
     get_occa_velocity_if_needed()
     get_occa_variable_if_needed("DDuvel")
-    @test isfile(joinpath(path0,"DDuvel.0406clim.nc"))
+    @test isfile(joinpath(ScratchSpace.path,"DDuvel.0406clim.nc"))
 
     get_ecco_velocity_if_needed()
     get_ecco_variable_if_needed("UVELMASS")
-    @test isdir(joinpath(path0,"UVELMASS"))
+    @test isdir(joinpath(ScratchSpace.path,"UVELMASS"))
 
     ##
 
@@ -50,7 +48,7 @@ p=dirname(pathof(OceanStateEstimation))
     end
 
     MeshArrays.GRID_LLC90_download()
-    pth=ECCO.standard_analysis_setup(path0)
+    pth=ECCO.standard_analysis_setup(ScratchSpace.path)
     list0=ECCO_helpers.standard_list_toml("")
     P0=ECCO_helpers.parameters(pth,"r2",list0[4])
 

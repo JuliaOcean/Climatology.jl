@@ -28,5 +28,6 @@ export get_occa_variable_if_needed, get_occa_velocity_if_needed
 export MITPROFclim_path, CBIOMESclim_path, ECCOdiags_path
 
 export ECCO, ECCO_helpers, ECCO_io, ECCO_diagnostics
+export ScratchSpace
 
 end # module
