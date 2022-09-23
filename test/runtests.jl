@@ -16,11 +16,11 @@ p=dirname(pathof(OceanStateEstimation))
 
     get_occa_velocity_if_needed()
     get_occa_variable_if_needed("DDuvel")
-    @test isfile(joinpath(ScratchSpace.path,"DDuvel.0406clim.nc"))
+    @test isfile(joinpath(ScratchSpaces.OCCA,"DDuvel.0406clim.nc"))
 
     get_ecco_velocity_if_needed()
     get_ecco_variable_if_needed("UVELMASS")
-    @test isdir(joinpath(ScratchSpace.path,"UVELMASS"))
+    @test isdir(joinpath(ScratchSpaces.ECCO,"UVELMASS"))
 
     ##
 
@@ -48,7 +48,7 @@ p=dirname(pathof(OceanStateEstimation))
     end
 
     MeshArrays.GRID_LLC90_download()
-    pth=ECCO.standard_analysis_setup(ScratchSpace.path)
+    pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
     list0=ECCO_helpers.standard_list_toml("")
     P0=ECCO_helpers.parameters(pth,"r2",list0[4])
 

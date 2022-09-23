@@ -15,7 +15,7 @@ For example:
 
 ```
 using OceanStateEstimation, Pkg
-pth=ECCO.standard_analysis_setup(ScratchSpace.path)
+pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
 ```
 
 The `Project.toml` file found in `pth` provides an environment ready for `ECCO` analyses. 
@@ -90,7 +90,7 @@ For example, to compute zonal mean temperatures at level 5:
 
 ```
 p=(calc = "zonmean", nam = "THETA", lev = 5)
-pth=ECCO.standard_analysis_setup(ScratchSpace.path)
+pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
 P0=parameters(pth,"r2",p)
 ```
 
@@ -98,7 +98,7 @@ or, from a predefined list:
 
 ```
 list0=ECCO_helpers.standard_list_toml("")
-pth=ECCO.standard_analysis_setup(ScratchSpace.path)
+pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
 P1=parameters(pth,"r2",list0[1])
 ```
 """
