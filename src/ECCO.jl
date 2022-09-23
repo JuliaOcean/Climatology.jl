@@ -15,7 +15,7 @@ For example:
 
 ```
 using OceanStateEstimation, Pkg
-pth_in=ECCOclim_path
+pth_in=OceanStateEstimation.ScratchSpace.download_cache
 pth=ECCO.standard_analysis_setup(pth_in)
 ```
 
@@ -91,7 +91,8 @@ For example, to compute zonal mean temperatures at level 5:
 
 ```
 p=(calc = "zonmean", nam = "THETA", lev = 5)
-pth=ECCO.standard_analysis_setup(ECCOclim_path)
+path0=OceanStateEstimation.ScratchSpace.download_cache
+pth=ECCO.standard_analysis_setup(path0)
 P0=parameters(pth,"r2",p)
 ```
 
@@ -99,7 +100,8 @@ or, from a predefined list:
 
 ```
 list0=ECCO_helpers.standard_list_toml("")
-pth=ECCO.standard_analysis_setup(ECCOclim_path)
+path0=OceanStateEstimation.ScratchSpace.download_cache
+pth=ECCO.standard_analysis_setup(path0)
 P1=parameters(pth,"r2",list0[1])
 ```
 """

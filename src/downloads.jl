@@ -1,8 +1,31 @@
 
+module ScratchSpace
+using Scratch, Downloads
+
+# This will be filled in inside `__init__()`
+download_cache = ""
+
+# Downloads a resource, stores it within a scratchspace
+function download_dataset(url)
+    fname = joinpath(download_cache, basename(url))
+    if !isfile(fname)
+        Downloads.download(url, fname)
+    end
+    return fname
+end
+
+function __init__()
+    global download_cache = @get_scratch!("downloaded_files")
+end
+
+end # module ScratchExample
+
+
 
 module downloads
 
 using OceanStateEstimation: pkg_pth
+import OceanStateEstimation: ScratchSpace
 
 using Artifacts, LazyArtifacts, Downloads, Tar, CodecZlib
 using Statistics, FortranFiles, MeshArrays, MITgcmTools
@@ -10,12 +33,6 @@ using Statistics, FortranFiles, MeshArrays, MITgcmTools
 ##
 
 artifact_toml = joinpath(pkg_pth, "../Artifacts.toml")
-
-ECCOclim_hash = artifact_hash("ECCOclim", artifact_toml)
-ECCOclim_path = artifact_path(ECCOclim_hash)*"/"
-
-OCCAclim_hash = artifact_hash("OCCAclim", artifact_toml)
-OCCAclim_path = artifact_path(OCCAclim_hash)*"/"
 
 MITPROFclim_hash = artifact_hash("MITPROFclim", artifact_toml)
 MITPROFclim_path = artifact_path(MITPROFclim_hash)*"/"
@@ -57,14 +74,15 @@ using OceanStateEstimation, CSV, DataFrames
 pth=dirname(pathof(OceanStateEstimation))
 lst=joinpath(pth,"../examples/OCCA_climatology.csv")
 nams=CSV.read(lst,DataFrame)
-[get_from_dataverse(lst,nam,OCCAclim_path) for nam in nams.name[:]]
+pth0=OceanStateEstimation.ScratchSpace.download_cache
+[get_from_dataverse(lst,nam,pth0) for nam in nams.name[:]]
 ```
 """
 function get_from_dataverse(lst::String,nam::String,pth::String)
     lists=dataverse_lists(lst)
     ii = findall([occursin("$nam", lists.name[i]) for i=1:length(lists.ID)])
-    for i in ii
-        nam1=Downloads.download(lists.URL[i])
+    for i in ii 
+        nam1=ScratchSpace.download_dataset(lists.URL[i])
         if length(ii)>1
             !isdir(joinpath(pth,nam)) ? mkdir(joinpath(pth,nam)) : nothing
             nam2=joinpath(pth,nam,lists.name[i])
@@ -106,25 +124,24 @@ tmp=get_ecco_files(γ,"oceQnet")
 """
 function get_ecco_files(γ::gcmgrid,v::String,t=1)
     get_ecco_variable_if_needed(v)
-    #return read_nctiles(ECCOclim_path*"$v/$v","$v",γ,I=(:,:,:,t))
-    return read_nctiles(ECCOclim_path*"$v/$v","$v",γ,I=(:,:,t))
+    return read_nctiles(joinpath(ScratchSpace.download_cache,"$v/$v"),"$v",γ,I=(:,:,t))
 end
 
 """
     get_ecco_variable_if_needed(v::String)
 
-Download ECCO output for variable `v` to `ECCOclim_path` if needed
+Download ECCO output for variable `v` to scratch space if needed
 """
 function get_ecco_variable_if_needed(v::String)
     lst=joinpath(pkg_pth,"../examples/nctiles_climatology.csv")
-    pth=ECCOclim_path
-    !isdir(pth*v) ? get_from_dataverse(lst,v,pth) : nothing
+    pth=ScratchSpace.download_cache
+    !isdir(joinpath(pth,v)) ? get_from_dataverse(lst,v,pth) : nothing
 end
 
 """
     get_ecco_velocity_if_needed()
 
-Download ECCO output for `u,v,w` to `ECCOclim_path` if needed
+Download ECCO output for `u,v,w` to scratch space if needed
 """
 function get_ecco_velocity_if_needed()
     get_ecco_variable_if_needed("UVELMASS")
@@ -135,18 +152,19 @@ end
 """
     get_occa_variable_if_needed(v::String)
 
-Download OCCA output for variable `v` to `OCCAclim_path` if needed
+Download OCCA output for variable `v` to scratch space if needed
 """
 function get_occa_variable_if_needed(v::String)
     lst=joinpath(pkg_pth,"../examples/OCCA_climatology.csv")
-    fil=joinpath(OCCAclim_path,v*".0406clim.nc")
-    !isfile(fil) ? get_from_dataverse(lst,v,OCCAclim_path) : nothing
+    path0=ScratchSpace.download_cache
+    fil=joinpath(path0,v*".0406clim.nc")
+    !isfile(fil) ? get_from_dataverse(lst,v,path0) : nothing
 end
 
 """
     get_occa_velocity_if_needed()
 
-Download OCCA output for `u,v,w` to `OCCAclim_path` if needed
+Download OCCA output for `u,v,w` to scratch space if needed
 """
 function get_occa_velocity_if_needed()
     nams = ("DDuvel","DDvvel","DDwvel","DDtheta","DDsalt")
