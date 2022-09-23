@@ -3,7 +3,7 @@ module ScratchSpaces
 using Downloads, Scratch
 
 # This will be filled in inside `__init__()`
-path = ""
+ECCO = ""
 OCCA = ""
 
 # Downloads a resource, stores it within path
@@ -16,7 +16,7 @@ function download_dataset(url,path)
 end
 
 function __init__()
-    global path = @get_scratch!("ECCO")
+    global ECCO = @get_scratch!("ECCO")
     global OCCA = @get_scratch!("OCCA")
 end
 
