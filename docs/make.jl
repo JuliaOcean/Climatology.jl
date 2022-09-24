@@ -18,7 +18,7 @@ makedocs(;
 )
 
 OceanStateEstimation.CBIOMESclim_download()
-OceanStateEstimation.ECCOdiags_download()
+OceanStateEstimation.ECCOdiags_add("release2")
 OceanStateEstimation.ECCOdiags_add("interp_coeffs")
 
 #lst=("CBIOMES_climatogy_create.jl",)
