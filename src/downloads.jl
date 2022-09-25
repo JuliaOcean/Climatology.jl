@@ -45,13 +45,13 @@ Download lazy artifact to scratch space.
 function MITPROFclim_download()
     url = "https://zenodo.org/record/5101243/files/gcmfaces_climatologies.tar.gz"
     fil="gcmfaces_climatologies.tar.gz"
-    fil_out=joinpath(ScratchSpaces.MITprof,fil[1:end-7])
-    if !isfile(fil_out)
+    dir_out=joinpath(ScratchSpaces.MITprof,fil[1:end-7])
+    if !isdir(dir_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.MITprof)
         tmp_path=open(joinpath(ScratchSpaces.MITprof,fil)) do io
             Tar.extract(CodecZlib.GzipDecompressorStream(io))
         end
-        mv(joinpath(tmp_path,fil[1:end-7]),fil-out)
+        mv(tmp_path,dir_out)
         rm(joinpath(ScratchSpaces.MITprof,fil))
     end
 end
@@ -64,13 +64,13 @@ Download lazy artifact to scratch space.
 function CBIOMESclim_download()
     url="https://zenodo.org/record/5598417/files/CBIOMES-global-alpha-climatology.nc.tar.gz"
     fil="CBIOMES-global-alpha-climatology.nc.tar.gz"
-    fil_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
-    if !isfile(fil_out)
+    dir_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
+    if !isdir(dir_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.CBIOMES)
         tmp_path=open(joinpath(ScratchSpaces.CBIOMES,fil)) do io
             Tar.extract(CodecZlib.GzipDecompressorStream(io))
         end
-        mv(joinpath(tmp_path,fil[1:end-7]),fil_out)
+        mv(tmp_path,dir_out)
         rm(joinpath(ScratchSpaces.CBIOMES,fil))
     end
 end
