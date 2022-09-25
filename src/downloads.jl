@@ -64,13 +64,13 @@ Download lazy artifact to scratch space.
 function CBIOMESclim_download()
     url="https://zenodo.org/record/5598417/files/CBIOMES-global-alpha-climatology.nc.tar.gz"
     fil="CBIOMES-global-alpha-climatology.nc.tar.gz"
-    dir_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
-    if !isdir(dir_out)
+    fil_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
+    if !isfile(fil_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.CBIOMES)
         tmp_path=open(joinpath(ScratchSpaces.CBIOMES,fil)) do io
             Tar.extract(CodecZlib.GzipDecompressorStream(io))
         end
-        mv(tmp_path,dir_out)
+        mv(tmp_path,fil_out)
         rm(joinpath(ScratchSpaces.CBIOMES,fil))
     end
 end
