@@ -11,10 +11,9 @@ _It is in early development stage; breaking changes remain likely._
 
 ### Use Examples
 
-- [Sea Level Time Series](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl))
-- [Sea Surface Temperature](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl))
-- [Physical Ocean, Gridded Estimates](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl))
-- [Marine Ecosystem / BGC Models](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl))
+- [Sea Level Time Series](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/NSLCT/NSLCT_notebook.jl))
+- [Physical Ocean, Currents, & Climate](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl))
+- [Marine Ecosystem & BGC Models](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl))
 
 Please refer to the [docs](https://gaelforget.github.io/OceanStateEstimation.jl/dev) for detail and additional notebooks.
 

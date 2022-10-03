@@ -2,7 +2,7 @@
 ## Physical Oceanography
 
 - [NSLCT\_notebook.jl](NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/NSLCT/NSLCT_notebook.jl)) : download and plot sea level data from NASA portal
-- [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) : explore ocean climatologies and currents
+- [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) : explore the Global Ocean (climatologies, currents, ...)
 
 [NSLCT\_notebook.jl](NSLCT_notebook.html) lets you access sea level data from NASA portal (`HTTP.jl`), organize it (`DataFrames.jl`), and plot it (`Makie.jl`).
 
@@ -17,7 +17,7 @@
 
 ## Marine Ecosystems
 
-- [CBIOMES\_climatology\_plot](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl)) : visualize climatology maps for ocean colour and biomass
+- [CBIOMES\_climatology\_plot](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl)) : visualize ocean colour and biomass climatologies
 - [CBIOMES\_climatology\_create](https://gaelforget.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) (➭ [code link](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_create.jl)) : recreate the CBIOMES-global climatology files
 
 The [CBIOMES-global](https://github.com/CBIOMES/global-ocean-model) climatology (alpha version) is a global ocean state estimate that covers the period from 1992 to 2011 (ECCO). It is based on Forget et al 2015 for ocean physics [MIT general circulation model](https://mitgcm.readthedocs.io/en/latest/#) and on Dutkiewicz et al 2015 for marine biogeochemistry and ecosystems [Darwin Project model](https://darwin3.readthedocs.io/en/latest/phys_pkgs/darwin.html).
@@ -31,14 +31,14 @@ The [CBIOMES-global](https://github.com/CBIOMES/global-ocean-model) climatology 
 
 ## More Notebooks
 
-- [OptimalTransport\_demo.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/OptimalTransport_demo.html) : using optimal transport for model-data comparison.
-- [HadIOD\_viz.jl](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/HadIOD/HadIOD_viz.jl) : download, read, and plot a subset of the [HadIOD](https://www.metoffice.gov.uk/hadobs/hadiod/) base.
+- [OptimalTransport\_demo.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/OptimalTransport_demo.html) : using optimal transport for e.g. model-data comparison
+- [HadIOD\_viz.jl](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/HadIOD/HadIOD_viz.jl) : download, read, and plot a subset of the [HadIOD](https://www.metoffice.gov.uk/hadobs/hadiod/) T/S database
 
 ## User Manual
 
 To run the notebook on a local computer or in the cloud, please refer to directions provided in :
 
-- [ECCO\_standard\_plots.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (final section)
+- [ECCO\_standard\_plots.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (see final section)
 - [JuliaClimate How-To](https://juliaclimate.github.io/Notebooks/#directions) 
 - [ECCO/Julia storymap](https://ecco-group.org/storymaps.htm?id=69)
 - [video demonstration](https://www.youtube.com/watch?v=mZevMagHatc&list=PLXO7Tdh24uhPFZ5bph6Y_Q3-CRSfk5cDU)
