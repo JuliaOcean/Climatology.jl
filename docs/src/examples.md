@@ -9,7 +9,7 @@
 [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) lets you explore climate indices and climatologies derived (via [this](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_calcs.jl) and [that](https://github.com/gaelforget/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_loop.jl)) from gridded ocean climatologies. The data is retrieved from [dataverse.org](https://dataverse.harvard.edu/dataverse/ECCO), and intermediate results from [zenodo.org](https://zenodo.org).
 
 !!! note
-    For more on these gridded estimates, and how to use them, see :
+    For more on these gridded estimates, and how to use them, take a look at the following pages.
 
 - [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/) : gridded Earth variables, domain decomposition, C-grid support; [Ocean Circulation](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/vectors.html), [Geography](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/geography.html) tutorials.
 - [MITgcmTools.jl](https://juliaclimate.github.io/MiTgcmTools.jl/dev/) : framework to interact with MITgcm (setup, run, output, plot, etc) and ECCO output.
@@ -23,7 +23,7 @@
 The [CBIOMES-global](https://github.com/CBIOMES/global-ocean-model) climatology (alpha version) is a global ocean state estimate that covers the period from 1992 to 2011 (ECCO). It is based on Forget et al 2015 for ocean physics [MIT general circulation model](https://mitgcm.readthedocs.io/en/latest/#) and on Dutkiewicz et al 2015 for marine biogeochemistry and ecosystems [Darwin Project model](https://darwin3.readthedocs.io/en/latest/phys_pkgs/darwin.html).
 
 !!! note
-    For more notebooks involving [CBIOMES](https://cbiomes.org) and related efforts :
+    For more notebooks involving [CBIOMES](https://cbiomes.org) and related efforts, take a look at the following pages.
 
 - [Marine Ecosystem Notebooks](https://github.com/JuliaOcean/MarineEcosystemNotebooks) : Darwin Model, Ocean Color data, Gradients field program, and more.
 - [JuliaCon2021 workshop](https://github.com/JuliaOcean/MarineEcosystemsJuliaCon2021.jl) : _Modeling Marine Ecosystems At Multiple Scales Using Julia_.
@@ -36,7 +36,7 @@ The [CBIOMES-global](https://github.com/CBIOMES/global-ocean-model) climatology 
 
 ## User Manual
 
-To run the notebook on a local computer or in the cloud, please refer to directions provided in :
+To run the notebook on a local computer or in the cloud, please refer to the [Pluto docs](https://github.com/fonsp/Pluto.jl/wiki). Directions are also provided in the following pages.
 
 - [ECCO\_standard\_plots.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (see final section)
 - [JuliaClimate How-To](https://juliaclimate.github.io/Notebooks/#directions) 
