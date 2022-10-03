@@ -19,10 +19,12 @@ makedocs(;
 
 OceanStateEstimation.CBIOMESclim_download()
 OceanStateEstimation.ECCOdiags_add("release2")
+OceanStateEstimation.ECCOdiags_add("release4")
 OceanStateEstimation.ECCOdiags_add("interp_coeffs")
 
 #lst=("CBIOMES_climatogy_create.jl",)
-lst=("CBIOMES/CBIOMES_climatology_plot.jl","ECCO/ECCO_standard_plots.jl","OptimalTransport/OptimalTransport_demo.jl")
+lst=("CBIOMES/CBIOMES_climatology_plot.jl","ECCO/ECCO_standard_plots.jl",
+     "OptimalTransport/OptimalTransport_demo.jl","NSLCT/NSLCT_notebook.jl")
 
 pth_out=joinpath(@__DIR__,"build", "examples")
 !isdir(pth_out) ? mkdir(pth_out) : nothing
