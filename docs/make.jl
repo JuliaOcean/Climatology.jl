@@ -11,9 +11,9 @@ makedocs(;
         "ECCO" => "ECCO.md",
         "Files" => "API.md",
     ],
-    repo="https://github.com/gaelforget/OceanStateEstimation.jl/blob/{commit}{path}#L{line}",
+    repo="https://github.com/JuliaClimate/OceanStateEstimation.jl/blob/{commit}{path}#L{line}",
     sitename="OceanStateEstimation.jl",
-    authors="gaelforget <gforget@mit.edu>",
+    authors="JuliaClimate <gforget@mit.edu>",
     assets=String[],
 )
 
@@ -42,5 +42,5 @@ end
 end
 
 deploydocs(;
-    repo="github.com/gaelforget/OceanStateEstimation.jl",
+    repo="github.com/JuliaClimate/OceanStateEstimation.jl",
 )
