@@ -1,12 +1,12 @@
 ### A Pluto.jl notebook ###
-# v0.19.9
+# v0.19.16
 
 using Markdown
 using InteractiveUtils
 
 # ╔═╡ bc84f26c-430a-11ed-0e26-b9ddf15124d4
 begin
-	using PlutoUI, CairoMakie
+	using PlutoUI, CairoMakie, NCDatasets
 end
 
 # ╔═╡ 474b2029-b125-451d-a5a1-988169570c82
@@ -34,6 +34,33 @@ md"""## Packages & Module"""
 # ╔═╡ 773ca476-c267-4323-b2c4-9046cd129dd8
 NSLCT=myinclude.NSLCT
 
+# ╔═╡ caef6c66-08c8-4e4e-b51d-5577264ffdc4
+function plot_gmsl(d)
+	ye=year.(d["time"][:])
+
+	va1="global_average_sea_level_change"
+	la1=d[va1].attrib["long_name"]
+	offset1=mean(d[va1][1:10])
+
+	va2="global_average_thermosteric_sea_level_change"
+	la2=d[va2].attrib["long_name"]
+	offset2=mean(d[va2][1:10])
+
+	f0,ax,li1=lines(ye,d[va1][:].-offset1,color=:black)
+	lines!(ax,ye,d[va1*"_upper"][:] .-offset1,linewidth=0.5,color=:black)
+	lines!(ax,ye,d[va1*"_lower"][:] .-offset1,linewidth=0.5,color=:black)
+
+	li2=lines!(ax,ye,d[va2][:] .-offset2,color=:red)
+	lines!(ax,ye,d[va2*"_upper"][:] .-offset2,linewidth=0.5,color=:red)
+	lines!(ax,ye,d[va2*"_lower"][:] .-offset2,linewidth=0.5,color=:red)
+	
+	#ax.title[]=la
+	#Legend(fig[2, 1],[li1],[la])
+	axislegend(ax, [li1,li2], [la1,la2], position = :lt)
+	ax.ylabel[]=d[va1].attrib["units"]
+	f0
+end
+
 # ╔═╡ a14e90e9-b0f1-4c4b-8c67-bdd0c3b26f75
 md"""## Search For Datasets""" 
 
@@ -45,7 +72,7 @@ begin
 end
 
 # ╔═╡ e6e030c9-856b-42cb-96f4-4644961d0123
-md"""## Download Datasets"""
+md"""## Get Data via RestFull API"""
 
 # ╔═╡ 76522a9d-161a-4cda-83b0-e12ad3d350b6
 begin
@@ -56,11 +83,23 @@ begin
 	names(ecco_ssh_ts)
 end	
 
+# ╔═╡ b053b44a-02cf-49a4-9dec-754a34f16027
+md"""## Lazily Access Data via OPeNDAP"""
+
+# ╔═╡ 1625adc7-734e-40d3-94dc-d5ba02321fab
+begin
+	gmsl_file="https://opendap.jpl.nasa.gov/opendap/allData/homage/L4/gmsl/global_timeseries_measures.nc"
+	d=Dataset(gmsl_file)
+end
+
 # ╔═╡ 5529a2a9-788a-4b02-98e5-b4d7b7583436
 md"""## Visualize Data"""
 
+# ╔═╡ c15817f5-569f-4dfa-bf48-511c445caf30
+plot_gmsl(d)
+
 # ╔═╡ c26cedf7-1275-4c05-962b-9fb1bea36c5c
-begin
+let
 	f1=Figure()
 	ax=Axis(f1[1,1],title="Sea Surface Height Anomalies",ylabel="Meters")
 	lines!(ax,ecco_ssh_ts.tim,ecco_ssh_ts.sla,label=ecco_ssh_nam)
@@ -84,6 +123,7 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+NCDatasets = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
@@ -92,6 +132,7 @@ CairoMakie = "~0.8.13"
 DataFrames = "~1.3.6"
 HTTP = "~1.4.0"
 JSON = "~0.21.3"
+NCDatasets = "~0.12.9"
 PlutoUI = "~0.7.43"
 """
 
@@ -101,7 +142,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.1"
 manifest_format = "2.0"
-project_hash = "c97a6045516abf93081009126e6992acc5b1de72"
+project_hash = "32271ccf5c206b1558ee7497b066d9da7412e183"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
@@ -169,6 +210,12 @@ version = "1.0.8+0"
 git-tree-sha1 = "eb4cb44a499229b3b8426dcfb5dd85333951ff90"
 uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 version = "0.4.2"
+
+[[deps.CFTime]]
+deps = ["Dates", "Printf"]
+git-tree-sha1 = "ed2e76c1c3c43fd9d0cb9248674620b29d71f2d1"
+uuid = "179af706-886a-5703-950a-314cd64e0468"
+version = "0.1.2"
 
 [[deps.Cairo]]
 deps = ["Cairo_jll", "Colors", "Glib_jll", "Graphics", "Libdl", "Pango_jll"]
@@ -470,6 +517,12 @@ version = "0.9.1"
 git-tree-sha1 = "53bb909d1151e57e2484c3d1b53e19552b887fb2"
 uuid = "42e2da0e-8278-4e71-bc24-59509adca0fe"
 version = "1.0.2"
+
+[[deps.HDF5_jll]]
+deps = ["Artifacts", "JLLWrappers", "LibCURL_jll", "Libdl", "OpenSSL_jll", "Pkg", "Zlib_jll"]
+git-tree-sha1 = "4cc2bb72df6ff40b055295fdef6d92955f9dede8"
+uuid = "0234f1f7-429e-5d53-9886-15a909be8d59"
+version = "1.12.2+2"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "Dates", "IniFile", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
@@ -795,11 +848,23 @@ version = "0.3.3"
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2022.2.1"
 
+[[deps.NCDatasets]]
+deps = ["CFTime", "DataStructures", "Dates", "NetCDF_jll", "NetworkOptions", "Printf"]
+git-tree-sha1 = "8d5cd8ff530228bf172f7d4e91d9ae9e8b8e8ad3"
+uuid = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
+version = "0.12.9"
+
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]
 git-tree-sha1 = "a7c3d1da1189a1c2fe843a3bfa04d18d20eb3211"
 uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "1.0.1"
+
+[[deps.NetCDF_jll]]
+deps = ["Artifacts", "HDF5_jll", "JLLWrappers", "LibCURL_jll", "Libdl", "Pkg", "XML2_jll", "Zlib_jll"]
+git-tree-sha1 = "072f8371f74c3b9e1b26679de7fbf059d45ea221"
+uuid = "7243133f-43d8-5620-bbf4-c2c921802cf3"
+version = "400.902.5+1"
 
 [[deps.Netpbm]]
 deps = ["FileIO", "ImageCore"]
@@ -1376,12 +1441,16 @@ version = "3.5.0+0"
 # ╠═bc84f26c-430a-11ed-0e26-b9ddf15124d4
 # ╠═474b2029-b125-451d-a5a1-988169570c82
 # ╠═773ca476-c267-4323-b2c4-9046cd129dd8
+# ╟─caef6c66-08c8-4e4e-b51d-5577264ffdc4
 # ╟─a14e90e9-b0f1-4c4b-8c67-bdd0c3b26f75
 # ╠═3df93e43-c80a-4897-bd5f-2ab11df0dc20
 # ╟─e6e030c9-856b-42cb-96f4-4644961d0123
-# ╠═76522a9d-161a-4cda-83b0-e12ad3d350b6
+# ╟─76522a9d-161a-4cda-83b0-e12ad3d350b6
+# ╟─b053b44a-02cf-49a4-9dec-754a34f16027
+# ╟─1625adc7-734e-40d3-94dc-d5ba02321fab
 # ╟─5529a2a9-788a-4b02-98e5-b4d7b7583436
-# ╠═c26cedf7-1275-4c05-962b-9fb1bea36c5c
+# ╟─c15817f5-569f-4dfa-bf48-511c445caf30
+# ╟─c26cedf7-1275-4c05-962b-9fb1bea36c5c
 # ╟─59deb787-ee3e-44c9-b2d5-c28e8d4ffc7f
 # ╠═de636e3b-e661-4a7d-aca1-7d1152757d0d
 # ╟─00000000-0000-0000-0000-000000000001
