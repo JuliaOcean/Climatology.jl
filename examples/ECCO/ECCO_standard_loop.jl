@@ -2,7 +2,8 @@ using Distributed, OceanStateEstimation
 
 @everywhere begin
     using Pkg, OceanStateEstimation
-    pth=ECCO.standard_analysis_setup(ECCOclim_path)
+    pth0=pwd()
+    pth=ECCO.standard_analysis_setup(pth0)
     Pkg.activate(pth)
 
     sol0="r2"
@@ -14,8 +15,8 @@ end
 pth_trsp=joinpath(pth,P0.sol,"ECCO_transport_lines")
 !isdir(pth_trsp) ? ECCO_helpers.transport_lines(P0.Γ,pth_trsp) : nothing
 
-list1=collect(1:length(list0))
-#list1=collect(1:6)
+#list1=collect(1:length(list0))
+list1=collect(3:5)
 #list1=[7,8,12,13]
 #list1=[25,26,27,28]
 
