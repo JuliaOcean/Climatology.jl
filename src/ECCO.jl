@@ -27,8 +27,7 @@ Pkg.activate(pth)
 Pkg.instantiate()
 ```
 """
-function standard_analysis_setup(pth0::String)
-	println(pth0)
+function standard_analysis_setup(pth0="")
 	
 	#1. setup run folder and create link to ECCO data folder
 	pth=joinpath(tempdir(),"ECCO_diags_dev"); 
@@ -36,7 +35,7 @@ function standard_analysis_setup(pth0::String)
 	pth1=joinpath(pth,"ECCOv4r2")
 	!isdir(pth1) ? mkdir(pth1) : nothing
 	link0=joinpath(pth1,"nctiles_monthly")
-	!isfile(link0)&& !islink(link0) ? symlink(pth0,link0) : nothing
+	!isfile(link0)&& !islink(link0)&& !isempty(pth0) ? symlink(pth0,link0) : nothing
 	
 	#2. copy Project.toml to run folder
 	tmp0=pkg_pth

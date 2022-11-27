@@ -19,7 +19,8 @@ begin
 	using Pkg; Pkg.activate()
 	using Distributed, OceanStateEstimation, PlutoUI
 
-	pth=ECCO.standard_analysis_setup(ECCOclim_path)
+	pth0=pwd()
+	pth=ECCO.standard_analysis_setup(pth0)
 	Pkg.activate(pth)
 
 	"Done with packages"
@@ -67,6 +68,7 @@ end
 # ╔═╡ cad6d821-6d49-4a4f-a57c-0511d770fa0c
 begin
 	P=ECCO_helpers.parameters(P0,list0[diag])
+	!isdir(P.pth_out) ? mkdir(P.pth_out) : nothing
 	ECCO_diagnostics.driver(P)
 	readdir(P.pth_out)
 end
