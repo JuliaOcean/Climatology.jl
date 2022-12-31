@@ -176,7 +176,11 @@ module plots
 		fig1
 	end
 
-	function map(λ,DD,levs,ttl)
+	function map(λ,DD,levs,ttl; ClipToRange=true)
+		if ClipToRange
+			DD[findall(DD.<=levs[1])].=levs[1]+(levs[2]-levs[1])/100
+			DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
+		end
 		fig = Figure(resolution = (900,600), backgroundcolor = :grey95)
 		ax = Axis(fig[1,1], title=ttl,xlabel="longitude",ylabel="latitude")
 		hm1=contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
