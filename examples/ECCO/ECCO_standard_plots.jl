@@ -176,7 +176,11 @@ module plots
 		fig1
 	end
 
-	function map(λ,DD,levs,ttl)
+	function map(λ,DD,levs,ttl; ClipToRange=true)
+		if ClipToRange
+			DD[findall(DD.<=levs[1])].=levs[1]+(levs[2]-levs[1])/100
+			DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
+		end
 		fig = Figure(resolution = (900,600), backgroundcolor = :grey95)
 		ax = Axis(fig[1,1], title=ttl,xlabel="longitude",ylabel="latitude")
 		hm1=contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
@@ -802,13 +806,13 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
-CairoMakie = "~0.9.3"
+CairoMakie = "~0.10.0"
 ClimateModels = "~0.2.15"
 Glob = "~1.3.0"
 JLD2 = "~0.4.29"
 MeshArrays = "~0.2.32"
 OceanStateEstimation = "~0.3.1"
-PlutoUI = "~0.7.48"
+PlutoUI = "~0.7.49"
 RollingFunctions = "~0.7.0"
 """
 
@@ -1683,9 +1687,9 @@ version = "0.18.4"
 
 [[deps.MakieCore]]
 deps = ["Observables"]
-git-tree-sha1 = "c1885d865632e7f37e5a1489a164f44c54fb80c9"
+git-tree-sha1 = "5357b0696f7c245941389995e193c127190d45f8"
 uuid = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
-version = "0.5.2"
+version = "0.6.0"
 
 [[deps.ManualMemory]]
 git-tree-sha1 = "bcaef4fc7a0cfe2cba636d84cda54b5e4e4ca3cd"
@@ -2090,6 +2094,12 @@ version = "1.3.17"
 
 [[deps.Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+
+[[deps.Setfield]]
+deps = ["ConstructionBase", "Future", "MacroTools", "StaticArraysCore"]
+git-tree-sha1 = "e2cc6d8c88613c05e1defb55170bf5ff211fbeac"
+uuid = "efcf1570-3423-57d1-acb7-fd33fddbac46"
+version = "1.1.1"
 
 [[deps.SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
