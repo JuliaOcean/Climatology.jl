@@ -13,7 +13,7 @@ end
 module myinclude 
 	using HTTP, JSON
 	using DataFrames, Dates, Statistics
-	include(joinpath(@__DIR__,"NSLCT_module.jl"))
+	include(joinpath(@__DIR__,"NSLCT_notebook_module.jl"))
 end
 
 # ╔═╡ 6faebe6e-4d6a-4f47-b798-0481a51df211
