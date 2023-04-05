@@ -32,9 +32,9 @@ function standard_analysis_setup(pth0="")
 	#1. setup run folder and create link to ECCO data folder
 	pth=joinpath(tempdir(),"ECCO_diags_dev"); 
 	!isdir(pth) ? mkdir(pth) : nothing
-	pth1=joinpath(pth,"ECCOv4r2")
+	pth1=joinpath(pth,"ECCOv4r5")
 	!isdir(pth1) ? mkdir(pth1) : nothing
-	link0=joinpath(pth1,"nctiles_monthly")
+	link0=joinpath(pth1,"diags")
 	!isfile(link0)&& !islink(link0)&& !isempty(pth0) ? symlink(pth0,link0) : nothing
 	
 	#2. copy Project.toml to run folder
@@ -456,19 +456,13 @@ function read_monthly_default(P,nam,t)
         end
     else
       if !isempty(findall(var_list3d.==nam))
-        ii=findall(var_list3d.==nam)[1];
-        fil=mdsio_list3d[ii]
-        meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
-        kk=findall(vec(meta.fldList).==nam)[1]
-        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]))[:,:,:,kk]
-        tmp=Γ.mskC*read(tmp,γ)     
+        fil=mdsio_list3d[ findall(var_list3d.==nam)[1] ]
+        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]),Symbol(nam))
+        tmp=P.Γ.mskC*read(tmp,γ)     
       else
-        ii=findall(var_list2d.==nam)[1];
-        fil=mdsio_list2d[ii]
-        meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
-        kk=findall(vec(meta.fldList).==nam)[1]
-        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]))[:,:,kk]
-        tmp=Γ.mskC[:,1]*read(tmp,Γ.XC)
+        fil=mdsio_list2d[ findall(var_list2d.==nam)[1] ]
+        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]),Symbol(nam))
+        tmp=P.Γ.mskC[:,1]*read(tmp,P.Γ.XC)
       end
     end
 end
@@ -694,6 +688,17 @@ end
 
 ##
 
+function UVtoTransport!(U::MeshArray,V::MeshArray,G::NamedTuple)
+    for i in eachindex(U)
+        for j in eachindex(U[i])
+            !isfinite(U[i][j]) ? U[i][j]=0.0 : nothing
+            !isfinite(V[i][j]) ? V[i][j]=0.0 : nothing
+            U[i][j]=G.DRF[i[2]]*U[i][j].*G.DYG[i[1]][j]
+            V[i][j]=G.DRF[i[2]]*V[i][j].*G.DXG[i[1]][j]
+        end
+    end
+end
+
 function comp_overturn(P,ov,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
 
@@ -702,10 +707,14 @@ function comp_overturn(P,ov,t)
 
     U=ECCO_io.read_monthly(P,"UVELMASS",t)
     V=ECCO_io.read_monthly(P,"VVELMASS",t)
-    (Utr,Vtr)=UVtoTransport(U,V,Γ)
+    UVtoTransport!(U,V,Γ)
+
+    UV=Dict("U"=>0*U[:,1],"V"=>0*V[:,1],"dimensions"=>["x","y"])
+
     #integrate across latitude circles
     for z=1:nr
-        UV=Dict("U"=>Utr[:,z],"V"=>Vtr[:,z],"dimensions"=>["x","y"])
+        UV["U"].=U[:,z]
+        UV["V"].=V[:,z]
         [ov[l,z,t]=ThroughFlow(UV,LC[l],Γ) for l=1:nl]
     end
     #integrate from bottom
@@ -737,14 +746,11 @@ function comp_MHT(P,MHT,t)
     nr=length(Γ.DRF)
     nl=length(LC)
 
-    U=ECCO_io.read_monthly(P,"ADVx_TH",t)
-    V=ECCO_io.read_monthly(P,"ADVy_TH",t)
-    U=U+ECCO_io.read_monthly(P,"DFxE_TH",t)
-    V=V+ECCO_io.read_monthly(P,"DFyE_TH",t)
+    U=ECCO_io.read_monthly(P,"ADVx_TH",t)+ECCO_io.read_monthly(P,"DFxE_TH",t)
+    V=ECCO_io.read_monthly(P,"ADVy_TH",t)+ECCO_io.read_monthly(P,"DFyE_TH",t)
 
     [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
     [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
-
     Tx=0.0*U[:,1]
     Ty=0.0*V[:,1]
     [Tx=Tx+U[:,z] for z=1:nr]
