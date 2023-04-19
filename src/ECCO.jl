@@ -376,15 +376,15 @@ function read_monthly_BSF(P,t)
 
     U=read_monthly_default(P,"UVELMASS",t)
     V=read_monthly_default(P,"VVELMASS",t)
-    (Utr,Vtr)=UVtoTransport(U,V,Γ)
+    UVtoTransport!(U,V,Γ)
     
     nz=size(Γ.hFacC,2)
     μ=Γ.mskC[:,1]
-    Tx=0.0*Utr[:,1]
-	Ty=0.0*Vtr[:,1]
+    Tx=0.0*U[:,1]
+	Ty=0.0*V[:,1]
 	for z=1:nz
-		Tx=Tx+Utr[:,z]
-		Ty=Ty+Vtr[:,z]
+		Tx=Tx+U[:,z]
+		Ty=Ty+V[:,z]
 	end
 
     #convergence & land mask
@@ -779,14 +779,17 @@ function comp_trsp(P,trsp,t)
 
     U=ECCO_io.read_monthly(P,"UVELMASS",t)
     V=ECCO_io.read_monthly(P,"VVELMASS",t)
-    (Utr,Vtr)=UVtoTransport(U,V,Γ)
+    UVtoTransport!(U,V,Γ)
+
+    UV=Dict("U"=>0*U[:,1],"V"=>0*V[:,1],"dimensions"=>["x","y"])
 
     pth_trsp=joinpath(pth_out,"..","ECCO_transport_lines")
     list_trsp,msk_trsp,ntr=ECCO_helpers.reload_transport_lines(pth_trsp)
 
     #integrate across transport lines
     for z=1:length(Γ.DRF)
-        UV=Dict("U"=>Utr[:,z],"V"=>Vtr[:,z],"dimensions"=>["x","y"])
+        UV["U"].=U[:,z]
+        UV["V"].=V[:,z]
         [trsp[itr,z,t]=ThroughFlow(UV,msk_trsp[itr],Γ) for itr=1:ntr]
     end
 end
