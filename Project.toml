@@ -1,7 +1,7 @@
 name = "OceanStateEstimation"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.3.2"
+version = "0.3.3"
 
 [deps]
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
@@ -25,7 +25,7 @@ CodecZlib = "0.7"
 FortranFiles = "0.6"
 JLD2 = "0.4"
 MITgcmTools = "0.2"
-MeshArrays = "0.2"
+MeshArrays = "0.2.37"
 NCDatasets = "0.12"
 Scratch = "1"
 julia = "1.7"

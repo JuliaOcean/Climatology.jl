@@ -376,15 +376,15 @@ function read_monthly_BSF(P,t)
 
     U=read_monthly_default(P,"UVELMASS",t)
     V=read_monthly_default(P,"VVELMASS",t)
-    (Utr,Vtr)=UVtoTransport(U,V,Γ)
+    MeshArrays.UVtoTransport!(U,V,Γ)
     
     nz=size(Γ.hFacC,2)
     μ=Γ.mskC[:,1]
-    Tx=0.0*Utr[:,1]
-	Ty=0.0*Vtr[:,1]
+    Tx=0.0*U[:,1]
+	Ty=0.0*V[:,1]
 	for z=1:nz
-		Tx=Tx+Utr[:,z]
-		Ty=Ty+Vtr[:,z]
+		Tx=Tx+U[:,z]
+		Ty=Ty+V[:,z]
 	end
 
     #convergence & land mask
@@ -456,19 +456,13 @@ function read_monthly_default(P,nam,t)
         end
     else
       if !isempty(findall(var_list3d.==nam))
-        ii=findall(var_list3d.==nam)[1];
-        fil=mdsio_list3d[ii]
-        meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
-        kk=findall(vec(meta.fldList).==nam)[1]
-        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]))[:,:,:,kk]
-        tmp=Γ.mskC*read(tmp,γ)     
+        fil=mdsio_list3d[ findall(var_list3d.==nam)[1] ]
+        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]),Symbol(nam))
+        tmp=P.Γ.mskC*read(tmp,γ)     
       else
-        ii=findall(var_list2d.==nam)[1];
-        fil=mdsio_list2d[ii]
-        meta=read_meta(joinpath(pth_in,fil*".0000241020.meta"))
-        kk=findall(vec(meta.fldList).==nam)[1]
-        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]))[:,:,kk]
-        tmp=Γ.mskC[:,1]*read(tmp,Γ.XC)
+        fil=mdsio_list2d[ findall(var_list2d.==nam)[1] ]
+        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]),Symbol(nam))
+        tmp=P.Γ.mskC[:,1]*read(tmp,P.Γ.XC)
       end
     end
 end
@@ -702,10 +696,14 @@ function comp_overturn(P,ov,t)
 
     U=ECCO_io.read_monthly(P,"UVELMASS",t)
     V=ECCO_io.read_monthly(P,"VVELMASS",t)
-    (Utr,Vtr)=UVtoTransport(U,V,Γ)
+    MeshArrays.UVtoTransport!(U,V,Γ)
+
+    UV=Dict("U"=>0*U[:,1],"V"=>0*V[:,1],"dimensions"=>["x","y"])
+
     #integrate across latitude circles
     for z=1:nr
-        UV=Dict("U"=>Utr[:,z],"V"=>Vtr[:,z],"dimensions"=>["x","y"])
+        UV["U"].=U[:,z]
+        UV["V"].=V[:,z]
         [ov[l,z,t]=ThroughFlow(UV,LC[l],Γ) for l=1:nl]
     end
     #integrate from bottom
@@ -737,14 +735,11 @@ function comp_MHT(P,MHT,t)
     nr=length(Γ.DRF)
     nl=length(LC)
 
-    U=ECCO_io.read_monthly(P,"ADVx_TH",t)
-    V=ECCO_io.read_monthly(P,"ADVy_TH",t)
-    U=U+ECCO_io.read_monthly(P,"DFxE_TH",t)
-    V=V+ECCO_io.read_monthly(P,"DFyE_TH",t)
+    U=ECCO_io.read_monthly(P,"ADVx_TH",t)+ECCO_io.read_monthly(P,"DFxE_TH",t)
+    V=ECCO_io.read_monthly(P,"ADVy_TH",t)+ECCO_io.read_monthly(P,"DFyE_TH",t)
 
     [U[i][findall(isnan.(U[i]))].=0.0 for i in eachindex(U)]
     [V[i][findall(isnan.(V[i]))].=0.0 for i in eachindex(V)]
-
     Tx=0.0*U[:,1]
     Ty=0.0*V[:,1]
     [Tx=Tx+U[:,z] for z=1:nr]
@@ -773,14 +768,17 @@ function comp_trsp(P,trsp,t)
 
     U=ECCO_io.read_monthly(P,"UVELMASS",t)
     V=ECCO_io.read_monthly(P,"VVELMASS",t)
-    (Utr,Vtr)=UVtoTransport(U,V,Γ)
+    MeshArrays.UVtoTransport!(U,V,Γ)
+
+    UV=Dict("U"=>0*U[:,1],"V"=>0*V[:,1],"dimensions"=>["x","y"])
 
     pth_trsp=joinpath(pth_out,"..","ECCO_transport_lines")
     list_trsp,msk_trsp,ntr=ECCO_helpers.reload_transport_lines(pth_trsp)
 
     #integrate across transport lines
     for z=1:length(Γ.DRF)
-        UV=Dict("U"=>Utr[:,z],"V"=>Vtr[:,z],"dimensions"=>["x","y"])
+        UV["U"].=U[:,z]
+        UV["V"].=V[:,z]
         [trsp[itr,z,t]=ThroughFlow(UV,msk_trsp[itr],Γ) for itr=1:ntr]
     end
 end
