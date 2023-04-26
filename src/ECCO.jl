@@ -32,9 +32,9 @@ function standard_analysis_setup(pth0="")
 	#1. setup run folder and create link to ECCO data folder
 	pth=joinpath(tempdir(),"ECCO_diags_dev"); 
 	!isdir(pth) ? mkdir(pth) : nothing
-	pth1=joinpath(pth,"ECCOv4r5")
+	pth1=joinpath(pth,"ECCOv4r2")
 	!isdir(pth1) ? mkdir(pth1) : nothing
-	link0=joinpath(pth1,"diags")
+	link0=joinpath(pth1,"nctiles_monthly")
 	!isfile(link0)&& !islink(link0)&& !isempty(pth0) ? symlink(pth0,link0) : nothing
 	
 	#2. copy Project.toml to run folder

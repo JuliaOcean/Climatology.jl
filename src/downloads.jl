@@ -70,7 +70,7 @@ function CBIOMESclim_download()
         tmp_path=open(joinpath(ScratchSpaces.CBIOMES,fil)) do io
             Tar.extract(CodecZlib.GzipDecompressorStream(io))
         end
-        mv(tmp_path,fil_out)
+        mv(joinpath(tmp_path,fil[1:end-7]),fil_out)
         rm(joinpath(ScratchSpaces.CBIOMES,fil))
     end
 end
