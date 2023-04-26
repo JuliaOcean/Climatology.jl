@@ -696,7 +696,7 @@ function comp_overturn(P,ov,t)
 
     U=ECCO_io.read_monthly(P,"UVELMASS",t)
     V=ECCO_io.read_monthly(P,"VVELMASS",t)
-    UVtoTransport!(U,V,Γ)
+    MeshArrays.UVtoTransport!(U,V,Γ)
 
     UV=Dict("U"=>0*U[:,1],"V"=>0*V[:,1],"dimensions"=>["x","y"])
 
@@ -768,7 +768,7 @@ function comp_trsp(P,trsp,t)
 
     U=ECCO_io.read_monthly(P,"UVELMASS",t)
     V=ECCO_io.read_monthly(P,"VVELMASS",t)
-    UVtoTransport!(U,V,Γ)
+    MeshArrays.UVtoTransport!(U,V,Γ)
 
     UV=Dict("U"=>0*U[:,1],"V"=>0*V[:,1],"dimensions"=>["x","y"])
 
