@@ -688,17 +688,6 @@ end
 
 ##
 
-function UVtoTransport!(U::MeshArray,V::MeshArray,G::NamedTuple)
-    for i in eachindex(U)
-        for j in eachindex(U[i])
-            !isfinite(U[i][j]) ? U[i][j]=0.0 : nothing
-            !isfinite(V[i][j]) ? V[i][j]=0.0 : nothing
-            U[i][j]=G.DRF[i[2]]*U[i][j].*G.DYG[i[1]][j]
-            V[i][j]=G.DRF[i[2]]*V[i][j].*G.DXG[i[1]][j]
-        end
-    end
-end
-
 function comp_overturn(P,ov,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
 
