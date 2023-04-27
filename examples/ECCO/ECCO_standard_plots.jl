@@ -28,6 +28,13 @@ module plots
 
 	using CairoMakie, JLD2, RollingFunctions, Statistics
 
+	to_range!(DD,levs::Tuple) = to_range!(DD,range(levs[1],levs[2],length=10))
+
+	function to_range!(DD,levs)
+		DD[findall(DD.<=levs[1])].=levs[1]+(levs[2]-levs[1])/100
+		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
+	end
+
 	function axtr1(ax,namtr,pth_out,list_trsp)
 		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
 
@@ -97,7 +104,7 @@ module plots
 		fig1
 	end
 
-	function figov2(pth_out,Γ)
+	function figov2(pth_out,Γ; ClipToRange=true)
 		fil=joinpath(pth_out,"overturn/overturn.jld2")
 		tmp=-1e-6*load(fil,"single_stored_object")
 		
@@ -105,11 +112,14 @@ module plots
 			
 		x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
 		z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
+
+		levs=(-40.0:5.0:40.0)
+		ClipToRange ? to_range!(z,levs) : nothing
 	
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, 92-11)",
 				xlabel="latitude",ylabel="depth (in m)")
-		hm1=contourf!(ax1,x,y,z,levels=(-40.0:5.0:40.0),clims=(-40,40))
+		hm1=contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs))
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
 		fig1
 	end
@@ -153,7 +163,8 @@ module plots
 		fig1
 	end
 
-	function DepthTime(x,y,z,levs,ttl,RC1,RC0)
+	function DepthTime(x,y,z,levs,ttl,RC1,RC0; ClipToRange=true)
+		ClipToRange ? to_range!(z,levs) : nothing
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
 			xticks=collect(1992.0:4:2021.0))
@@ -165,7 +176,8 @@ module plots
 		fig1
 	end
 
-	function TimeLat(x,y,z,levs,ttl,y0,y1)
+	function TimeLat(x,y,z,levs,ttl,y0,y1; ClipToRange=true)
+		ClipToRange ? to_range!(z,levs) : nothing
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
 			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
@@ -177,10 +189,7 @@ module plots
 	end
 
 	function map(λ,DD,levs,ttl; ClipToRange=true)
-		if ClipToRange
-			DD[findall(DD.<=levs[1])].=levs[1]+(levs[2]-levs[1])/100
-			DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
-		end
+		ClipToRange ? to_range!(DD,levs) : nothing
 		fig = Figure(resolution = (900,600), backgroundcolor = :grey95)
 		ax = Axis(fig[1,1], title=ttl,xlabel="longitude",ylabel="latitude")
 		hm1=contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
@@ -806,7 +815,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
-CairoMakie = "~0.10.0"
+CairoMakie = "~0.10.4"
 ClimateModels = "~0.2.15"
 Glob = "~1.3.0"
 JLD2 = "~0.4.29"
@@ -822,7 +831,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.0-rc1"
 manifest_format = "2.0"
-project_hash = "4cdeaac3788ea7b7c9c2a8be731dc69ad98b6059"
+project_hash = "7cd5bff773ece4a9f139df426b13573105a7588b"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1022,10 +1031,10 @@ uuid = "a2cac450-b92f-5266-8821-25eda20663c8"
 version = "0.4.0"
 
 [[deps.ColorSchemes]]
-deps = ["ColorTypes", "ColorVectorSpace", "Colors", "FixedPointNumbers", "Random", "SnoopPrecompile"]
-git-tree-sha1 = "aa3edc8f8dea6cbfa176ee12f7c2fc82f0608ed3"
+deps = ["ColorTypes", "ColorVectorSpace", "Colors", "FixedPointNumbers", "PrecompileTools", "Random"]
+git-tree-sha1 = "be6ab11021cd29f0344d5c4357b163af05a48cba"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.20.0"
+version = "3.21.0"
 
 [[deps.ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -1363,9 +1372,9 @@ version = "0.1.14"
 
 [[deps.HypergeometricFunctions]]
 deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions"]
-git-tree-sha1 = "d926e9c297ef4607866e8ef5df41cde1a642917f"
+git-tree-sha1 = "432b5b03176f8182bd6841fbfc42c718506a2d5f"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
-version = "0.3.14"
+version = "0.3.15"
 
 [[deps.Hyperscript]]
 deps = ["Test"]
@@ -1444,9 +1453,9 @@ version = "1.4.0"
 
 [[deps.IntelOpenMP_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "d979e54b71da82f3a65b62553da4fc3d18c9004c"
+git-tree-sha1 = "0cb9352ef2e01574eeebdb102948a58740dcaf83"
 uuid = "1d5cc7b8-4909-519e-a0f8-d0f5ad9712d0"
-version = "2018.0.3+2"
+version = "2023.1.0+0"
 
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]
@@ -1527,9 +1536,9 @@ version = "0.3.1"
 
 [[deps.KernelDensity]]
 deps = ["Distributions", "DocStringExtensions", "FFTW", "Interpolations", "StatsBase"]
-git-tree-sha1 = "9816b296736292a80b9a3200eb7fbb57aaa3917a"
+git-tree-sha1 = "4a9513ad756e712177bd342ba6c022b515ed8d76"
 uuid = "5ab0869b-81aa-558d-bb23-cbf5423bbe9b"
-version = "0.6.5"
+version = "0.6.6"
 
 [[deps.LAME_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1646,9 +1655,9 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[deps.LoopVectorization]]
 deps = ["ArrayInterface", "ArrayInterfaceCore", "CPUSummary", "CloseOpenIntervals", "DocStringExtensions", "HostCPUFeatures", "IfElse", "LayoutPointers", "LinearAlgebra", "OffsetArrays", "PolyesterWeave", "SIMDTypes", "SLEEFPirates", "SnoopPrecompile", "Static", "StaticArrayInterface", "ThreadingUtilities", "UnPack", "VectorizationBase"]
-git-tree-sha1 = "a282dbdbc2860134d6809acd951543ce359bcf15"
+git-tree-sha1 = "defbfba8ddbccdc8ca3edb4a96a6d6fd3cd33ebd"
 uuid = "bdcacae8-1622-11e9-2a5c-532679323890"
-version = "0.12.155"
+version = "0.12.157"
 
     [deps.LoopVectorization.extensions]
     ForwardDiffExt = ["ChainRulesCore", "ForwardDiff"]
@@ -1715,9 +1724,9 @@ version = "1.2.0"
 
 [[deps.MathTeXEngine]]
 deps = ["AbstractTrees", "Automa", "DataStructures", "FreeTypeAbstraction", "GeometryBasics", "LaTeXStrings", "REPL", "RelocatableFolders", "Test", "UnicodeFun"]
-git-tree-sha1 = "64890e1e8087b71c03bd6b8af99b49c805b2a78d"
+git-tree-sha1 = "8f52dbaa1351ce4cb847d95568cb29e62a307d93"
 uuid = "0a4f8689-d25c-4efe-a92b-7142dfc1aa53"
-version = "0.5.5"
+version = "0.5.6"
 
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1888,9 +1897,9 @@ version = "0.5.0"
 
 [[deps.PaddedViews]]
 deps = ["OffsetArrays"]
-git-tree-sha1 = "03a7a85b76381a3d04c7a1656039197e70eda03d"
+git-tree-sha1 = "0fac6313486baae819364c52b4f483450a9d793f"
 uuid = "5432bcbf-9aad-5242-b902-cca2824c8663"
-version = "0.5.11"
+version = "0.5.12"
 
 [[deps.Pango_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "FriBidi_jll", "Glib_jll", "HarfBuzz_jll", "JLLWrappers", "Libdl", "Pkg"]
@@ -1922,10 +1931,10 @@ uuid = "eebad327-c553-4316-9ea0-9fa01ccd7688"
 version = "0.3.2"
 
 [[deps.PlotUtils]]
-deps = ["ColorSchemes", "Colors", "Dates", "Printf", "Random", "Reexport", "SnoopPrecompile", "Statistics"]
-git-tree-sha1 = "c95373e73290cf50a8a22c3375e4625ded5c5280"
+deps = ["ColorSchemes", "Colors", "Dates", "PrecompileTools", "Printf", "Random", "Reexport", "Statistics"]
+git-tree-sha1 = "f92e1315dadf8c46561fb9396e525f7200cdc227"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
-version = "1.3.4"
+version = "1.3.5"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -1949,6 +1958,12 @@ deps = ["DataAPI", "Future"]
 git-tree-sha1 = "a6062fe4063cdafe78f4a0a81cfffb89721b30e7"
 uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 version = "1.4.2"
+
+[[deps.PrecompileTools]]
+deps = ["Preferences"]
+git-tree-sha1 = "bc2bda41d798c2e66e7c44a11007bb329b15941b"
+uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+version = "1.0.1"
 
 [[deps.Preferences]]
 deps = ["TOML"]
@@ -2011,9 +2026,13 @@ version = "0.3.2"
 
 [[deps.Ratios]]
 deps = ["Requires"]
-git-tree-sha1 = "dc84268fe0e3335a62e315a3a7cf2afa7178a734"
+git-tree-sha1 = "6d7bb727e76147ba18eed998700998e17b8e4911"
 uuid = "c84ed2f1-dad5-54f0-aa8e-dbefe2724439"
-version = "0.4.3"
+version = "0.4.4"
+weakdeps = ["FixedPointNumbers"]
+
+    [deps.Ratios.extensions]
+    RatiosFixedPointNumbersExt = "FixedPointNumbers"
 
 [[deps.Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
@@ -2175,9 +2194,9 @@ version = "0.8.6"
 
 [[deps.StaticArrayInterface]]
 deps = ["ArrayInterface", "Compat", "IfElse", "LinearAlgebra", "Requires", "SnoopPrecompile", "SparseArrays", "Static", "SuiteSparse"]
-git-tree-sha1 = "fd5f417fd7e103c121b0a0b4a6902f03991111f4"
+git-tree-sha1 = "33040351d2403b84afce74dae2e22d3f5b18edcb"
 uuid = "0d7ed370-da01-4f52-bd93-41d350b8b718"
-version = "1.3.0"
+version = "1.4.0"
 weakdeps = ["OffsetArrays", "StaticArrays"]
 
     [deps.StaticArrayInterface.extensions]
@@ -2554,8 +2573,8 @@ version = "3.5.0+0"
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
-# ╠═a522d3ef-1c94-4eb4-87bc-355965d2ac4a
-# ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
+# ╠═a468baa1-2e5b-40ce-b33c-2e275d720c8e
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
