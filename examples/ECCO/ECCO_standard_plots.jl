@@ -209,7 +209,7 @@ end
 PlutoUI.TableOfContents()
 
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
-md"""#  Ocean State Estimate : Standard Plots
+md"""#  Standard Views of Global Ocean State
 
 
 !!! introduction
@@ -218,12 +218,6 @@ md"""#  Ocean State Estimate : Standard Plots
 !!! note
     - In you are viewing a live version of the notebook, plots will update according to drop down menus as seen in this [video demo](https://youtu.be/UEmBnzspSRg). Directions to run the notebook via [Pluto.jl](https://github.com/fonsp/Pluto.jl), are provided at the bottom of the page. 
     - If instead you are viewing the static html version hosted online, then this interactivity is disabled.
-"""
-
-# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
-md"""## Select Solution
-
-Changing solution will update all plots.
 """
 
 # ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
@@ -344,7 +338,9 @@ md"""### Transport Across One Section"""
 md"""### Transport Across Multiple Sections"""
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
-md"""## Appendices"""
+md"""## Appendices
+$(space)
+"""
 
 # ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
 begin
@@ -425,39 +421,6 @@ begin
 	"Done with listing solutions, file names, color codes"
 end
 
-# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
-begin
-	sol_select = @bind sol Select(sol_list,default="ECCOv4r2_analysis")
-	md"""select a solution : $(sol_select)"""
-end
-
-# ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
-md"""Select a solution : $(sol_select)"""
-
-# ╔═╡ 3088bca4-0db3-4e4d-a7e5-8afb0f356271
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ b55432ac-4960-4983-8330-4ea957a05eee
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 347dc728-2224-4e91-9d7b-45badef8f9a0
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 53069bcc-9b28-40bf-9053-4ec0c6099611
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ edf6e079-9aad-4969-b6e3-06dd45b99d68
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 339c792e-7ef1-4554-9f12-d616bc9a7e5b
-md"""select a solution : $(sol_select)"""
-
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
 begin
 	nammap_select = @bind nammap Select(clim_longname)
@@ -524,10 +487,23 @@ $(ntr2_select)
 	"""
 end
 
+# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
+md"""### Select Solution
+$(space)
+Changing solution will update all plots.
+"""
+
+# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
+begin
+	sol_select = @bind sol Select(sol_list,default="ECCOv4r2_analysis")
+	md"""select a solution : $(sol_select)"""
+end
+
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
 begin
 	pth_out=joinpath(ScratchSpaces.ECCO,sol)
 	md"""### Input Data Files
+$(space)
 
 Here we read and display results from previous computation that derived transports and other quantities like zonal means from gridded model output. Plots include interpolation from model grid to regular grid.
 	
@@ -546,7 +522,8 @@ end
 begin
 	bind_SaveAllPlots = @bind SaveAllPlots PlutoUI.Button("Save Plots")
 	
-	md"""### Save All Plots at Once
+	md"""### Save All Plots
+	$(space)
 	All plots will be saved in the folder listed below.
 	$(space)
 	$(bind_SaveAllPlots)
@@ -557,25 +534,6 @@ end
 begin
 	MC=ModelConfig(model="ECCO_plots")
 	pathof(MC)
-end
-
-# ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
-begin
-	bind_SaveOnePlot = @bind SaveOnePlot PlutoUI.Button("Save Plot")
-	bind_SelectePlot = @bind SelectPlot PlutoUI.Select(collect(keys(MC.outputs)))
-	
-	md"""### Save Plot
-	The selected plot is saved in file listed below.
-	$(space)
-	$(bind_SaveOnePlot)
-	$(bind_SelectePlot)
-	"""
-end
-
-# ╔═╡ c1c4e3c1-d581-4103-8f46-e555c64df86a
-let
-	fil=plots.save_fig(MC.outputs[SelectPlot],SaveOnePlot)
-	md"""File = $(fil)"""
 end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
@@ -776,6 +734,57 @@ begin
 		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,list_trsp)
 end
 
+# ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
+begin
+	isempty(MC.outputs) ? listSave=["N/A"] : listSave=collect(keys(MC.outputs))
+	bind_SaveOnePlot = @bind SaveOnePlot PlutoUI.Button("Save Plot")
+	bind_SelectePlot = @bind SelectPlot PlutoUI.Select(listSave)
+	
+	md"""### Save Plot
+	$(space)
+	The selected plot is saved in file listed below.
+	$(space)
+	$(bind_SaveOnePlot)
+	$(bind_SelectePlot)
+	"""
+end
+
+# ╔═╡ 60b73ddd-ec82-4a52-87b6-058728f150a4
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 3088bca4-0db3-4e4d-a7e5-8afb0f356271
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ b55432ac-4960-4983-8330-4ea957a05eee
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 347dc728-2224-4e91-9d7b-45badef8f9a0
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 53069bcc-9b28-40bf-9053-4ec0c6099611
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ edf6e079-9aad-4969-b6e3-06dd45b99d68
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 339c792e-7ef1-4554-9f12-d616bc9a7e5b
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ c1c4e3c1-d581-4103-8f46-e555c64df86a
+let
+	SelectPlot!=="N/A" ? fil=plots.save_fig(MC.outputs[SelectPlot],SaveOnePlot) : fil="N/A"
+	md"""File = $(fil)"""
+end
+
 # ╔═╡ c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
 begin
 	SaveAllPlots
@@ -801,6 +810,7 @@ end
 
 # ╔═╡ 77339a25-c26c-4bfe-84ee-15274389619f
 md""" ### User Directions
+$(space)
 
 !!! summary
     Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as show below. `Code for steps 2 to 4` is given first in the `grey box`. These commands should be executed in the Julia terminal window (the `REPL`) after installing `julia` in step 1.
@@ -2565,13 +2575,10 @@ version = "3.5.0+0"
 # ╔═╡ Cell order:
 # ╟─6f721618-d955-4c51-ba44-2873f8609831
 # ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
-# ╟─c46f0656-3627-448b-a779-dad2d980e3cf
-# ╟─8fced956-e527-4ed0-94d4-321368f09773
-# ╟─1fb8f44b-d6f7-4539-8459-fdae07bb6a58
-# ╟─c1c4e3c1-d581-4103-8f46-e555c64df86a
 # ╟─8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
+# ╟─60b73ddd-ec82-4a52-87b6-058728f150a4
 # ╟─1df3bd3c-1396-4cd0-bfd2-3a05dec68261
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
@@ -2612,8 +2619,12 @@ version = "3.5.0+0"
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─c46f0656-3627-448b-a779-dad2d980e3cf
+# ╟─8fced956-e527-4ed0-94d4-321368f09773
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
+# ╟─1fb8f44b-d6f7-4539-8459-fdae07bb6a58
+# ╟─c1c4e3c1-d581-4103-8f46-e555c64df86a
 # ╟─935cb17d-07b3-4c0c-b863-448ab327d57b
 # ╟─0a956b36-9306-42e2-a296-3a1840a4cf5b
 # ╟─c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
