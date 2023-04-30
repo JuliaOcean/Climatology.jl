@@ -106,7 +106,7 @@ function get_ecco_variable_if_needed(v::String)
         pth1=joinpath(ScratchSpaces.ECCO,v)
         lst1=findall([v==n[1:end-8] for n in lst.name])
         !isdir(pth1) ? mkdir(pth1) : nothing
-        [DataverseDownloads.download_files(lst,v,ScratchSpaces.ECCO) for v in lst.name[lst1]]
+        [DataverseDownloads.download_files(lst,v,pth1) for v in lst.name[lst1]]
     end
 end
 
