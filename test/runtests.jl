@@ -1,6 +1,9 @@
 using OceanStateEstimation, MeshArrays, Statistics
 using Test
 
+using Dataverse
+pyDataverse.APIs(do_install=true)
+
 p=dirname(pathof(OceanStateEstimation))
 
 @testset "OceanStateEstimation.jl" begin
@@ -10,9 +13,6 @@ p=dirname(pathof(OceanStateEstimation))
     ref=[19.88214831145215,47.63055475475805,-44.1122401210416,
          3.4402271721659816,30.14270126344508]
     @test tmp==ref
-
-    lst=joinpath(p,"../examples/nctiles_climatology.csv")
-    lists=dataverse_lists(lst)
 
     get_occa_velocity_if_needed()
     get_occa_variable_if_needed("DDuvel")
