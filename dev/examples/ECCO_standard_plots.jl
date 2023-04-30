@@ -20,6 +20,7 @@ begin
 	using JLD2, PlutoUI, Glob, TOML, Statistics
 	ECCOdiags_add("release2")
 	ECCOdiags_add("interp_coeffs")
+	space = html"<br><br>"
 	"Done with packages"
 end
 
@@ -55,7 +56,7 @@ module plots
 		valsmo[1:5].=NaN
 		valsmo[end-4:end].=NaN
 		lines!(ax,x,valsmo,linewidth=4.0,color=:red)
-		xlims!(ax,(1992.0,2021.0))
+		xlims!(ax,(1992.0,2020.0))
 	end
 
 	function transport(namtrs,ncols,pth_out,list_trsp)
@@ -69,7 +70,7 @@ module plots
 			jj=div.(na,ncols,RoundUp)
 			kk=na-(jj.-1)*ncols
 			ax1 = Axis(fig1[jj,kk], title=" $txt (in Sv)",
-				xticks=(1992.0:4:2021.0),ylabel="transport, in Sv")
+				xticks=(1992.0:4:2020.0),ylabel="transport, in Sv")
 			axtr1(ax1,namtrs[na],pth_out,list_trsp)
 		end
 		#ylims!(ax1,rng)
@@ -88,7 +89,7 @@ module plots
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1],ylabel="Sv",
 			title="Global Overturning, in Sv, at kk=$(kk)",
-			xticks=(1992.0:4:2021.0))
+			xticks=(1992.0:4:2020.0))
 		for ll in 115:10:145
 			ov=tmp[ll,kk,:]
 			ov=runmean(ov, 12)
@@ -96,7 +97,7 @@ module plots
 			ov[end-4:end].=NaN
 			hm1=lines!(x,ov,label="$(lats[ll])N")
 		end
-		xlims!(ax1,(1992.0,2021.0))
+		xlims!(ax1,(1992.0,2020.0))
 		low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
 		fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
 
@@ -156,9 +157,9 @@ module plots
 
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2021.0),ylabel=zlb)
+			xticks=collect(1992.0:4:2020.0),ylabel=zlb)
 		hm1=lines!(ax1,gl1.x,y)
-		xlims!(ax1,(1992.0,2021.0))
+		xlims!(ax1,(1992.0,2020.0))
 		ylims!(ax1,rng)
 		fig1
 	end
@@ -167,10 +168,10 @@ module plots
 		ClipToRange ? to_range!(z,levs) : nothing
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2021.0))
+			xticks=collect(1992.0:4:2020.0))
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,1992.0,2021.0)
+		xlims!(ax1,1992.0,2020.0)
 		ylims!(ax1,RC1,RC0)
 		
 		fig1
@@ -180,10 +181,10 @@ module plots
 		ClipToRange ? to_range!(z,levs) : nothing
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2021.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
+			xticks=collect(1992.0:4:2020.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,1992.0,2021.0)
+		xlims!(ax1,1992.0,2020.0)
 		ylims!(ax1,y0,y1)
 		fig1
 	end
@@ -197,13 +198,18 @@ module plots
 		fig	
 	end
 
+	function save_fig(fig,trigger)
+		fil=tempname()*".png"
+		plots.save(fil,fig)
+		fil
+	end
 end
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
 PlutoUI.TableOfContents()
 
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
-md"""#  Ocean State Estimate : Standard Plots
+md"""#  Standard Views of The Ocean State
 
 
 !!! introduction
@@ -215,13 +221,10 @@ md"""#  Ocean State Estimate : Standard Plots
 """
 
 # ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
-md"""## Climatology Maps"""
-
-# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
-md"""## Select a Solution"""
+md"""## Climatology Map"""
 
 # ╔═╡ 1df3bd3c-1396-4cd0-bfd2-3a05dec68261
-md"""## Zonal Means"""
+md"""## Zonal Mean vs Time"""
 
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
@@ -240,7 +243,7 @@ begin
 end
 
 # ╔═╡ 31e97c10-69a6-4074-8b51-89d845620548
-md"""## Zonal Mean Anomalies"""
+md"""## Zonal Mean vs Time (anomalies)"""
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
@@ -266,7 +269,7 @@ md"""Select a quantity and plot it's anomaly as a function of time and latitude.
 end
 
 # ╔═╡ 7dbbb44c-22db-4c30-b71c-58fbab3f78b6
-md"""### Depth vs Time Anomalies"""
+md"""## Depth vs Time (Anomalies)"""
 
 # ╔═╡ 302c84ce-c39d-456b-b748-e3f5ddec0eda
 begin
@@ -334,40 +337,10 @@ md"""### Transport Across One Section"""
 # ╔═╡ 0b8ce7b9-8f41-451f-9ec5-5bff418bcafb
 md"""### Transport Across Multiple Sections"""
 
-# ╔═╡ 935cb17d-07b3-4c0c-b863-448ab327d57b
-md"""## Save Plots to Files"""
-
-# ╔═╡ 657fa106-b80f-4a80-868b-54e0bc42651f
-@bind savePlots PlutoUI.Button("Save Plots")
-
-# ╔═╡ 0a956b36-9306-42e2-a296-3a1840a4cf5b
-MC=ModelConfig(model="ECCO_plots")
-
-# ╔═╡ c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
-begin
-	savePlots
-	MC.outputs
-end
-
-# ╔═╡ ff40a006-915a-4d35-847f-5f10085f60a2
-begin
-	savePlots
-	
-	!isdir(pathof(MC)) ? setup(MC) : nothing
-	p=joinpath(pathof(MC),"plots")
-	!isdir(p) ? mkdir(p) : nothing
-
-	listplots=("overturning","overturnings","transport","transports","OHT",
-		"global","DepthTime","TimeLat","TimeLatAnom","map")
-	if !isempty(MC.outputs)
-		[plots.save(joinpath(p,f*".png"),MC.outputs[Symbol(f)]) for f in listplots]
-	end
-
-	readdir(p)
-end
-
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
-md"""## Appendices"""
+md"""## Appendices
+$(space)
+"""
 
 # ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
 begin
@@ -460,39 +433,6 @@ begin
 	"""
 end
 
-# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
-begin
-	sol_select = @bind sol Select(sol_list,default="ECCOv4r2_analysis")
-	md"""select a solution : $(sol_select)"""
-end
-
-# ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
-md"""Select a solution : $(sol_select)"""
-
-# ╔═╡ 3088bca4-0db3-4e4d-a7e5-8afb0f356271
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ b55432ac-4960-4983-8330-4ea957a05eee
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 347dc728-2224-4e91-9d7b-45badef8f9a0
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 53069bcc-9b28-40bf-9053-4ec0c6099611
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ edf6e079-9aad-4969-b6e3-06dd45b99d68
-md"""select a solution : $(sol_select)"""
-
-# ╔═╡ 339c792e-7ef1-4554-9f12-d616bc9a7e5b
-md"""select a solution : $(sol_select)"""
-
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
 begin
 	function glo(pth_out,nam,k=0)
@@ -547,149 +487,200 @@ $(ntr2_select)
 	"""
 end
 
+# ╔═╡ c46f0656-3627-448b-a779-dad2d980e3cf
+md"""### Select Solution
+$(space)
+Changing solution will update all plots.
+"""
+
+# ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
+begin
+	sol_select = @bind sol Select(sol_list,default="ECCOv4r2_analysis")
+	md"""select a solution : $(sol_select)"""
+end
+
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
 begin
 	pth_out=joinpath(ScratchSpaces.ECCO,sol)
-	md"""## ECCO Files
+	md"""### Input Data Files
+$(space)
 
-Here we read and display results from a previous computation that derived transports and other quantities like zonal means from the gridded model output. Plotting includes interpolation from model grid to regular grid.
+Here we read and display results from previous computation that derived transports and other quantities like zonal means from gridded model output. Plots include interpolation from model grid to regular grid.
 	
 Folder name : $(pth_out)
 	"""
 end
 
-# ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-let
-	ii=findall(clim_longname.==nammap)[1]
-	nam=clim_name[ii]
+# ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
+with_terminal() do
+	fil_list=readdir(pth_out)
+	println.(fil_list)
+	"Subfolders And files list:"
+end
+
+# ╔═╡ 935cb17d-07b3-4c0c-b863-448ab327d57b
+begin
+	bind_SaveAllPlots = @bind SaveAllPlots PlutoUI.Button("Save Plots")
 	
-	fil=joinpath(pth_out,clim_files[ii])
-	if statmap!=="mon"
-		tmp=load(fil,statmap)
-	else
-		tmp=load(fil,statmap)[:,timemap]
+	md"""### Save All Plots
+	$(space)
+	All plots will be saved in the folder listed below.
+	$(space)
+	$(bind_SaveAllPlots)
+	"""
+end
+
+# ╔═╡ 0a956b36-9306-42e2-a296-3a1840a4cf5b
+begin
+	MC=ModelConfig(model="ECCO_plots")
+	pathof(MC)
+end
+
+# ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
+begin
+	function data_map(nammap)
+		ii=findall(clim_longname.==nammap)[1]
+		nam=clim_name[ii]
+		
+		fil=joinpath(pth_out,clim_files[ii])
+		if statmap!=="mon"
+			tmp=load(fil,statmap)
+		else
+			tmp=load(fil,statmap)[:,timemap]
+		end
+	
+		DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
+		DD=reshape(DD,size(λ.lon))
+		#DD[findall(DD.==0.0)].=NaN
+		statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
+		levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
+	
+		ttl=clim_longname[ii]
+		return λ,DD,levs,ttl
 	end
-
-	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
-	DD=reshape(DD,size(λ.lon))
-	#DD[findall(DD.==0.0)].=NaN
-	statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
-	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
-
-	ttl=clim_longname[ii]
-
-	MC.outputs[:map]=plots.map(λ,DD,levs,ttl)
+	
+	MC.outputs[:map]=plots.map(data_map(nammap)...)
 end
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
 begin
 	pth_out
 
-	if namzm=="MXLDEPTH"
-		levs=(0.0:50.0:400.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="SIarea"
-		levs=(0.0:0.1:1.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="THETA"
-		levs=(-2.0:2.0:34.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif namzm=="SALT"
-		levs=(32.6:0.2:36.2); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=10*(-0.15:0.02:0.15); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	else
-		levs=missing
-	end
-
-	tmp=load(fil,"single_stored_object")
-	if length(size(tmp))==3
-		z=fn(tmp[:,k_zm,:])
-		x=vec(0.5:size(tmp,3))
-		addon1=" at $(Int(round(Γ.RC[k_zm])))m "
-	else
-		z=fn(tmp[:,:])
-		x=vec(0.5:size(tmp,2))
-		addon1=""
-	end
-
-	x=1992.0 .+ x./12.0
-	ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
+	function data_TimeLat(namzm)
+		fn(x)=transpose(x);
+		if namzm=="MXLDEPTH"
+			levs=(0.0:50.0:400.0); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="SIarea"
+			levs=(0.0:0.1:1.0); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="THETA"
+			levs=(-2.0:2.0:34.0); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif namzm=="SALT"
+			levs=(32.6:0.2:36.2); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif (namzm=="ETAN")||(namzm=="SSH")
+			levs=10*(-0.15:0.02:0.15); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		else
+			levs=missing
+		end
 	
-	MC.outputs[:TimeLat]=plots.TimeLat(x,y,z,cmap_fac*levs,ttl,-90.0,90.0)
+		tmp=load(fil,"single_stored_object")
+		if length(size(tmp))==3
+			z=fn(tmp[:,k_zm,:])
+			x=vec(0.5:size(tmp,3))
+			addon1=" at $(Int(round(Γ.RC[k_zm])))m "
+		else
+			z=fn(tmp[:,:])
+			x=vec(0.5:size(tmp,2))
+			addon1=""
+		end
+	
+		x=1992.0 .+ x./12.0
+		ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
+		return x,y,z,cmap_fac*levs,ttl,-90.0,90.0
+	end
+	
+	MC.outputs[:TimeLat]=plots.TimeLat(data_TimeLat(namzm)...)
 end
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
-let
+begin
 	pth_out
 
-	namzm=namzmanom2d
-	if namzm=="MXLDEPTH"
-		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="SIarea"
-		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="THETA"
-		levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif namzm=="SALT"
-		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	else
-		fn=transpose
-		levs=missing
-	end
-
-	tmp=load(fil,"single_stored_object")
-	if length(size(tmp))==3
-		z=fn(tmp[:,k_zm2d,:])
-		x=vec(0.5:size(tmp,3)); 
-		addon1=" -- at $(Int(round(Γ.RC[k_zm2d])))m "
-	else
-		z=fn(tmp[:,:])
-		x=vec(0.5:size(tmp,2)); 
-		addon1=""
-	end
-
-	dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-	nt=size(z,1)
-
-	if true
-		#a. subtract monthly mean
-		ref1="1992-2011 monthy mean"
-		for m in 1:12
-			zmean=vec(mean(z[m:12:240,:],dims=1))
-			[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+	function data_TimeLatAnom(namzmanom2d)
+		namzm=namzmanom2d
+		if namzm=="MXLDEPTH"
+			levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="SIarea"
+			levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="THETA"
+			levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif namzm=="SALT"
+			levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif (namzm=="ETAN")||(namzm=="SSH")
+			levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		else
+			fn=transpose
+			levs=missing
 		end
-	else
-		#b. subtract time mean
-		ref1="1992-2011 annual mean"
-		zmean=vec(mean(z[1:240,:],dims=1))
-		[z[t,:]=z[t,:]-zmean for t in 1:nt]
+	
+		tmp=load(fil,"single_stored_object")
+		if length(size(tmp))==3
+			z=fn(tmp[:,k_zm2d,:])
+			x=vec(0.5:size(tmp,3)); 
+			addon1=" -- at $(Int(round(Γ.RC[k_zm2d])))m "
+		else
+			z=fn(tmp[:,:])
+			x=vec(0.5:size(tmp,2)); 
+			addon1=""
+		end
+	
+		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		nt=size(z,1)
+	
+		if true
+			#a. subtract monthly mean
+			ref1="1992-2011 monthy mean"
+			for m in 1:12
+				zmean=vec(mean(z[m:12:240,:],dims=1))
+				[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+			end
+		else
+			#b. subtract time mean
+			ref1="1992-2011 annual mean"
+			zmean=vec(mean(z[1:240,:],dims=1))
+			[z[t,:]=z[t,:]-zmean for t in 1:nt]
+		end
+	
+		x=1992.0 .+ x./12.0
+		ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
+	
+		return x,y,z,cmap_fac*levs,ttl,y[l0],y[l1]
 	end
 
-	x=1992.0 .+ x./12.0
-	ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
-
-	MC.outputs[:TimeLatAnom]=plots.TimeLat(x,y,z,cmap_fac*levs,ttl,y[l0],y[l1])
+	MC.outputs[:TimeLatAnom]=plots.TimeLat(data_TimeLatAnom(namzmanom2d)...)
 end
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
-let
+begin
 	pth_out
 	
-	fn(x)=transpose(x)	
+	fn_DepthTime(x)=transpose(x)	
+
+	function data_DepthTime(namzmanom)
 	if namzmanom=="THETA"
 		levs=(-3.0:0.4:3.0)/8.0; cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
@@ -704,7 +695,7 @@ let
 	lats=(-90+dlat/2:dlat:90-dlat/2)
 
 	tmp=load(fil,"single_stored_object")
-	z=fn(tmp[l_Tzm,:,:])
+	z=fn_DepthTime(tmp[l_Tzm,:,:])
 	addon1=" -- at $(lats[l_Tzm])N "
 	x=vec(0.5:size(tmp,3)); 
 	y=vec(Γ.RC)
@@ -723,12 +714,16 @@ let
 
 	x=1992.0 .+ x./12.0
 	ttl="$(longname(namzmanom)) -- minus $(ref1) $(addon1)"
-	
-	MC.outputs[:DepthTime]=plots.DepthTime(x,y,z,facA*levs,ttl,Γ.RC[k1],Γ.RC[k0])
+
+	return x,y,z,facA*levs,ttl,Γ.RC[k1],Γ.RC[k0]
+	end
+
+	MC.outputs[:DepthTime]=plots.DepthTime(data_DepthTime(namzmanom)...)
 end
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
 begin
+	save_global=true
 	gl1=glo(pth_out,ngl1,kgl1)
 	MC.outputs[:global]=plots.glo(gl1)
 end
@@ -742,8 +737,11 @@ MC.outputs[:overturning]=plots.figov2(pth_out,Γ)
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
 MC.outputs[:overturnings]=plots.figov1(pth_out,ktr1,low1)
 
-# ╔═╡ 030dab23-18ed-4e1e-9074-4da8bb9e3ee8
-MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,list_trsp)
+# ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
+begin
+	save_transport=true
+	MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,list_trsp)
+end
 
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
@@ -752,15 +750,83 @@ begin
 		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,list_trsp)
 end
 
-# ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
-with_terminal() do
-	fil_list=readdir(pth_out)
-	println.(fil_list)
-	"Subfolders And files list:"
+# ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
+begin
+	isempty(MC.outputs) ? listSave=["N/A"] : listSave=collect(keys(MC.outputs))
+	bind_SaveOnePlot = @bind SaveOnePlot PlutoUI.Button("Save Plot")
+	bind_SelectePlot = @bind SelectPlot PlutoUI.Select(listSave)
+	
+	md"""### Save Plot
+	$(space)
+	The selected plot is saved in file listed below.
+	$(space)
+	$(bind_SaveOnePlot)
+	$(bind_SelectePlot)
+	"""
+end
+
+# ╔═╡ 60b73ddd-ec82-4a52-87b6-058728f150a4
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 0477e49b-d8b2-4308-b692-cadcdfe28892
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 22faa18e-cdf9-411f-8ddb-5b779e44db01
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 3088bca4-0db3-4e4d-a7e5-8afb0f356271
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ e88a17f0-5e42-4d0b-8253-e83cabfec4d2
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ b55432ac-4960-4983-8330-4ea957a05eee
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 347dc728-2224-4e91-9d7b-45badef8f9a0
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 53069bcc-9b28-40bf-9053-4ec0c6099611
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ edf6e079-9aad-4969-b6e3-06dd45b99d68
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ 339c792e-7ef1-4554-9f12-d616bc9a7e5b
+md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
+
+# ╔═╡ c1c4e3c1-d581-4103-8f46-e555c64df86a
+let
+	SelectPlot!=="N/A" ? fil=plots.save_fig(MC.outputs[SelectPlot],SaveOnePlot) : fil="N/A"
+	md"""File = $(fil)"""
+end
+
+# ╔═╡ c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
+begin
+	SaveAllPlots
+	MC.outputs
+end
+
+# ╔═╡ ff40a006-915a-4d35-847f-5f10085f60a2
+begin
+	SaveAllPlots
+	
+	!isdir(pathof(MC)) ? setup(MC) : nothing
+	p=joinpath(pathof(MC),"plots")
+	!isdir(p) ? mkdir(p) : nothing
+
+	listplots=("overturning","overturnings","transport","transports","OHT",
+		"global","DepthTime","TimeLat","TimeLatAnom","map")
+	if !isempty(MC.outputs)
+		[plots.save(joinpath(p,f*".png"),MC.outputs[Symbol(f)]) for f in listplots]
+	end
+
+	display(readdir(p))
 end
 
 # ╔═╡ 77339a25-c26c-4bfe-84ee-15274389619f
-md""" ## Directions
+md""" ### User Directions
+$(space)
 
 !!! summary
     Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as show below. `Code for steps 2 to 4` is given first in the `grey box`. These commands should be executed in the Julia terminal window (the `REPL`) after installing `julia` in step 1.
@@ -829,7 +895,7 @@ RollingFunctions = "~0.7.0"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc1"
+julia_version = "1.9.0-rc2"
 manifest_format = "2.0"
 project_hash = "7cd5bff773ece4a9f139df426b13573105a7588b"
 
@@ -2528,8 +2594,7 @@ version = "3.5.0+0"
 # ╟─8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
-# ╟─c46f0656-3627-448b-a779-dad2d980e3cf
-# ╟─8fced956-e527-4ed0-94d4-321368f09773
+# ╟─60b73ddd-ec82-4a52-87b6-058728f150a4
 # ╟─1df3bd3c-1396-4cd0-bfd2-3a05dec68261
 # ╟─39ca358a-6e4b-45ed-9ccb-7785884a9868
 # ╟─bb3b3089-ab83-4683-9cf0-860a55a9af97
@@ -2558,25 +2623,28 @@ version = "3.5.0+0"
 # ╟─7a9269b9-b7aa-4dec-bc86-636a0be6ad01
 # ╟─53069bcc-9b28-40bf-9053-4ec0c6099611
 # ╟─ac1cb355-5d59-4d98-9b0a-181a89625b21
-# ╟─030dab23-18ed-4e1e-9074-4da8bb9e3ee8
+# ╟─f5e41a76-e56c-4889-821a-68abcb5a72c8
 # ╟─aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 # ╟─edf6e079-9aad-4969-b6e3-06dd45b99d68
 # ╟─0b8ce7b9-8f41-451f-9ec5-5bff418bcafb
 # ╟─8702a6cf-69de-4e9c-8e77-81f39b55efc7
 # ╟─8b286e86-692f-419c-83c1-f9120e4e35de
 # ╟─339c792e-7ef1-4554-9f12-d616bc9a7e5b
-# ╟─935cb17d-07b3-4c0c-b863-448ab327d57b
-# ╟─657fa106-b80f-4a80-868b-54e0bc42651f
-# ╟─0a956b36-9306-42e2-a296-3a1840a4cf5b
-# ╟─c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
-# ╟─ff40a006-915a-4d35-847f-5f10085f60a2
 # ╟─0f308191-13ca-4056-a85f-3a0061958e28
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─64cd25be-2875-4249-b59c-19dcda28a127
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
-# ╠═a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
+# ╟─c46f0656-3627-448b-a779-dad2d980e3cf
+# ╟─8fced956-e527-4ed0-94d4-321368f09773
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
+# ╟─1fb8f44b-d6f7-4539-8459-fdae07bb6a58
+# ╟─c1c4e3c1-d581-4103-8f46-e555c64df86a
+# ╟─935cb17d-07b3-4c0c-b863-448ab327d57b
+# ╟─0a956b36-9306-42e2-a296-3a1840a4cf5b
+# ╟─c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
+# ╟─ff40a006-915a-4d35-847f-5f10085f60a2
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
