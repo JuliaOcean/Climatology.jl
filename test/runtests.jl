@@ -1,6 +1,9 @@
 using OceanStateEstimation, MeshArrays, Statistics
 using Test
 
+using Dataverse
+(DataAccessApi,NativeApi)=pyDataverse.APIs()
+
 p=dirname(pathof(OceanStateEstimation))
 
 @testset "OceanStateEstimation.jl" begin
