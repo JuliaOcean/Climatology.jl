@@ -34,6 +34,7 @@ using OceanStateEstimation: pkg_pth
 using OceanStateEstimation: ScratchSpaces
 using Tar, CodecZlib
 using Statistics, FortranFiles, MeshArrays, MITgcmTools
+using Dataverse
 
 ##
 
@@ -78,52 +79,6 @@ end
 ## Dataverse Donwloads
 
 """
-    get_from_dataverse(lst::String,nam::String,pth::String)
-
-```
-using OceanStateEstimation, CSV, DataFrames
-pth=dirname(pathof(OceanStateEstimation))
-lst=joinpath(pth,"../examples/OCCA_climatology.csv")
-nams=CSV.read(lst,DataFrame)
-[get_from_dataverse(lst,nam,ScratchSpaces.OCCA) for nam in nams.name[:]]
-```
-"""
-function get_from_dataverse(lst::String,nam::String,pth::String)
-    lists=dataverse_lists(lst)
-    ii = findall([occursin("$nam", lists.name[i]) for i=1:length(lists.ID)])
-    for i in ii 
-        nam1=ScratchSpaces.download_dataset(lists.URL[i],pth)
-        if length(ii)>1
-            !isdir(joinpath(pth,nam)) ? mkdir(joinpath(pth,nam)) : nothing
-            nam2=joinpath(pth,nam,lists.name[i])
-            mv(nam1,nam2)
-        else
-            nam2=joinpath(pth,lists.name[i])
-            mv(nam1,nam2)
-        end
-    end
-end
-
-get_from_dataverse(nam::String,pth::String) = get_from_dataverse("../examples/nctiles_climatology.csv",nam,pth)
-
-"""
-    dataverse_lists(lst::String)
-
-Read and derive lists (ID,name,URL) from csv file (ID,name) and return as tuple
-```
-lists=dataverse_lists(lst)
-```
-"""
-function dataverse_lists(lst::String)
-    tmp=readlines(lst)
-    ID=[parse(Int,tmp[j][1:findfirst(isequal(','),tmp[j])-1]) for j=2:length(tmp)]
-    name=[tmp[j][findfirst(isequal(','),tmp[j])+1:end] for j=2:length(tmp)]
-    tmp="https://dataverse.harvard.edu/api/access/datafile/"
-    URL=[tmp*"$(ID[j])" for j=1:length(ID)]
-    return (ID=ID,name=name,URL=URL)
-end
-
-"""
     get_ecco_files(γ::gcmgrid,v::String,t=1)
 
 ```
@@ -143,8 +98,16 @@ end
 Download ECCO output for variable `v` to scratch space if needed
 """
 function get_ecco_variable_if_needed(v::String)
-    lst=joinpath(pkg_pth,"../examples/nctiles_climatology.csv")
-    !isdir(joinpath(ScratchSpaces.ECCO,v)) ? get_from_dataverse(lst,v,ScratchSpaces.ECCO) : nothing
+    lst0=pyDataverse.dataset_file_list("doi:10.7910/DVN/3HPRZI")
+    lst=DataverseDownloads.download_urls(lst0)
+
+    fil=joinpath(ScratchSpaces.ECCO,v,v*".0001.nc")
+    if !isfile(fil)
+        pth1=joinpath(ScratchSpaces.ECCO,v)
+        lst1=findall([v==n[1:end-8] for n in lst.name])
+        !isdir(pth1) ? mkdir(pth1) : nothing
+        [DataverseDownloads.download_files(lst,v,ScratchSpaces.ECCO) for v in lst.name[lst1]]
+    end
 end
 
 """
@@ -164,9 +127,10 @@ end
 Download OCCA output for variable `v` to scratch space if needed
 """
 function get_occa_variable_if_needed(v::String)
-    lst=joinpath(pkg_pth,"../examples/OCCA_climatology.csv")
+    lst0=pyDataverse.dataset_file_list("doi:10.7910/DVN/RNXA2A")
+    lst=DataverseDownloads.download_urls(lst0)
     fil=joinpath(ScratchSpaces.OCCA,v*".0406clim.nc")
-    !isfile(fil) ? get_from_dataverse(lst,v,ScratchSpaces.OCCA) : nothing
+    !isfile(fil) ? DataverseDownloads.download_files(lst,v,ScratchSpaces.OCCA) : nothing
 end
 
 """

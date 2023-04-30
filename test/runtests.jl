@@ -11,9 +11,6 @@ p=dirname(pathof(OceanStateEstimation))
          3.4402271721659816,30.14270126344508]
     @test tmp==ref
 
-    lst=joinpath(p,"../examples/nctiles_climatology.csv")
-    lists=dataverse_lists(lst)
-
     get_occa_velocity_if_needed()
     get_occa_variable_if_needed("DDuvel")
     @test isfile(joinpath(ScratchSpaces.OCCA,"DDuvel.0406clim.nc"))

@@ -6,8 +6,6 @@ include("downloads.jl")
 include("ECCO.jl")
 
 get_ecco_files=downloads.get_ecco_files
-dataverse_lists=downloads.dataverse_lists
-get_from_dataverse=downloads.get_from_dataverse
 get_ecco_variable_if_needed=downloads.get_ecco_variable_if_needed
 get_ecco_velocity_if_needed=downloads.get_ecco_velocity_if_needed
 get_occa_variable_if_needed=downloads.get_occa_variable_if_needed
@@ -17,7 +15,22 @@ MITPROFclim_download=downloads.MITPROFclim_download
 CBIOMESclim_download=downloads.CBIOMESclim_download
 ECCOdiags_add=downloads.ECCOdiags_add
 
-export dataverse_lists, get_from_dataverse, ECCOdiags_add
+using Glob
+
+"""
+   examples()
+
+List of examples provided in OceanStateEstimation.jl (full paths)
+"""
+function examples()
+    nb=joinpath(abspath("/"),split(pathof(OceanStateEstimation),"/")[2:end-2]...,"examples")
+#    ex=glob("*/*.jl",nb)
+    ex_known=("CBIOMES_climatology_plot.jl","ECCO_standard_plots.jl",
+    "HadIOD_viz.jl","NSLCT_notebook.jl","OptimalTransport_demo.jl")
+    ex=[glob("*/"*e,nb)[1] for e in ex_known]
+end
+
+export ECCOdiags_add
 export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 export get_occa_variable_if_needed, get_occa_velocity_if_needed
 
