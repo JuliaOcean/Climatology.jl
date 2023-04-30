@@ -36,8 +36,6 @@ using Tar, CodecZlib
 using Statistics, FortranFiles, MeshArrays, MITgcmTools
 using Dataverse
 
-pyDataverse.APIs(do_install=true)
-
 ##
 
 """
@@ -100,15 +98,15 @@ end
 Download ECCO output for variable `v` to scratch space if needed
 """
 function get_ecco_variable_if_needed(v::String)
-    lst0=pyDataverse.dataset_file_list("doi:10.7910/DVN/3HPRZI")
-    lst=DataverseDownloads.download_urls(lst0)
+    lst0=Dataverse.file_list("doi:10.7910/DVN/3HPRZI")
+    lst=Dataverse.url_list(lst0)
 
     fil=joinpath(ScratchSpaces.ECCO,v,v*".0001.nc")
     if !isfile(fil)
         pth1=joinpath(ScratchSpaces.ECCO,v)
         lst1=findall([v==n[1:end-8] for n in lst.name])
         !isdir(pth1) ? mkdir(pth1) : nothing
-        [DataverseDownloads.download_files(lst,v,pth1) for v in lst.name[lst1]]
+        [Dataverse.file_download(lst,v,pth1) for v in lst.name[lst1]]
     end
 end
 
@@ -129,10 +127,10 @@ end
 Download OCCA output for variable `v` to scratch space if needed
 """
 function get_occa_variable_if_needed(v::String)
-    lst0=pyDataverse.dataset_file_list("doi:10.7910/DVN/RNXA2A")
-    lst=DataverseDownloads.download_urls(lst0)
+    lst0=Dataverse.file_list("doi:10.7910/DVN/RNXA2A")
+    lst=Dataverse.url_list(lst0)
     fil=joinpath(ScratchSpaces.OCCA,v*".0406clim.nc")
-    !isfile(fil) ? DataverseDownloads.download_files(lst,v,ScratchSpaces.OCCA) : nothing
+    !isfile(fil) ? Dataverse.file_download(lst,v,ScratchSpaces.OCCA) : nothing
 end
 
 """
