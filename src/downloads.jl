@@ -36,7 +36,7 @@ using Tar, CodecZlib
 using Statistics, FortranFiles, MeshArrays, MITgcmTools
 using Dataverse
 
-(DataAccessApi,NativeApi)=pyDataverse.APIs()
+pyDataverse.APIs(do_install=true)
 
 ##
 

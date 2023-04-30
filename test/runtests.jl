@@ -2,7 +2,7 @@ using OceanStateEstimation, MeshArrays, Statistics
 using Test
 
 using Dataverse
-(DataAccessApi,NativeApi)=pyDataverse.APIs()
+pyDataverse.APIs(do_install=true)
 
 p=dirname(pathof(OceanStateEstimation))
 
