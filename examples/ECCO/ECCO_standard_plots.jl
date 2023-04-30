@@ -209,7 +209,7 @@ end
 PlutoUI.TableOfContents()
 
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
-md"""#  Standard Views of Global Ocean State
+md"""#  Standard Views of The Ocean State
 
 
 !!! introduction
@@ -537,137 +537,150 @@ begin
 end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-let
-	ii=findall(clim_longname.==nammap)[1]
-	nam=clim_name[ii]
+begin
+	function data_map(nammap)
+		ii=findall(clim_longname.==nammap)[1]
+		nam=clim_name[ii]
+		
+		fil=joinpath(pth_out,clim_files[ii])
+		if statmap!=="mon"
+			tmp=load(fil,statmap)
+		else
+			tmp=load(fil,statmap)[:,timemap]
+		end
 	
-	fil=joinpath(pth_out,clim_files[ii])
-	if statmap!=="mon"
-		tmp=load(fil,statmap)
-	else
-		tmp=load(fil,statmap)[:,timemap]
+		DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
+		DD=reshape(DD,size(λ.lon))
+		#DD[findall(DD.==0.0)].=NaN
+		statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
+		levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
+	
+		ttl=clim_longname[ii]
+		return λ,DD,levs,ttl
 	end
-
-	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
-	DD=reshape(DD,size(λ.lon))
-	#DD[findall(DD.==0.0)].=NaN
-	statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
-	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
-
-	ttl=clim_longname[ii]
-
-	MC.outputs[:map]=plots.map(λ,DD,levs,ttl)
+	
+	MC.outputs[:map]=plots.map(data_map(nammap)...)
 end
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
 begin
 	pth_out
 
-	if namzm=="MXLDEPTH"
-		levs=(0.0:50.0:400.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="SIarea"
-		levs=(0.0:0.1:1.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="THETA"
-		levs=(-2.0:2.0:34.0); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif namzm=="SALT"
-		levs=(32.6:0.2:36.2); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=10*(-0.15:0.02:0.15); fn(x)=transpose(x); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	else
-		levs=missing
-	end
-
-	tmp=load(fil,"single_stored_object")
-	if length(size(tmp))==3
-		z=fn(tmp[:,k_zm,:])
-		x=vec(0.5:size(tmp,3))
-		addon1=" at $(Int(round(Γ.RC[k_zm])))m "
-	else
-		z=fn(tmp[:,:])
-		x=vec(0.5:size(tmp,2))
-		addon1=""
-	end
-
-	x=1992.0 .+ x./12.0
-	ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
+	function data_TimeLat(namzm)
+		fn(x)=transpose(x);
+		if namzm=="MXLDEPTH"
+			levs=(0.0:50.0:400.0); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="SIarea"
+			levs=(0.0:0.1:1.0); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="THETA"
+			levs=(-2.0:2.0:34.0); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif namzm=="SALT"
+			levs=(32.6:0.2:36.2); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif (namzm=="ETAN")||(namzm=="SSH")
+			levs=10*(-0.15:0.02:0.15); cm=:turbo
+			dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		else
+			levs=missing
+		end
 	
-	MC.outputs[:TimeLat]=plots.TimeLat(x,y,z,cmap_fac*levs,ttl,-90.0,90.0)
+		tmp=load(fil,"single_stored_object")
+		if length(size(tmp))==3
+			z=fn(tmp[:,k_zm,:])
+			x=vec(0.5:size(tmp,3))
+			addon1=" at $(Int(round(Γ.RC[k_zm])))m "
+		else
+			z=fn(tmp[:,:])
+			x=vec(0.5:size(tmp,2))
+			addon1=""
+		end
+	
+		x=1992.0 .+ x./12.0
+		ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
+		return x,y,z,cmap_fac*levs,ttl,-90.0,90.0
+	end
+	
+	MC.outputs[:TimeLat]=plots.TimeLat(data_TimeLat(namzm)...)
 end
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
-let
+begin
 	pth_out
 
-	namzm=namzmanom2d
-	if namzm=="MXLDEPTH"
-		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="SIarea"
-		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	elseif namzm=="THETA"
-		levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif namzm=="SALT"
-		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
-	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	else
-		fn=transpose
-		levs=missing
-	end
-
-	tmp=load(fil,"single_stored_object")
-	if length(size(tmp))==3
-		z=fn(tmp[:,k_zm2d,:])
-		x=vec(0.5:size(tmp,3)); 
-		addon1=" -- at $(Int(round(Γ.RC[k_zm2d])))m "
-	else
-		z=fn(tmp[:,:])
-		x=vec(0.5:size(tmp,2)); 
-		addon1=""
-	end
-
-	dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-	nt=size(z,1)
-
-	if true
-		#a. subtract monthly mean
-		ref1="1992-2011 monthy mean"
-		for m in 1:12
-			zmean=vec(mean(z[m:12:240,:],dims=1))
-			[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+	function data_TimeLatAnom(namzmanom2d)
+		namzm=namzmanom2d
+		if namzm=="MXLDEPTH"
+			levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="SIarea"
+			levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		elseif namzm=="THETA"
+			levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif namzm=="SALT"
+			levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		elseif (namzm=="ETAN")||(namzm=="SSH")
+			levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
+			fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		else
+			fn=transpose
+			levs=missing
 		end
-	else
-		#b. subtract time mean
-		ref1="1992-2011 annual mean"
-		zmean=vec(mean(z[1:240,:],dims=1))
-		[z[t,:]=z[t,:]-zmean for t in 1:nt]
+	
+		tmp=load(fil,"single_stored_object")
+		if length(size(tmp))==3
+			z=fn(tmp[:,k_zm2d,:])
+			x=vec(0.5:size(tmp,3)); 
+			addon1=" -- at $(Int(round(Γ.RC[k_zm2d])))m "
+		else
+			z=fn(tmp[:,:])
+			x=vec(0.5:size(tmp,2)); 
+			addon1=""
+		end
+	
+		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		nt=size(z,1)
+	
+		if true
+			#a. subtract monthly mean
+			ref1="1992-2011 monthy mean"
+			for m in 1:12
+				zmean=vec(mean(z[m:12:240,:],dims=1))
+				[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+			end
+		else
+			#b. subtract time mean
+			ref1="1992-2011 annual mean"
+			zmean=vec(mean(z[1:240,:],dims=1))
+			[z[t,:]=z[t,:]-zmean for t in 1:nt]
+		end
+	
+		x=1992.0 .+ x./12.0
+		ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
+	
+		return x,y,z,cmap_fac*levs,ttl,y[l0],y[l1]
 	end
 
-	x=1992.0 .+ x./12.0
-	ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
-
-	MC.outputs[:TimeLatAnom]=plots.TimeLat(x,y,z,cmap_fac*levs,ttl,y[l0],y[l1])
+	MC.outputs[:TimeLatAnom]=plots.TimeLat(data_TimeLatAnom(namzmanom2d)...)
 end
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
-let
+begin
 	pth_out
 	
-	fn(x)=transpose(x)	
+	fn_DepthTime(x)=transpose(x)	
+
+	function data_DepthTime(namzmanom)
 	if namzmanom=="THETA"
 		levs=(-3.0:0.4:3.0)/8.0; cm=:turbo
 		fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
@@ -682,7 +695,7 @@ let
 	lats=(-90+dlat/2:dlat:90-dlat/2)
 
 	tmp=load(fil,"single_stored_object")
-	z=fn(tmp[l_Tzm,:,:])
+	z=fn_DepthTime(tmp[l_Tzm,:,:])
 	addon1=" -- at $(lats[l_Tzm])N "
 	x=vec(0.5:size(tmp,3)); 
 	y=vec(Γ.RC)
@@ -701,8 +714,11 @@ let
 
 	x=1992.0 .+ x./12.0
 	ttl="$(longname(namzmanom)) -- minus $(ref1) $(addon1)"
-	
-	MC.outputs[:DepthTime]=plots.DepthTime(x,y,z,facA*levs,ttl,Γ.RC[k1],Γ.RC[k0])
+
+	return x,y,z,facA*levs,ttl,Γ.RC[k1],Γ.RC[k0]
+	end
+
+	MC.outputs[:DepthTime]=plots.DepthTime(data_DepthTime(namzmanom)...)
 end
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
