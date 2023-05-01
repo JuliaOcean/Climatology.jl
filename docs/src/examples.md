@@ -1,15 +1,17 @@
 
 ## Physical Oceanography
 
-- [NSLCT\_notebook.jl](NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/NSLCT/NSLCT_notebook.jl)) : download and plot sea level data from NASA portal
-- [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) : explore the Global Ocean (climatologies, currents, ...)
+- [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) : explore the Ocean climatology, currents, and more.
+- [NSLCT\_notebook.jl](NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/NSLCT/NSLCT_notebook.jl)) : plot global mean sea level data from NASA and Dataverse.
 
-[NSLCT\_notebook.jl](NSLCT_notebook.html) lets you access sea level data from NASA portal (`HTTP.jl`), organize it (`DataFrames.jl`), and plot it (`Makie.jl`).
+### Detail
 
 [ECCO\_standard\_plots.jl](ECCO_standard_plots.html) lets you explore climate indices and climatologies derived (via [this](https://github.com/JuliaOcean/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_calcs.jl) and [that](https://github.com/JuliaOcean/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_loop.jl)) from gridded ocean climatologies. The data is retrieved from [dataverse.org](https://dataverse.harvard.edu/dataverse/ECCO), and intermediate results from [zenodo.org](https://zenodo.org).
 
+[NSLCT\_notebook.jl](NSLCT_notebook.html) lets you access sea level data from NASA and Dataver portals (`HTTP.jl`, `Dataverse.jl`), organize it into tables (`DataFrames.jl`), and plot it (`Makie.jl`).
+
 !!! note
-    For more on these gridded estimates, and how to use them, take a look at the following pages.
+    For more on these estimates, and how to use them in Julia, please refer to the following documentation and links therein.
 
 - [MeshArrays.jl](https://juliaclimate.github.io/MeshArrays.jl/dev/) : gridded Earth variables, domain decomposition, C-grid support; [Ocean Circulation](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/vectors.html), [Geography](https://juliaclimate.github.io/MeshArrays.jl/dev/tutorials/geography.html) tutorials.
 - [MITgcmTools.jl](https://juliaclimate.github.io/MiTgcmTools.jl/dev/) : framework to interact with MITgcm (setup, run, output, plot, etc) and ECCO output.
