@@ -6,7 +6,7 @@ using InteractiveUtils
 
 # ╔═╡ bc84f26c-430a-11ed-0e26-b9ddf15124d4
 begin
-	using PlutoUI, CairoMakie, NCDatasets
+	using PlutoUI, CairoMakie, NCDatasets, Dataverse
 end
 
 # ╔═╡ 474b2029-b125-451d-a5a1-988169570c82
@@ -19,20 +19,73 @@ end
 # ╔═╡ 6faebe6e-4d6a-4f47-b798-0481a51df211
 md"""## Sea Level Change
 
-Search, download, and visualize data from the [NASA Sea Level Change Team](https://sealevel.nasa.gov) portal.
+Search and download data using the [NASA Sea Level Change Team](https://sealevel.nasa.gov) and [Harvard Dataverse](https://data.harvard.edu/dataverse) servers.
 
 !!! note
-    this Julia example was inspired by this [earlier Python notebook](https://github.com/sea-level-change/notebooks).
+    This Julia example was inspired by this [earlier Python notebook](https://github.com/sea-level-change/notebooks). It illustrate the use of [restFull APIs](https://en.wikipedia.org/wiki/Representational_state_transfer).
 """
 
 # ╔═╡ 938b40d5-7be4-4558-8140-53af0ee2ed61
 TableOfContents()
 
+# ╔═╡ a14e90e9-b0f1-4c4b-8c67-bdd0c3b26f75
+md"""## Search For NASA Sea Level Change Team Datasets""" 
+
+# ╔═╡ e6e030c9-856b-42cb-96f4-4644961d0123
+md"""## Get Data via NASA Sea Level Change Team API"""
+
+# ╔═╡ b053b44a-02cf-49a4-9dec-754a34f16027
+md"""## Get Global Mean Sea Level via Dataverse API"""
+
+# ╔═╡ 1625adc7-734e-40d3-94dc-d5ba02321fab
+begin
+	gmsl_file=joinpath(tempdir(),"global_timeseries_measures.nc")
+	if !isfile(gmsl_file)
+		lst=Dataverse.url_list(Dataverse.file_list("doi:10.7910/DVN/OYBLGK"))
+		#"https://doi.org/10.7910/DVN/OYBLGK"
+		Dataverse.file_download(lst,"global_timeseries_measures.nc")
+	end
+	d=Dataset(gmsl_file)
+end
+
+# ╔═╡ 5529a2a9-788a-4b02-98e5-b4d7b7583436
+md"""## Visualize Data"""
+
+# ╔═╡ 59deb787-ee3e-44c9-b2d5-c28e8d4ffc7f
+md"""## Appendices"""
+
 # ╔═╡ 056f6384-5c9d-4480-a79c-c856e5efe4d5
-md"""## Packages & Module"""
+md"""### Julia Packages & Cutsom Code"""
 
 # ╔═╡ 773ca476-c267-4323-b2c4-9046cd129dd8
 NSLCT=myinclude.NSLCT
+
+# ╔═╡ 3df93e43-c80a-4897-bd5f-2ab11df0dc20
+begin
+	list=NSLCT.get_list()
+	NSLCT.search(list,"sea","surface","height")
+	NSLCT.search(list,"sea surface height")
+end
+
+# ╔═╡ 76522a9d-161a-4cda-83b0-e12ad3d350b6
+begin
+	ecco_ssh_nam="SSH_ECCO_version4_release4"
+	ecco_ssh_ts=NSLCT.get_ssh_ts(ecco_ssh_nam)
+	measures_ssh_nam="SEA_SURFACE_HEIGHT_ALT_GRIDS_L4_2SATS_5DAY_6THDEG_V_JPL2205_Monthly"
+	measures_ssh_ts=NSLCT.get_ssh_ts(measures_ssh_nam)
+	names(ecco_ssh_ts)
+end	
+
+# ╔═╡ c26cedf7-1275-4c05-962b-9fb1bea36c5c
+let
+	f1=Figure()
+	ax=Axis(f1[1,1],title="Sea Surface Height Anomalies",ylabel="Meters")
+	lines!(ax,ecco_ssh_ts.tim,ecco_ssh_ts.sla,label=ecco_ssh_nam)
+	lines!(ax,measures_ssh_ts.tim,measures_ssh_ts.sla,label=measures_ssh_nam)
+	axislegend()
+
+	f1
+end
 
 # ╔═╡ caef6c66-08c8-4e4e-b51d-5577264ffdc4
 function plot_gmsl(d)
@@ -61,56 +114,11 @@ function plot_gmsl(d)
 	f0
 end
 
-# ╔═╡ a14e90e9-b0f1-4c4b-8c67-bdd0c3b26f75
-md"""## Search For Datasets""" 
-
-# ╔═╡ 3df93e43-c80a-4897-bd5f-2ab11df0dc20
-begin
-	list=NSLCT.get_list()
-	NSLCT.search(list,"sea","surface","height")
-	NSLCT.search(list,"sea surface height")
-end
-
-# ╔═╡ e6e030c9-856b-42cb-96f4-4644961d0123
-md"""## Get Data via RestFull API"""
-
-# ╔═╡ 76522a9d-161a-4cda-83b0-e12ad3d350b6
-begin
-	ecco_ssh_nam="SSH_ECCO_version4_release4"
-	ecco_ssh_ts=NSLCT.get_ssh_ts(ecco_ssh_nam)
-	measures_ssh_nam="SEA_SURFACE_HEIGHT_ALT_GRIDS_L4_2SATS_5DAY_6THDEG_V_JPL2205_Monthly"
-	measures_ssh_ts=NSLCT.get_ssh_ts(measures_ssh_nam)
-	names(ecco_ssh_ts)
-end	
-
-# ╔═╡ b053b44a-02cf-49a4-9dec-754a34f16027
-md"""## Lazily Access Data via OPeNDAP"""
-
-# ╔═╡ 1625adc7-734e-40d3-94dc-d5ba02321fab
-begin
-	gmsl_file="https://opendap.jpl.nasa.gov/opendap/allData/homage/L4/gmsl/global_timeseries_measures.nc"
-	d=Dataset(gmsl_file)
-end
-
-# ╔═╡ 5529a2a9-788a-4b02-98e5-b4d7b7583436
-md"""## Visualize Data"""
-
 # ╔═╡ c15817f5-569f-4dfa-bf48-511c445caf30
 plot_gmsl(d)
 
-# ╔═╡ c26cedf7-1275-4c05-962b-9fb1bea36c5c
-let
-	f1=Figure()
-	ax=Axis(f1[1,1],title="Sea Surface Height Anomalies",ylabel="Meters")
-	lines!(ax,ecco_ssh_ts.tim,ecco_ssh_ts.sla,label=ecco_ssh_nam)
-	lines!(ax,measures_ssh_ts.tim,measures_ssh_ts.sla,label=measures_ssh_nam)
-	axislegend()
-
-	f1
-end
-
-# ╔═╡ 59deb787-ee3e-44c9-b2d5-c28e8d4ffc7f
-md"""## Extras"""
+# ╔═╡ ff05c0d1-40ca-4519-a54e-8e7576fcadf0
+md"""### JSON string example"""
 
 # ╔═╡ de636e3b-e661-4a7d-aca1-7d1152757d0d
 NSLCT.get_projection()
@@ -120,6 +128,7 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Dataverse = "9c0b9be8-e31e-490f-90fe-77697562404d"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
@@ -130,6 +139,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 [compat]
 CairoMakie = "~0.10.4"
 DataFrames = "~1.5.0"
+Dataverse = "~0.2.0"
 HTTP = "~1.7.4"
 JSON = "~0.21.4"
 NCDatasets = "~0.12.14"
@@ -140,9 +150,9 @@ PlutoUI = "~0.7.50"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc1"
+julia_version = "1.9.0-rc2"
 manifest_format = "2.0"
-project_hash = "a2cc08a88691c8eb5d8aafe2c2f37101d1fc9631"
+project_hash = "8ada4b13fbd1a61882b64b563d5e82ce530b85ba"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -234,6 +244,12 @@ version = "0.1.2"
 [[deps.CRC32c]]
 uuid = "8bf52ea8-c179-5cab-976a-9e18b702a9bc"
 
+[[deps.CSV]]
+deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "SnoopPrecompile", "Tables", "Unicode", "WeakRefStrings", "WorkerUtilities"]
+git-tree-sha1 = "c700cce799b51c9045473de751e9319bdd1c6e94"
+uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+version = "0.10.9"
+
 [[deps.Cairo]]
 deps = ["Cairo_jll", "Colors", "Glib_jll", "Graphics", "Libdl", "Pango_jll"]
 git-tree-sha1 = "d0b3f8b4ad16cb0a2988c6788646a5e6a17b6b1b"
@@ -321,6 +337,12 @@ deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.0.2+0"
 
+[[deps.Conda]]
+deps = ["Downloads", "JSON", "VersionParsing"]
+git-tree-sha1 = "e32a90da027ca45d84678b826fffd3110bb3fc90"
+uuid = "8f4d0f93-b110-5947-807f-2305c1781a2d"
+version = "1.8.0"
+
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
 git-tree-sha1 = "89a9db8d28102b094992472d333674bd1a83ce2a"
@@ -363,6 +385,12 @@ version = "0.18.13"
 git-tree-sha1 = "bfc1187b79289637fa0ef6d4436ebdfe6905cbd6"
 uuid = "e2d170a0-9d28-54be-80f0-106bbe20a464"
 version = "1.0.0"
+
+[[deps.Dataverse]]
+deps = ["CSV", "Conda", "DataFrames", "Downloads", "HTTP", "JSON", "PyCall"]
+git-tree-sha1 = "21fd97553d03212049286c74f3d63b0121cac6bb"
+uuid = "9c0b9be8-e31e-490f-90fe-77697562404d"
+version = "0.2.0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -449,6 +477,12 @@ deps = ["Pkg", "Requires", "UUIDs"]
 git-tree-sha1 = "7be5f99f7d15578798f338f5433b6c432ea8037b"
 uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 version = "1.16.0"
+
+[[deps.FilePathsBase]]
+deps = ["Compat", "Dates", "Mmap", "Printf", "Test", "UUIDs"]
+git-tree-sha1 = "e27c4ebe80e8699540f2d6c805cc12203b614f12"
+uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
+version = "0.9.20"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -1132,6 +1166,12 @@ git-tree-sha1 = "d7a7aef8f8f2d537104f170139553b14dfe39fe9"
 uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
 version = "1.7.2"
 
+[[deps.PyCall]]
+deps = ["Conda", "Dates", "Libdl", "LinearAlgebra", "MacroTools", "Serialization", "VersionParsing"]
+git-tree-sha1 = "62f417f6ad727987c755549e9cd88c46578da562"
+uuid = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+version = "1.95.1"
+
 [[deps.QOI]]
 deps = ["ColorTypes", "FileIO", "FixedPointNumbers"]
 git-tree-sha1 = "18e8f4d1426e965c7b532ddd260599e1510d26ce"
@@ -1454,11 +1494,27 @@ git-tree-sha1 = "53915e50200959667e78a92a418594b428dffddf"
 uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.1"
 
+[[deps.VersionParsing]]
+git-tree-sha1 = "58d6e80b4ee071f5efd07fda82cb9fbe17200868"
+uuid = "81def892-9a0e-5fdd-b105-ffc91e053289"
+version = "1.3.0"
+
+[[deps.WeakRefStrings]]
+deps = ["DataAPI", "InlineStrings", "Parsers"]
+git-tree-sha1 = "b1be2855ed9ed8eac54e5caff2afcdb442d52c23"
+uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
+version = "1.4.2"
+
 [[deps.WoodburyMatrices]]
 deps = ["LinearAlgebra", "SparseArrays"]
 git-tree-sha1 = "de67fa59e33ad156a590055375a30b23c40299d3"
 uuid = "efce3f68-66dc-5838-9240-27a6d6f5f9b6"
 version = "0.5.5"
+
+[[deps.WorkerUtilities]]
+git-tree-sha1 = "cd1659ba0d57b71a464a29e64dbc67cfe83d54e7"
+uuid = "76eceee3-57b5-4d4a-8e66-0e911cebbf60"
+version = "1.6.1"
 
 [[deps.XML2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "Zlib_jll"]
@@ -1598,13 +1654,8 @@ version = "3.5.0+0"
 # ╔═╡ Cell order:
 # ╟─6faebe6e-4d6a-4f47-b798-0481a51df211
 # ╟─938b40d5-7be4-4558-8140-53af0ee2ed61
-# ╟─056f6384-5c9d-4480-a79c-c856e5efe4d5
-# ╠═bc84f26c-430a-11ed-0e26-b9ddf15124d4
-# ╠═474b2029-b125-451d-a5a1-988169570c82
-# ╠═773ca476-c267-4323-b2c4-9046cd129dd8
-# ╟─caef6c66-08c8-4e4e-b51d-5577264ffdc4
 # ╟─a14e90e9-b0f1-4c4b-8c67-bdd0c3b26f75
-# ╠═3df93e43-c80a-4897-bd5f-2ab11df0dc20
+# ╟─3df93e43-c80a-4897-bd5f-2ab11df0dc20
 # ╟─e6e030c9-856b-42cb-96f4-4644961d0123
 # ╟─76522a9d-161a-4cda-83b0-e12ad3d350b6
 # ╟─b053b44a-02cf-49a4-9dec-754a34f16027
@@ -1613,6 +1664,12 @@ version = "3.5.0+0"
 # ╟─c15817f5-569f-4dfa-bf48-511c445caf30
 # ╟─c26cedf7-1275-4c05-962b-9fb1bea36c5c
 # ╟─59deb787-ee3e-44c9-b2d5-c28e8d4ffc7f
-# ╠═de636e3b-e661-4a7d-aca1-7d1152757d0d
+# ╟─056f6384-5c9d-4480-a79c-c856e5efe4d5
+# ╠═bc84f26c-430a-11ed-0e26-b9ddf15124d4
+# ╠═474b2029-b125-451d-a5a1-988169570c82
+# ╟─773ca476-c267-4323-b2c4-9046cd129dd8
+# ╟─caef6c66-08c8-4e4e-b51d-5577264ffdc4
+# ╟─ff05c0d1-40ca-4519-a54e-8e7576fcadf0
+# ╟─de636e3b-e661-4a7d-aca1-7d1152757d0d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
