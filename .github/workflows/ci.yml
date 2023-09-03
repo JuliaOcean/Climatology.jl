@@ -41,6 +41,7 @@ jobs:
       - run: |
           julia -e '
             using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
             Pkg.instantiate()
             Pkg.resolve()
             using OceanStateEstimation, MITgcmTools
