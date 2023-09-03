@@ -53,7 +53,8 @@ end
 
 module ECCO_helpers
 
-using MeshArrays, TOML, JLD2, NCDatasets
+using MeshArrays, TOML, JLD2
+import NCDatasets
 
 """
     parameters(P0,params)
@@ -98,7 +99,7 @@ or, from a predefined list:
 ```
 list0=ECCO_helpers.standard_list_toml("")
 pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
-P1=parameters(pth,"r2",list0[1])
+P1=ECCO_helpers.parameters(pth,"r2",list0[1])
 ```
 """
 function parameters(pth0::String,sol0::String,params)
@@ -111,7 +112,7 @@ function parameters(pth0::String,sol0::String,params)
     if sol0=="r1"||sol0=="r2"
         fil=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly","THETA","THETA.0001.nc")
         if isfile(fil)
-            nt=NCDataset(fil) do ds
+            nt=NCDatasets.Dataset(fil) do ds
                 data = length(ds["tim"][:])
             end
         else
@@ -170,7 +171,7 @@ function get_nr_nt(pth_in,nam)
     lst=readdir(nct_path)
     lst=lst[findall(occursin.(Ref(".nc"),lst))]
     fil1=joinpath(nct_path,lst[1])
-    ds=NCTiles.NCDatasets.Dataset(fil1)
+    ds=NCDatasets.Dataset(fil1)
     siz=size(ds[nam])
     siz[end-1],siz[end]
 end
@@ -319,7 +320,9 @@ end #module ECCO_helpers
 
 module ECCO_io
 
-using MeshArrays, MITgcmTools
+using MeshArrays
+
+import OceanStateEstimation: read_nctiles_alias
 
 """
     read_monthly(P,nam,t)
@@ -423,17 +426,23 @@ function read_monthly_default(P,nam,t)
 
     if (sol=="ECCOv4r1_analysis")||(sol=="ECCOv4r2_analysis")||(sol=="ECCOv4r3_analysis")
         nct_path=joinpath(pth_in,nam)
-        if sum(var_list3d.==nam)==1
-            tmp=read_nctiles(nct_path,nam,γ,I=(:,:,:,t))
-        else
-            tmp=read_nctiles(nct_path,nam,γ,I=(:,:,t))
+        try
+            if sum(var_list3d.==nam)==1
+                tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,:,t))
+            else
+                tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,t))
+            end
+        catch
+            error("failed: call to `read_nctiles`
+            This method is provided by `MITgcmTools`
+            and now activated by `using MITgcmTools` ")
         end
     elseif (sol=="ECCOv4r4_analysis")
         y0=Int(floor((t-1)/12))+1992
         m0=mod1(t,12)
         nct_path=joinpath(pth_in,nam,string(y0))
         m0<10 ? fil=nam*"_$(y0)_0$(m0).nc" : fil=nam*"_$(y0)_$(m0).nc"
-        tmp0=NCTiles.NCDatasets.Dataset(joinpath(nct_path,fil))[nam]
+        tmp0=NCDatasets.Dataset(joinpath(nct_path,fil))[nam]
         til0=Tiles(γ,90,90)
         if sum(var_list3d.==nam)==1
             tmp=MeshArray(γ,γ.ioPrec,nr)
