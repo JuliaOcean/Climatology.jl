@@ -2,7 +2,19 @@ module OceanStateEstimation
 
 pkg_pth=dirname(pathof(OceanStateEstimation))
 
+"""
+    read_nctiles_alias()
+
+Placeholder to allow MITgcmTools extension, which is activated by `using MITgcmTools`.
+"""
 function read_nctiles_alias end
+
+"""
+    read_Dataset()
+
+Placeholder to allow NCDatasets extension, which is activated by `using NCDatasets`.
+"""
+function read_Dataset end
 
 include("downloads.jl")
 include("ECCO.jl")
