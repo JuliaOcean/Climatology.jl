@@ -425,10 +425,16 @@ function read_monthly_default(P,nam,t)
 
     if (sol=="ECCOv4r1_analysis")||(sol=="ECCOv4r2_analysis")||(sol=="ECCOv4r3_analysis")
         nct_path=joinpath(pth_in,nam)
-        if sum(var_list3d.==nam)==1
-            tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,:,t))
-        else
-            tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,t))
+        try
+            if sum(var_list3d.==nam)==1
+                tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,:,t))
+            else
+                tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,t))
+            end
+        catch
+            error("failed: call to `read_nctiles`
+            This method is provided by `MITgcmTools`
+            and now activated by `using MITgcmTools` ")
         end
     elseif (sol=="ECCOv4r4_analysis")
         y0=Int(floor((t-1)/12))+1992

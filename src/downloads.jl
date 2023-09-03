@@ -83,14 +83,21 @@ end
     get_ecco_files(γ::gcmgrid,v::String,t=1)
 
 ```
-using MeshArrays, OceanStateEstimation
+using MeshArrays, OceanStateEstimation, MITgcmTools
 γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-tmp=get_ecco_files(γ,"oceQnet")
+tmp=OceanStateEstimation.get_ecco_files(γ,"oceQnet")
 ```
 """
 function get_ecco_files(γ::gcmgrid,v::String,t=1)
     get_ecco_variable_if_needed(v)
-    return read_nctiles_alias(joinpath(ScratchSpaces.ECCO,"$v/$v"),"$v",γ,I=(:,:,t))
+    try
+        read_nctiles_alias(joinpath(ScratchSpaces.ECCO,"$v/$v"),"$v",γ,I=(:,:,t))
+    catch
+        error("failed: call to `read_nctiles`
+        This method is provided by `MITgcmTools`
+        and now activated by `using MITgcmTools` ")
+    end
+    return 
 end
 
 """
