@@ -1,4 +1,4 @@
-using OceanStateEstimation, MITgcmTools, MeshArrays, Statistics
+using OceanStateEstimation, MITgcmTools, MeshArrays, NCDatasets, Statistics
 using Test
 
 p=dirname(pathof(OceanStateEstimation))

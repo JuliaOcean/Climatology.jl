@@ -54,7 +54,7 @@ end
 module ECCO_helpers
 
 using MeshArrays, TOML, JLD2
-import NCDatasets
+import OceanStateEstimation: read_Dataset
 
 """
     parameters(P0,params)
@@ -91,7 +91,7 @@ For example, to compute zonal mean temperatures at level 5:
 ```
 p=(calc = "zonmean", nam = "THETA", lev = 5)
 pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
-P0=parameters(pth,"r2",p)
+P0=ECCO_helpers.parameters(pth,"r2",p)
 ```
 
 or, from a predefined list:
@@ -112,7 +112,7 @@ function parameters(pth0::String,sol0::String,params)
     if sol0=="r1"||sol0=="r2"
         fil=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly","THETA","THETA.0001.nc")
         if isfile(fil)
-            nt=NCDatasets.Dataset(fil) do ds
+            nt=read_Dataset(fil) do ds
                 data = length(ds["tim"][:])
             end
         else
@@ -171,7 +171,7 @@ function get_nr_nt(pth_in,nam)
     lst=readdir(nct_path)
     lst=lst[findall(occursin.(Ref(".nc"),lst))]
     fil1=joinpath(nct_path,lst[1])
-    ds=NCDatasets.Dataset(fil1)
+    ds=read_Dataset(fil1)
     siz=size(ds[nam])
     siz[end-1],siz[end]
 end
@@ -322,7 +322,7 @@ module ECCO_io
 
 using MeshArrays
 
-import OceanStateEstimation: read_nctiles_alias
+import OceanStateEstimation: read_nctiles_alias, read_Dataset
 
 """
     read_monthly(P,nam,t)
@@ -442,7 +442,7 @@ function read_monthly_default(P,nam,t)
         m0=mod1(t,12)
         nct_path=joinpath(pth_in,nam,string(y0))
         m0<10 ? fil=nam*"_$(y0)_0$(m0).nc" : fil=nam*"_$(y0)_$(m0).nc"
-        tmp0=NCDatasets.Dataset(joinpath(nct_path,fil))[nam]
+        tmp0=read_Dataset(joinpath(nct_path,fil))[nam]
         til0=Tiles(γ,90,90)
         if sum(var_list3d.==nam)==1
             tmp=MeshArray(γ,γ.ioPrec,nr)
