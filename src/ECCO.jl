@@ -99,7 +99,7 @@ or, from a predefined list:
 ```
 list0=ECCO_helpers.standard_list_toml("")
 pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
-P1=parameters(pth,"r2",list0[1])
+P1=ECCO_helpers.parameters(pth,"r2",list0[1])
 ```
 """
 function parameters(pth0::String,sol0::String,params)
