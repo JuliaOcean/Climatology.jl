@@ -30,10 +30,11 @@ end
 
 module downloads
 
-using OceanStateEstimation: pkg_pth
-using OceanStateEstimation: ScratchSpaces
+import OceanStateEstimation: pkg_pth
+import OceanStateEstimation: ScratchSpaces
+import OceanStateEstimation: read_nctiles_alias
 using Tar, CodecZlib
-using Statistics, FortranFiles, MeshArrays, MITgcmTools
+using Statistics, FortranFiles, MeshArrays
 using Dataverse
 
 ##
@@ -89,7 +90,7 @@ tmp=get_ecco_files(γ,"oceQnet")
 """
 function get_ecco_files(γ::gcmgrid,v::String,t=1)
     get_ecco_variable_if_needed(v)
-    return read_nctiles(joinpath(ScratchSpaces.ECCO,"$v/$v"),"$v",γ,I=(:,:,t))
+    return read_nctiles_alias(joinpath(ScratchSpaces.ECCO,"$v/$v"),"$v",γ,I=(:,:,t))
 end
 
 """

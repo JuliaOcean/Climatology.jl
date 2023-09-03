@@ -2,6 +2,8 @@ module OceanStateEstimation
 
 pkg_pth=dirname(pathof(OceanStateEstimation))
 
+function read_nctiles_alias end
+
 include("downloads.jl")
 include("ECCO.jl")
 
