@@ -97,7 +97,6 @@ function get_ecco_files(γ::gcmgrid,v::String,t=1)
         This method is provided by `MITgcmTools`
         and now activated by `using MITgcmTools` ")
     end
-    return 
 end
 
 """
