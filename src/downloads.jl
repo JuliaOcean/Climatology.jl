@@ -34,7 +34,7 @@ import OceanStateEstimation: pkg_pth
 import OceanStateEstimation: ScratchSpaces
 import OceanStateEstimation: read_nctiles_alias
 using Tar, CodecZlib
-using Statistics, FortranFiles, MeshArrays
+using Statistics, MeshArrays
 using Dataverse
 
 ##
