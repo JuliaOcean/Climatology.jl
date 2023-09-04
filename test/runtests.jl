@@ -2,6 +2,9 @@ using OceanStateEstimation, MITgcmTools, MeshArrays, NCDatasets, Statistics
 using Test
 
 OceanStateEstimation.MITPROFclim_download()
+println("ok3")
+OceanStateEstimation.CBIOMESclim_download()
+println("ok4")
 
 p=dirname(pathof(OceanStateEstimation))
 
