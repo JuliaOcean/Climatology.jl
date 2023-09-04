@@ -16,7 +16,7 @@ The gridded fields used in the ECCO examples can be retrieved from [ecco-group.o
 
 ECCO climatology files can downloaded using `get_ecco_files`. These files are for version 4 release 2, on the native model grid.
 
-```julia
+```@example 1
 using OceanStateEstimation, MeshArrays
 γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
 tmp=OceanStateEstimation.get_ecco_files(γ,"ETAN")
@@ -24,15 +24,14 @@ tmp=OceanStateEstimation.get_ecco_files(γ,"ETAN")
 
 Precomputed quantities shown in [ECCO\_standard\_plots.jl](examples/ECCO_standard_plots.html) can be downloaded separately.
 
-```
+```@example 1
 OceanStateEstimation.ECCOdiags_add("release2")
-OceanStateEstimation.ECCOdiags_add("interp_coeffs")
+readdir(ScratchSpaces.ECCO)
 ```
 
 ### OCCA
 
-```julia
-using OceanStateEstimation
+```@example 1
 get_occa_variable_if_needed("SIarea")
 readdir(ScratchSpaces.OCCA)
 ```
@@ -41,17 +40,18 @@ readdir(ScratchSpaces.OCCA)
 
 To retrieve the CBIOMES climatology, in the `julia REPL` for example :
 
-```julia
-using OceanStateEstimation
+```@example 1
 OceanStateEstimation.CBIOMESclim_download()
+readdir(ScratchSpaces.CBIOMES)
 ```
 
 And the files, now found in `ScratchSpaces.CBIOMES`, can then be read using other libraries.
 
-```
+```@example 1
 using NCDatasets
 fil_out=joinpath(ScratchSpaces.CBIOMES,"CBIOMES-global-alpha-climatology.nc")
 nc=NCDataset(fil_out,"r")
+keys(nc)
 ```
 
 

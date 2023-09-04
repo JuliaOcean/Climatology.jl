@@ -1,4 +1,4 @@
-using Documenter, OceanStateEstimation, MITgcmTools, NCDatasets, Pkg
+using Documenter, OceanStateEstimation, MITgcmTools, MeshArrays, NCDatasets, Pkg
 import PlutoSliderServer, CairoMakie
 Pkg.precompile()
 
@@ -20,7 +20,7 @@ makedocs(;
 OceanStateEstimation.CBIOMESclim_download()
 OceanStateEstimation.ECCOdiags_add("release2")
 OceanStateEstimation.ECCOdiags_add("release4")
-OceanStateEstimation.ECCOdiags_add("interp_coeffs")
+interpolation_setup()
 
 #lst=("CBIOMES_climatogy_create.jl",)
 lst=("CBIOMES/CBIOMES_climatology_plot.jl","ECCO/ECCO_standard_plots.jl",

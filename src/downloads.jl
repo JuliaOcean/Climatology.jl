@@ -183,18 +183,13 @@ function ECCOdiags_add(nam::String)
     elseif nam=="release5"
         url="https://zenodo.org/record/7869067/files/ECCOv4r5_rc2_analysis.tar.gz"
         fil="ECCOv4r5_rc2_analysis.tar.gz"
-    elseif nam=="interp_coeffs"
-        url="https://zenodo.org/record/5784905/files/interp_coeffs_halfdeg.jld2"
-        fil="interp_coeffs_halfdeg.jld2"
     else
         println("unknown release name")
         url=missing
         fil=missing
     end
 
-    if (!ismissing(url))&&(nam=="interp_coeffs")
-        ScratchSpaces.download_dataset(url,ScratchSpaces.ECCO)
-    elseif (!ismissing(url))&&(!isdir(joinpath(ScratchSpaces.ECCO,fil)[1:end-7]))
+    if (!ismissing(url))&&(!isdir(joinpath(ScratchSpaces.ECCO,fil)[1:end-7]))
         println("downloading "*nam*" ... started")
         ScratchSpaces.download_dataset(url,ScratchSpaces.ECCO)
         tmp_path=try
