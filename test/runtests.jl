@@ -1,6 +1,8 @@
 using OceanStateEstimation, MITgcmTools, MeshArrays, NCDatasets, Statistics
 using Test
 
+OceanStateEstimation.MITPROFclim_download()
+
 p=dirname(pathof(OceanStateEstimation))
 
 @testset "OceanStateEstimation.jl" begin
