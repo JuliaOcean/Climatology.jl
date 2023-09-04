@@ -197,9 +197,13 @@ function ECCOdiags_add(nam::String)
     elseif (!ismissing(url))&&(!isdir(joinpath(ScratchSpaces.ECCO,fil)[1:end-7]))
         println("downloading "*nam*" ... started")
         ScratchSpaces.download_dataset(url,ScratchSpaces.ECCO)
-        tmp_path=open(joinpath(ScratchSpaces.ECCO,fil)) do io
-            Tar.extract(CodecZlib.GzipDecompressorStream(io))
-        end
+        try
+            tmp_path=untargz_alias(joinpath(ScratchSpaces.ECCO,fil))
+        catch
+            error("failed: call to `untargz`
+            This method is provided by `MITgcmTools`
+            and now activated by `using MITgcmTools` ")
+        end    
         mv(joinpath(tmp_path,fil[1:end-7]),joinpath(ScratchSpaces.ECCO,fil[1:end-7]))
         rm(joinpath(ScratchSpaces.ECCO,fil))
         println("downloading "*nam*" ... done")
