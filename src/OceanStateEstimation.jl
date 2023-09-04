@@ -16,6 +16,13 @@ Placeholder to allow NCDatasets extension, which is activated by `using NCDatase
 """
 function read_Dataset end
 
+"""
+    untargz_alias()
+
+Placeholder to allow MITgcmTools extension, which is activated by `using MITgcmTools`.
+"""
+function untargz_alias end
+
 include("downloads.jl")
 include("ECCO.jl")
 

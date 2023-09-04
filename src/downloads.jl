@@ -33,7 +33,7 @@ module downloads
 import OceanStateEstimation: pkg_pth
 import OceanStateEstimation: ScratchSpaces
 import OceanStateEstimation: read_nctiles_alias
-using Tar, CodecZlib
+import OceanStateEstimation: untargz_alias
 using Statistics, MeshArrays
 using Dataverse
 
@@ -50,9 +50,13 @@ function MITPROFclim_download()
     dir_out=joinpath(ScratchSpaces.MITprof,fil[1:end-7])
     if !isdir(dir_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.MITprof)
-        tmp_path=open(joinpath(ScratchSpaces.MITprof,fil)) do io
-            Tar.extract(CodecZlib.GzipDecompressorStream(io))
-        end
+        try
+            tmp_path=untargz_alias(joinpath(ScratchSpaces.MITprof,fil))
+        catch
+            error("failed: call to `untargz`
+            This method is provided by `MITgcmTools`
+            and now activated by `using MITgcmTools` ")
+        end    
         mv(tmp_path,dir_out)
         rm(joinpath(ScratchSpaces.MITprof,fil))
     end
@@ -69,8 +73,12 @@ function CBIOMESclim_download()
     fil_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
     if !isfile(fil_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.CBIOMES)
-        tmp_path=open(joinpath(ScratchSpaces.CBIOMES,fil)) do io
-            Tar.extract(CodecZlib.GzipDecompressorStream(io))
+        try
+            tmp_path=untargz_alias(joinpath(ScratchSpaces.CBIOMES,fil))
+        catch
+            error("failed: call to `untargz`
+            This method is provided by `MITgcmTools`
+            and now activated by `using MITgcmTools` ")
         end
         mv(joinpath(tmp_path,fil[1:end-7]),fil_out)
         rm(joinpath(ScratchSpaces.CBIOMES,fil))
