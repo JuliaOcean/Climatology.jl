@@ -50,8 +50,8 @@ function MITPROFclim_download()
     dir_out=joinpath(ScratchSpaces.MITprof,fil[1:end-7])
     if !isdir(dir_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.MITprof)
-        try
-            tmp_path=untargz_alias(joinpath(ScratchSpaces.MITprof,fil))
+        tmp_path=try
+            untargz_alias(joinpath(ScratchSpaces.MITprof,fil))
         catch
             error("failed: call to `untargz`
             This method is provided by `MITgcmTools`
@@ -73,8 +73,8 @@ function CBIOMESclim_download()
     fil_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
     if !isfile(fil_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.CBIOMES)
-        try
-            tmp_path=untargz_alias(joinpath(ScratchSpaces.CBIOMES,fil))
+        tmp_path=try
+            untargz_alias(joinpath(ScratchSpaces.CBIOMES,fil))
         catch
             error("failed: call to `untargz`
             This method is provided by `MITgcmTools`
@@ -197,8 +197,8 @@ function ECCOdiags_add(nam::String)
     elseif (!ismissing(url))&&(!isdir(joinpath(ScratchSpaces.ECCO,fil)[1:end-7]))
         println("downloading "*nam*" ... started")
         ScratchSpaces.download_dataset(url,ScratchSpaces.ECCO)
-        try
-            tmp_path=untargz_alias(joinpath(ScratchSpaces.ECCO,fil))
+        tmp_path=try
+            untargz_alias(joinpath(ScratchSpaces.ECCO,fil))
         catch
             error("failed: call to `untargz`
             This method is provided by `MITgcmTools`
