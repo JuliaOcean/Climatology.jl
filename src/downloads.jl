@@ -50,13 +50,15 @@ function MITPROFclim_download()
     dir_out=joinpath(ScratchSpaces.MITprof,fil[1:end-7])
     if !isdir(dir_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.MITprof)
-        try
+        println("ok1")
+#        try
             tmp_path=untargz_alias(joinpath(ScratchSpaces.MITprof,fil))
-        catch
-            error("failed: call to `untargz`
-            This method is provided by `MITgcmTools`
-            and now activated by `using MITgcmTools` ")
-        end    
+#        catch
+#            error("failed: call to `untargz`
+#            This method is provided by `MITgcmTools`
+#            and now activated by `using MITgcmTools` ")
+#        end    
+        println("ok2")
         mv(tmp_path,dir_out)
         rm(joinpath(ScratchSpaces.MITprof,fil))
     end
