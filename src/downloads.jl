@@ -113,8 +113,7 @@ end
 Download ECCO output for variable `v` to scratch space if needed
 """
 function get_ecco_variable_if_needed(v::String)
-    lst0=Dataverse.file_list("doi:10.7910/DVN/3HPRZI")
-    lst=Dataverse.url_list(lst0)
+    lst=Dataverse.file_list("doi:10.7910/DVN/3HPRZI")
 
     fil=joinpath(ScratchSpaces.ECCO,v,v*".0001.nc")
     if !isfile(fil)
@@ -142,8 +141,7 @@ end
 Download OCCA output for variable `v` to scratch space if needed
 """
 function get_occa_variable_if_needed(v::String)
-    lst0=Dataverse.file_list("doi:10.7910/DVN/RNXA2A")
-    lst=Dataverse.url_list(lst0)
+    lst=Dataverse.file_list("doi:10.7910/DVN/RNXA2A")
     fil=joinpath(ScratchSpaces.OCCA,v*".0406clim.nc")
     !isfile(fil) ? Dataverse.file_download(lst,v,ScratchSpaces.OCCA) : nothing
 end

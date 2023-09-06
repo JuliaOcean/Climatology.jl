@@ -45,7 +45,7 @@ The data set below is from _Frederikse, T.; Landerer, F.; Caron, L.; Adhikari, S
 begin
 	gmsl_file=joinpath(tempdir(),"global_timeseries_measures.nc")
 	if !isfile(gmsl_file)
-		lst=Dataverse.url_list(Dataverse.file_list("doi:10.7910/DVN/OYBLGK"))
+		lst=Dataverse.Dataverse.file_list("doi:10.7910/DVN/OYBLGK")
 		Dataverse.file_download(lst,"global_timeseries_measures.nc")
 	end
 	d=Dataset(gmsl_file)
