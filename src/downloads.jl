@@ -118,9 +118,9 @@ function get_ecco_variable_if_needed(v::String)
     fil=joinpath(ScratchSpaces.ECCO,v,v*".0001.nc")
     if !isfile(fil)
         pth1=joinpath(ScratchSpaces.ECCO,v)
-        lst1=findall([v==n[1:end-8] for n in lst.name])
+        lst1=findall([v==n[1:end-8] for n in lst.filename])
         !isdir(pth1) ? mkdir(pth1) : nothing
-        [Dataverse.file_download(lst,v,pth1) for v in lst.name[lst1]]
+        [Dataverse.file_download(lst,v,pth1) for v in lst.filename[lst1]]
     end
 end
 
