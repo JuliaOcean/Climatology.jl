@@ -573,7 +573,7 @@ version = "1.0.0"
 deps = ["CSV", "Conda", "DataFrames", "Downloads", "HTTP", "JSON", "PyCall"]
 git-tree-sha1 = "21fd97553d03212049286c74f3d63b0121cac6bb"
 uuid = "9c0b9be8-e31e-490f-90fe-77697562404d"
-version = "0.2.0"
+version = "0.2.3"
 
 [[deps.Dates]]
 deps = ["Printf"]

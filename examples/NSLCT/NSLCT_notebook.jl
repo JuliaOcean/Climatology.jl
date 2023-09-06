@@ -45,7 +45,7 @@ The data set below is from _Frederikse, T.; Landerer, F.; Caron, L.; Adhikari, S
 begin
 	gmsl_file=joinpath(tempdir(),"global_timeseries_measures.nc")
 	if !isfile(gmsl_file)
-		lst=Dataverse.Dataverse.file_list("doi:10.7910/DVN/OYBLGK")
+		lst=Dataverse.file_list("doi:10.7910/DVN/OYBLGK")
 		Dataverse.file_download(lst,"global_timeseries_measures.nc")
 	end
 	d=Dataset(gmsl_file)
@@ -153,7 +153,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 [compat]
 CairoMakie = "~0.10.4"
 DataFrames = "~1.5.0"
-Dataverse = "~0.2"
+Dataverse = "~0.2.3"
 HTTP = "~1.7.4"
 JSON = "~0.21.4"
 NCDatasets = "~0.12.14"
@@ -455,7 +455,7 @@ version = "1.0.0"
 deps = ["CSV", "Conda", "DataFrames", "Downloads", "HTTP", "JSON", "PyCall"]
 git-tree-sha1 = "c3a709a2e010f8607719d272c948e0a90ca7062b"
 uuid = "9c0b9be8-e31e-490f-90fe-77697562404d"
-version = "0.2.1"
+version = "0.2.3"
 
 [[deps.Dates]]
 deps = ["Printf"]
