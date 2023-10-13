@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.25
+# v0.19.29
 
 using Markdown
 using InteractiveUtils
@@ -36,7 +36,7 @@ module plots
 		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
 	end
 
-	function axtr1(ax,namtr,pth_out,list_trsp)
+	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1)
 		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
 
 		itr=findall(list_trsp.==namtr)[1]
@@ -50,16 +50,16 @@ module plots
 		valsmo = runmean(val, 12)
 	
 		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
+		x=year0 .+ x./12.0
 
 		hm1=lines!(ax,x,val,label="ECCO estimate")
 		valsmo[1:5].=NaN
 		valsmo[end-4:end].=NaN
 		lines!(ax,x,valsmo,linewidth=4.0,color=:red)
-		xlims!(ax,(1992.0,2020.0))
+		xlims!(ax,(year0,year1))
 	end
 
-	function transport(namtrs,ncols,pth_out,list_trsp)
+	function transport(namtrs,ncols,pth_out,list_trsp,year0,year1)
 		if ncols > 1
 			fig1 = Figure(resolution = (2000,1000),markersize=0.1)
 		else
@@ -70,26 +70,26 @@ module plots
 			jj=div.(na,ncols,RoundUp)
 			kk=na-(jj.-1)*ncols
 			ax1 = Axis(fig1[jj,kk], title=" $txt (in Sv)",
-				xticks=(1992.0:4:2020.0),ylabel="transport, in Sv")
-			axtr1(ax1,namtrs[na],pth_out,list_trsp)
+				xticks=(year0:4:year1),ylabel="transport, in Sv")
+			axtr1(ax1,namtrs[na],pth_out,list_trsp,year0,year1)
 		end
 		#ylims!(ax1,rng)
 		fig1
 	end
 
-	function figov1(pth_out,kk,low1)
+	function figov1(pth_out,kk,low1,year0,year1)
 		fil=joinpath(pth_out,"overturn/overturn.jld2")
 		tmp=-1e-6*load(fil,"single_stored_object")
 	
 		nt=size(tmp,3)
 		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
+		x=year0 .+ x./12.0
 		lats=vec(-89.0:89.0)
 
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1],ylabel="Sv",
 			title="Global Overturning, in Sv, at kk=$(kk)",
-			xticks=(1992.0:4:2020.0))
+			xticks=(year0:4:year1))
 		for ll in 115:10:145
 			ov=tmp[ll,kk,:]
 			ov=runmean(ov, 12)
@@ -97,7 +97,7 @@ module plots
 			ov[end-4:end].=NaN
 			hm1=lines!(x,ov,label="$(lats[ll])N")
 		end
-		xlims!(ax1,(1992.0,2020.0))
+		xlims!(ax1,(year0,year1))
 		low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
 		fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
 
@@ -140,7 +140,7 @@ module plots
 		fig1
 	end
 
-	function glo(gl1)
+	function glo(gl1,year0,year1)
 		ttl="Global Mean $(gl1.txt)"
 		zlb=gl1.txt
 		rng=gl1.rng
@@ -157,34 +157,34 @@ module plots
 
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2020.0),ylabel=zlb)
+			xticks=collect(year0:4:year1),ylabel=zlb)
 		hm1=lines!(ax1,gl1.x,y)
-		xlims!(ax1,(1992.0,2020.0))
+		xlims!(ax1,(year0,year1))
 		ylims!(ax1,rng)
 		fig1
 	end
 
-	function DepthTime(x,y,z,levs,ttl,RC1,RC0; ClipToRange=true)
+	function DepthTime(x,y,z,levs,ttl,RC1,RC0,year0,year1; ClipToRange=true)
 		ClipToRange ? to_range!(z,levs) : nothing
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2020.0))
+			xticks=collect(year0:4:year1))
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,1992.0,2020.0)
+		xlims!(ax1,year0,year1)
 		ylims!(ax1,RC1,RC0)
 		
 		fig1
 	end
 
-	function TimeLat(x,y,z,levs,ttl,y0,y1; ClipToRange=true)
+	function TimeLat(x,y,z,levs,ttl,y0,y1,year0,year1; ClipToRange=true)
 		ClipToRange ? to_range!(z,levs) : nothing
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(1992.0:4:2020.0),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
+			xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,1992.0,2020.0)
+		xlims!(ax1,year0,year1)
 		ylims!(ax1,y0,y1)
 		fig1
 	end
@@ -374,7 +374,7 @@ end
 
 # ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 begin
-	sol_list=glob("ECCOv4r*_analysis",ScratchSpaces.ECCO)
+	sol_list=glob("ECCOv4*_analysis",ScratchSpaces.ECCO)
 	sol_list=[basename(i) for i in sol_list]
 
 	fil_trsp=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis/trsp/trsp.jld2")
@@ -435,7 +435,7 @@ end
 
 # ╔═╡ 5d320375-0a3c-4197-b35d-f6610173329d
 begin
-	function glo(pth_out,nam,k=0)
+	function glo(pth_out,nam,k,year0,year1)
 		if k>0
 			fil=fil=joinpath(pth_out,nam*"_glo2d/glo2d.jld2")
 		else
@@ -457,7 +457,7 @@ begin
 		end
 
 		x=vec(0.5:nt)
-		x=1992.0 .+ x./12.0
+		x=year0 .+ x./12.0
 
 		(y=tmp,txt=txt,rng=rng,x=x)
 	end
@@ -497,6 +497,23 @@ Changing solution will update all plots.
 begin
 	sol_select = @bind sol Select(sol_list,default="ECCOv4r2_analysis")
 	md"""select a solution : $(sol_select)"""
+end
+
+# ╔═╡ 09b47016-c954-4fe3-a972-e3de81f40171
+begin
+	year0=1992
+	year1=2011
+	if occursin("r3",sol)
+		year1=2015
+	elseif occursin("r4",sol)
+		year1=2017
+	elseif occursin("r5",sol)
+		year1=2019
+	elseif occursin("43y",sol)
+		year0=1982
+		year1=2023
+	end
+	year0,year1
 end
 
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
@@ -603,9 +620,9 @@ begin
 			addon1=""
 		end
 	
-		x=1992.0 .+ x./12.0
+		x=year0 .+ x./12.0
 		ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
-		return x,y,z,cmap_fac*levs,ttl,-90.0,90.0
+		return x,y,z,cmap_fac*levs,ttl,-90.0,90.0,year0,year1
 	end
 	
 	MC.outputs[:TimeLat]=plots.TimeLat(data_TimeLat(namzm)...)
@@ -615,7 +632,7 @@ end
 begin
 	pth_out
 
-	function data_TimeLatAnom(namzmanom2d)
+	function data_TimeLatAnom(namzmanom2d,year0,year1)
 		namzm=namzmanom2d
 		if namzm=="MXLDEPTH"
 			levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
@@ -650,28 +667,30 @@ begin
 	
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
 		nt=size(z,1)
-	
+
+		m0=(1992-year0)*12
+		
 		if true
 			#a. subtract monthly mean
 			ref1="1992-2011 monthy mean"
 			for m in 1:12
-				zmean=vec(mean(z[m:12:240,:],dims=1))
+				zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
 				[z[t,:]=z[t,:]-zmean for t in m:12:nt]
 			end
 		else
 			#b. subtract time mean
 			ref1="1992-2011 annual mean"
-			zmean=vec(mean(z[1:240,:],dims=1))
+			zmean=vec(mean(z[m0+1:m0+240,:],dims=1))
 			[z[t,:]=z[t,:]-zmean for t in 1:nt]
 		end
 	
-		x=1992.0 .+ x./12.0
+		x=1992.0-m0/12.0 .+ x./12.0
 		ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
 	
-		return x,y,z,cmap_fac*levs,ttl,y[l0],y[l1]
+		return x,y,z,cmap_fac*levs,ttl,y[l0],y[l1],year0,year1
 	end
 
-	MC.outputs[:TimeLatAnom]=plots.TimeLat(data_TimeLatAnom(namzmanom2d)...)
+	MC.outputs[:TimeLatAnom]=plots.TimeLat(data_TimeLatAnom(namzmanom2d,year0,year1)...)
 end
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
@@ -712,20 +731,20 @@ begin
 	#zmean=vec(mean(z[1:240,:],dims=1))
 	#[z[t,:]=z[t,:]-zmean for t in 1:nt]
 
-	x=1992.0 .+ x./12.0
+	x=year0 .+ x./12.0
 	ttl="$(longname(namzmanom)) -- minus $(ref1) $(addon1)"
 
 	return x,y,z,facA*levs,ttl,Γ.RC[k1],Γ.RC[k0]
 	end
 
-	MC.outputs[:DepthTime]=plots.DepthTime(data_DepthTime(namzmanom)...)
+	MC.outputs[:DepthTime]=plots.DepthTime(data_DepthTime(namzmanom)...,year0,year1)
 end
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
 begin
 	save_global=true
-	gl1=glo(pth_out,ngl1,kgl1)
-	MC.outputs[:global]=plots.glo(gl1)
+	gl1=glo(pth_out,ngl1,kgl1,year0,year1)
+	MC.outputs[:global]=plots.glo(gl1,year0,year1)
 end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
@@ -735,19 +754,19 @@ MC.outputs[:OHT]=plots.OHT(pth_out)
 MC.outputs[:overturning]=plots.figov2(pth_out,Γ)
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-MC.outputs[:overturnings]=plots.figov1(pth_out,ktr1,low1)
+MC.outputs[:overturnings]=plots.figov1(pth_out,ktr1,low1,year0,year1)
 
 # ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
 begin
 	save_transport=true
-	MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,list_trsp)
+	MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,list_trsp,year0,year1)
 end
 
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
 		#namtrs=[ntr1,ntr1,ntr1,ntr1]
 		ncols=Int(floor(sqrt(length(namtrs))))
-		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,list_trsp)
+		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,list_trsp,year0,year1)
 end
 
 # ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
@@ -895,7 +914,7 @@ RollingFunctions = "~0.7.0"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc2"
+julia_version = "1.9.3"
 manifest_format = "2.0"
 project_hash = "7cd5bff773ece4a9f139df426b13573105a7588b"
 
@@ -1133,7 +1152,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.2+0"
+version = "1.0.5+0"
 
 [[deps.ConstructionBase]]
 deps = ["LinearAlgebra"]
@@ -1988,7 +2007,7 @@ version = "0.40.1+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.9.0"
+version = "1.9.2"
 
 [[deps.PkgVersion]]
 deps = ["Pkg"]
@@ -2539,7 +2558,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.4.0+0"
+version = "5.8.0+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2637,6 +2656,7 @@ version = "3.5.0+0"
 # ╟─a468baa1-2e5b-40ce-b33c-2e275d720c8e
 # ╟─c46f0656-3627-448b-a779-dad2d980e3cf
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
+# ╟─09b47016-c954-4fe3-a972-e3de81f40171
 # ╟─79a9794e-85c6-400e-8b44-3742b56544a2
 # ╟─8563e63d-0096-49f0-8368-e32c4457f5a3
 # ╟─1fb8f44b-d6f7-4539-8459-fdae07bb6a58
