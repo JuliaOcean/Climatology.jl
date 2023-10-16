@@ -61,11 +61,19 @@ function parameters()
 
 	##
 
-	ECCOdiags_add("release2")
-	ECCOdiags_add("interp_coeffs")
+	ECCOdiags_add("release5")
 
-	fil=joinpath(ScratchSpaces.ECCO,"interp_coeffs_halfdeg.jld2")
-	λ=MeshArrays.interpolation_setup(fil)
+	interpolation_setup()
+	μ = land_mask(Γ)
+
+	λ_file = joinpath(tempdir(),"interp_coeffs_halfdeg.jld2")
+	if !isfile(λ_file)
+		lon=[i for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
+		lat=[j for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]		
+		(f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
+		jldsave(λ_file; lon=lon, lat=lat, f=f, i=i, j=j, w=w)
+	end
+	λ = interpolation_setup(λ_file)
 
 	##
 	
@@ -88,7 +96,7 @@ function parameters()
 	clim_longname=longname.(clim_name) 
 
 	#"Done with listing solutions, file names, color codes"
-	(γ=γ,Γ=Γ,λ=λ,sol_list=sol_list,list_trsp=list_trsp,
+	(γ=γ,Γ=Γ,λ=λ,μ=μ,sol_list=sol_list,list_trsp=list_trsp,
 	clim_colors1=clim_colors1,clim_colors2=clim_colors2,
 	clim_files=clim_files,clim_name=clim_name,clim_longname=clim_longname)
 end
