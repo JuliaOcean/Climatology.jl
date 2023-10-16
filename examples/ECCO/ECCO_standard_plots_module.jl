@@ -3,7 +3,7 @@
 
 module procs
 
-using JLD2, MeshArrays, Statistics
+using JLD2, MeshArrays, Statistics, OceanStateEstimation, Glob, TOML
 
 function longname(n)
 	if occursin("_k",n)
@@ -32,6 +32,69 @@ function climatology_files(pth_out)
 	clim_files
 end
 
+##
+
+function years_min_max(sol)
+	year0=1992
+	year1=2011
+	if occursin("r3",sol)
+		year1=2015
+	elseif occursin("r4",sol)
+		year1=2017
+	elseif occursin("r5",sol)
+		year1=2019
+	elseif occursin("43y",sol)
+		year0=1982
+		year1=2023
+	end
+	return year0,year1
+end
+
+##
+
+function parameters()
+
+	pth=MeshArrays.GRID_LLC90
+	γ=GridSpec("LatLonCap",pth)
+	Γ=GridLoad(γ;option="full")
+	#LC=LatitudeCircles(-89.0:89.0,Γ)
+
+	##
+
+	ECCOdiags_add("release2")
+	ECCOdiags_add("interp_coeffs")
+
+	fil=joinpath(ScratchSpaces.ECCO,"interp_coeffs_halfdeg.jld2")
+	λ=MeshArrays.interpolation_setup(fil)
+
+	##
+	
+	sol_list=glob("ECCOv4*_analysis",ScratchSpaces.ECCO)
+	sol_list=[basename(i) for i in sol_list]
+
+	fil_trsp=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis/trsp/trsp.jld2")
+	ntr=length(load(fil_trsp,"single_stored_object"))
+	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
+	list_trsp=[i[1:end-5] for i in list_trsp]
+
+	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples","ECCO")	
+	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
+	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
+
+
+	pth_tmp01=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis")
+	clim_files=climatology_files(pth_tmp01)
+	clim_name=[split(basename(f),'.')[1] for f in clim_files]
+	clim_longname=longname.(clim_name) 
+
+	#"Done with listing solutions, file names, color codes"
+	(γ=γ,Γ=Γ,λ=λ,sol_list=sol_list,list_trsp=list_trsp,
+	clim_colors1=clim_colors1,clim_colors2=clim_colors2,
+	clim_files=clim_files,clim_name=clim_name,clim_longname=clim_longname)
+end
+
+##
+
 function glo(pth_out,nam,k,year0,year1)
 	if k>0
 		fil=fil=joinpath(pth_out,nam*"_glo2d/glo2d.jld2")
@@ -59,26 +122,25 @@ function glo(pth_out,nam,k,year0,year1)
 	(y=tmp,txt=txt,rng=rng,x=x)
 end
 
-function map(nammap,clim_name,clim_longname,clim_files,clim_colors1,clim_colors2,
-		statmap,timemap,λ,pth_out)
-	ii=findall(clim_longname.==nammap)[1]
-	nam=clim_name[ii]
+function map(nammap,P,statmap,timemap,pth_out)
+	ii=findall(P.clim_longname.==nammap)[1]
+	nam=P.clim_name[ii]
 	
-	fil=joinpath(pth_out,clim_files[ii])
+	fil=joinpath(pth_out,P.clim_files[ii])
 	if statmap!=="mon"
 		tmp=load(fil,statmap)
 	else
 		tmp=load(fil,statmap)[:,timemap]
 	end
 
-	DD=Interpolate(λ.μ*tmp,λ.f,λ.i,λ.j,λ.w)
-	DD=reshape(DD,size(λ.lon))
+	DD=Interpolate(P.λ.μ*tmp,P.λ.f,P.λ.i,P.λ.j,P.λ.w)
+	DD=reshape(DD,size(P.λ.lon))
 	#DD[findall(DD.==0.0)].=NaN
-	statmap=="std" ? rng=clim_colors2[nam] : rng=clim_colors1[nam]
+	statmap=="std" ? rng=P.clim_colors2[nam] : rng=P.clim_colors1[nam]
 	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
-	ttl=clim_longname[ii]
-	return λ,DD,levs,ttl
+	ttl=P.clim_longname[ii]
+	return P.λ,DD,levs,ttl
 end
 
 function TimeLat(namzm,pth_out,year0,year1,cmap_fac)
@@ -123,7 +185,7 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac)
 	return x,y,z,cmap_fac*levs,ttl,-90.0,90.0,year0,year1
 end
 
-function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,Γ,l0,l1)
+function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
 	namzm=namzmanom2d
 	if namzm=="MXLDEPTH"
 		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
@@ -149,7 +211,7 @@ function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,Γ,l0,l1)
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm2d,:])
 		x=vec(0.5:size(tmp,3)); 
-		addon1=" -- at $(Int(round(Γ.RC[k_zm2d])))m "
+		addon1=" -- at $(Int(round(P.Γ.RC[k_zm2d])))m "
 	else
 		z=fn(tmp[:,:])
 		x=vec(0.5:size(tmp,2)); 
@@ -183,7 +245,7 @@ end
 
 fn_DepthTime(x)=transpose(x)	
 
-function DepthTime(namzmanom,pth_out,facA,Γ,l_Tzm,year0,year1,k0,k1)
+function DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P)
 if namzmanom=="THETA"
 	levs=(-3.0:0.4:3.0)/8.0; cm=:turbo
 	fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
@@ -201,7 +263,7 @@ tmp=load(fil,"single_stored_object")
 z=fn_DepthTime(tmp[l_Tzm,:,:])
 addon1=" -- at $(lats[l_Tzm])N "
 x=vec(0.5:size(tmp,3)); 
-y=vec(Γ.RC)
+y=vec(P.Γ.RC)
 nt=size(tmp,3)
 
 #a. subtract monthly mean
@@ -218,7 +280,7 @@ end
 x=year0 .+ x./12.0
 ttl="$(longname(namzmanom)) -- minus $(ref1) $(addon1)"
 
-return x,y,z,facA*levs,ttl,Γ.RC[k1],Γ.RC[k0]
+return x,y,z,facA*levs,ttl,P.Γ.RC[k1],P.Γ.RC[k0]
 end
 
 end

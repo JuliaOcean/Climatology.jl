@@ -16,20 +16,14 @@ end
 
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin	
-	using MeshArrays, OceanStateEstimation, ClimateModels
-	using JLD2, PlutoUI, Glob, TOML, Statistics
-	
-	ECCOdiags_add("release2")
-	ECCOdiags_add("interp_coeffs")
-
-	space = html"<br><br>"
-	
+	using ClimateModels, PlutoUI	
+	space = html"<br><br>"	
 	"Done with packages"
 end
 
 # ╔═╡ 8dccce78-c665-4105-9f6b-fb295af8fbd0
 module inc
-	using CairoMakie, JLD2, RollingFunctions, Statistics
+	using CairoMakie, JLD2, RollingFunctions, Statistics, MeshArrays, OceanStateEstimation, Glob
 	include("ECCO_standard_plots_module.jl")
 end
 
@@ -180,44 +174,14 @@ begin
 end
 
 # ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
-begin
-	pth=MeshArrays.GRID_LLC90
-	γ=GridSpec("LatLonCap",pth)
-	Γ=GridLoad(γ;option="full")
-	#LC=LatitudeCircles(-89.0:89.0,Γ)
 
-	fil=joinpath(ScratchSpaces.ECCO,"interp_coeffs_halfdeg.jld2")
-	λ=MeshArrays.interpolation_setup(fil)
-	
-	"Done with ECCO grid and interpolation"
-end
 
 # ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
-begin
-	sol_list=glob("ECCOv4*_analysis",ScratchSpaces.ECCO)
-	sol_list=[basename(i) for i in sol_list]
-
-	fil_trsp=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis/trsp/trsp.jld2")
-	ntr=length(load(fil_trsp,"single_stored_object"))
-	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
-	list_trsp=[i[1:end-5] for i in list_trsp]
-
-	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples","ECCO")	
-	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
-	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
-
-
-	pth_tmp01=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis")
-	clim_files=procs.climatology_files(pth_tmp01)
-	clim_name=[split(basename(f),'.')[1] for f in clim_files]
-	clim_longname=procs.longname.(clim_name) 
-
-	"Done with listing solutions, file names, color codes"
-end
+P=procs.parameters()
 
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
 begin
-	nammap_select = @bind nammap Select(clim_longname)
+	nammap_select = @bind nammap Select(P.clim_longname)
 	statmap_select = @bind statmap Select(["mean","std","mon"])	
 	timemap_select = @bind timemap Select(1:12)
 	md"""
@@ -229,7 +193,7 @@ end
 
 # ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 begin
-	ntr1_select = @bind ntr1 Select(list_trsp)
+	ntr1_select = @bind ntr1 Select(P.list_trsp)
 	
 	md"""Settings:
 	
@@ -239,7 +203,7 @@ end
 
 # ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
 begin
-	ntr2_select = @bind namtrs MultiCheckBox(list_trsp; orientation=:row, select_all=true, default=[list_trsp[1],list_trsp[2]])
+	ntr2_select = @bind namtrs MultiCheckBox(P.list_trsp; orientation=:row, select_all=true, default=[P.list_trsp[1],P.list_trsp[2]])
 	
 	md"""Select Sections:
 	
@@ -259,30 +223,16 @@ Changing solution will update all plots.
 
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
 begin
-	sol_select = @bind sol Select(sol_list,default="ECCOv4r2_analysis")
+	sol_select = @bind sol Select(P.sol_list,default="ECCOv4r2_analysis")
 	md"""select a solution : $(sol_select)"""
 end
 
 # ╔═╡ 09b47016-c954-4fe3-a972-e3de81f40171
-begin
-	year0=1992
-	year1=2011
-	if occursin("r3",sol)
-		year1=2015
-	elseif occursin("r4",sol)
-		year1=2017
-	elseif occursin("r5",sol)
-		year1=2019
-	elseif occursin("43y",sol)
-		year0=1982
-		year1=2023
-	end
-	year0,year1
-end
+year0,year1=procs.years_min_max(sol)
 
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
 begin
-	pth_out=joinpath(ScratchSpaces.ECCO,sol)
+	pth_out=joinpath(procs.ScratchSpaces.ECCO,sol)
 	md"""### Input Data Files
 $(space)
 
@@ -318,17 +268,16 @@ begin
 end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-MC.outputs[:map]=plots.map(procs.map(nammap,clim_name,clim_longname,clim_files,
-	clim_colors1,clim_colors2,statmap,timemap,λ,pth_out)...)
+MC.outputs[:map]=plots.map(procs.map(nammap,P,statmap,timemap,pth_out)...)
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
 MC.outputs[:TimeLat]=plots.TimeLat(procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac)...)
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
-MC.outputs[:TimeLatAnom]=plots.TimeLat(procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,Γ,l0,l1)...)
+MC.outputs[:TimeLatAnom]=plots.TimeLat(procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)...)
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
-MC.outputs[:DepthTime]=plots.DepthTime(procs.DepthTime(namzmanom,pth_out,facA,Γ,l_Tzm,year0,year1,k0,k1)...,year0,year1)
+MC.outputs[:DepthTime]=plots.DepthTime(procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P)...,year0,year1)
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
 begin
@@ -341,7 +290,7 @@ end
 MC.outputs[:OHT]=plots.OHT(pth_out)
 
 # ╔═╡ 594c8843-f03f-4230-bdba-a943d535524d
-MC.outputs[:overturning]=plots.figov2(pth_out,Γ)
+MC.outputs[:overturning]=plots.figov2(pth_out,P.Γ)
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
 MC.outputs[:overturnings]=plots.figov1(pth_out,ktr1,low1,year0,year1)
@@ -349,14 +298,14 @@ MC.outputs[:overturnings]=plots.figov1(pth_out,ktr1,low1,year0,year1)
 # ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
 begin
 	save_transport=true
-	MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,list_trsp,year0,year1)
+	MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,P.list_trsp,year0,year1)
 end
 
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
 		#namtrs=[ntr1,ntr1,ntr1,ntr1]
 		ncols=Int(floor(sqrt(length(namtrs))))
-		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,list_trsp,year0,year1)
+		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,P.list_trsp,year0,year1)
 end
 
 # ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
@@ -476,6 +425,8 @@ For more on the underlying software and additional notebooks like this, take a l
 """
 
 
+
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -488,16 +439,15 @@ OceanStateEstimation = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 RollingFunctions = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
 CairoMakie = "~0.10.11"
-ClimateModels = "~0.2.21"
+ClimateModels = "~0.3.0"
 Glob = "~1.3.0"
-JLD2 = "~0.4.29"
-MeshArrays = "~0.2.32"
-OceanStateEstimation = "~0.3.1"
-PlutoUI = "~0.7.49"
+JLD2 = "~0.4.35"
+MeshArrays = "~0.3.1"
+OceanStateEstimation = "~0.3.7"
+PlutoUI = "~0.7.52"
 RollingFunctions = "~0.8.0"
 """
 
@@ -507,7 +457,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "0e9ddf777293f3ced3487d22f0e137bffd47c006"
+project_hash = "1c911f599c563cc26481875d35f69d50c87b10fc"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -701,9 +651,9 @@ version = "1.17.0"
 
 [[deps.ClimateModels]]
 deps = ["CSV", "DataFrames", "Dates", "Downloads", "Git", "NetCDF", "OrderedCollections", "Pkg", "Statistics", "Suppressor", "TOML", "Test", "UUIDs"]
-git-tree-sha1 = "c4a6540873747572d4f568f07b61bcbf64b1ede2"
+git-tree-sha1 = "b465d25499a4b31279098e0d76a7811e3f3d4d86"
 uuid = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
-version = "0.2.21"
+version = "0.3.0"
 
 [[deps.CloseOpenIntervals]]
 deps = ["Static", "StaticArrayInterface"]
@@ -1581,9 +1531,9 @@ version = "2.28.2+0"
 
 [[deps.MeshArrays]]
 deps = ["CatViews", "Dates", "LazyArtifacts", "NearestNeighbors", "Pkg", "Printf", "SparseArrays", "Statistics", "Unitful"]
-git-tree-sha1 = "6ab2088be696f9039b4704beca534b5717b71a81"
+git-tree-sha1 = "24914ba2fe54f0f4d3fd3f12544fb4b68eabfab6"
 uuid = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
-version = "0.2.41"
+version = "0.3.1"
 
     [deps.MeshArrays.extensions]
     MeshArraysDownloadsExt = ["Downloads"]
