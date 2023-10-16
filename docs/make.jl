@@ -14,7 +14,7 @@ makedocs(;
     repo="https://github.com/JuliaOcean/OceanStateEstimation.jl/blob/{commit}{path}#L{line}",
     sitename="OceanStateEstimation.jl",
     authors="JuliaOcean <gforget@mit.edu>",
-    warnonly = :cross_references,
+    warnonly = [:cross_references,:missing_docs],
 )
 
 OceanStateEstimation.CBIOMESclim_download()
