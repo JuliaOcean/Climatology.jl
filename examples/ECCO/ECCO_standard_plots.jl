@@ -163,19 +163,8 @@ md"""### Transport Across One Section"""
 md"""### Transport Across Multiple Sections"""
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
-begin
-	space = html"<br><br>"
-	md"""## Appendices
-	$(space)
-	"""
-end
 
 # ╔═╡ 6100db56-1681-4f9f-bc53-3792da75e85e
-begin
-	ECCOdiags_add("release5")
-	interpolation_setup()
-	"Done with downloading files"
-end
 
 # ╔═╡ 58befe75-5b00-475b-838e-6f64231549a6
 begin
