@@ -164,7 +164,6 @@ md"""### Transport Across Multiple Sections"""
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
 
-# ╔═╡ 6100db56-1681-4f9f-bc53-3792da75e85e
 
 # ╔═╡ 58befe75-5b00-475b-838e-6f64231549a6
 begin
@@ -425,6 +424,7 @@ For more on the underlying software and additional notebooks like this, take a l
 """
 
 
+# ╔═╡ 6100db56-1681-4f9f-bc53-3792da75e85e
 
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -434,7 +434,6 @@ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ClimateModels = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-MITgcmTools = "62725fbc-3a66-4df3-9000-e33e85b3a198"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 OceanStateEstimation = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
@@ -444,7 +443,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 [compat]
 CairoMakie = "~0.10.11"
 ClimateModels = "~0.3.0"
-Glob = "~1.3.0"
+Glob = "~1.3.1"
 JLD2 = "~0.4.35"
 MeshArrays = "~0.3.1"
 OceanStateEstimation = "~0.3.7"
@@ -458,7 +457,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "1c911f599c563cc26481875d35f69d50c87b10fc"
+project_hash = "8a85b4d1782154747a346b0f35de25e84b37f368"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -993,16 +992,6 @@ deps = ["Printf"]
 git-tree-sha1 = "8339d61043228fdd3eb658d86c926cb282ae72a8"
 uuid = "59287772-0a20-5a39-b81b-1366585eb4c0"
 version = "0.4.2"
-
-[[deps.ForwardDiff]]
-deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
-git-tree-sha1 = "cf0fe81336da9fb90944683b8c41984b08793dad"
-uuid = "f6369f11-7733-5829-9624-2563aa707210"
-version = "0.10.36"
-weakdeps = ["StaticArrays"]
-
-    [deps.ForwardDiff.extensions]
-    ForwardDiffStaticArraysExt = "StaticArrays"
 
 [[deps.ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
@@ -1762,12 +1751,6 @@ git-tree-sha1 = "34c0e9ad262e5f7fc75b10a9952ca7692cfc5fbe"
 uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 version = "0.12.3"
 
-[[deps.Parameters]]
-deps = ["OrderedCollections", "UnPack"]
-git-tree-sha1 = "34c0e9ad262e5f7fc75b10a9952ca7692cfc5fbe"
-uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
-version = "0.12.3"
-
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]
 git-tree-sha1 = "716e24b21538abc91f6205fd1d8363f39b442851"
@@ -1849,12 +1832,6 @@ deps = ["DataAPI", "Future"]
 git-tree-sha1 = "36d8b4b899628fb92c2749eb488d884a926614d3"
 uuid = "2dfb63ee-cc39-5dd5-95bd-886bf059d720"
 version = "1.4.3"
-
-[[deps.PositiveFactorizations]]
-deps = ["LinearAlgebra"]
-git-tree-sha1 = "17275485f373e6673f7e7f97051f703ed5b15b20"
-uuid = "85a6dd25-e78a-55b7-8502-1745935b8125"
-version = "0.2.4"
 
 [[deps.PositiveFactorizations]]
 deps = ["LinearAlgebra"]
@@ -1983,11 +1960,6 @@ deps = ["AccurateArithmetic", "FastBroadcast", "KahanSummation", "LinearAlgebra"
 git-tree-sha1 = "4a54152985fea23b0b0e99a77566a87137221a0a"
 uuid = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
 version = "0.8.0"
-
-[[deps.RoundingEmulator]]
-git-tree-sha1 = "40b9edad2e5287e05bd413a38f61a8ff55b9557b"
-uuid = "5eaf0fd0-dfba-4ccb-bf02-d820a40db705"
-version = "0.2.1"
 
 [[deps.RoundingEmulator]]
 git-tree-sha1 = "40b9edad2e5287e05bd413a38f61a8ff55b9557b"
@@ -2560,5 +2532,6 @@ version = "3.5.0+0"
 # ╟─c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
 # ╟─ff40a006-915a-4d35-847f-5f10085f60a2
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
+# ╠═6100db56-1681-4f9f-bc53-3792da75e85e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

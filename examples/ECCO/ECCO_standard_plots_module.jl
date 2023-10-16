@@ -61,8 +61,7 @@ function parameters()
 
 	##
 
-	ECCOdiags_add("release5")
-
+	#ECCOdiags_add("release5")
 	interpolation_setup()
 	μ = land_mask(Γ)
 
