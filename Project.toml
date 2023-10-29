@@ -27,6 +27,7 @@ OceanStateEstimationNCDatasetsExt = ["NCDatasets"]
 
 [compat]
 Dataverse = "0.2"
+Downloads = "1"
 Glob = "1"
 JLD2 = "0.4.35"
 MITgcmTools = "0.2"
