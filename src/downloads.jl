@@ -54,8 +54,8 @@ function MITPROFclim_download()
             untargz_alias(joinpath(ScratchSpaces.MITprof,fil))
         catch
             error("failed: call to `untargz`
-            This method is provided by `MITgcmTools`
-            and now activated by `using MITgcmTools` ")
+            This method is provided by `MITgcm.jl`
+            and now activated by `using MITgcm` ")
         end    
         mv(tmp_path,dir_out)
         rm(joinpath(ScratchSpaces.MITprof,fil))
@@ -77,8 +77,8 @@ function CBIOMESclim_download()
             untargz_alias(joinpath(ScratchSpaces.CBIOMES,fil))
         catch
             error("failed: call to `untargz`
-            This method is provided by `MITgcmTools`
-            and now activated by `using MITgcmTools` ")
+            This method is provided by `MITgcm.jl`
+            and now activated by `using MITgcm` ")
         end
         mv(joinpath(tmp_path,fil[1:end-7]),fil_out)
         rm(joinpath(ScratchSpaces.CBIOMES,fil))
@@ -91,7 +91,7 @@ end
     get_ecco_files(γ::gcmgrid,v::String,t=1)
 
 ```
-using MeshArrays, OceanStateEstimation, MITgcmTools
+using MeshArrays, OceanStateEstimation, MITgcm
 γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
 tmp=OceanStateEstimation.get_ecco_files(γ,"oceQnet")
 ```
@@ -102,8 +102,8 @@ function get_ecco_files(γ::gcmgrid,v::String,t=1)
         read_nctiles_alias(joinpath(ScratchSpaces.ECCO,"$v/$v"),"$v",γ,I=(:,:,t))
     catch
         error("failed: call to `read_nctiles`
-        This method is provided by `MITgcmTools`
-        and now activated by `using MITgcmTools` ")
+        This method is provided by `MITgcm.jl`
+        and now activated by `using MITgcm` ")
     end
 end
 
@@ -194,8 +194,8 @@ function ECCOdiags_add(nam::String)
             untargz_alias(joinpath(ScratchSpaces.ECCO,fil))
         catch
             error("failed: call to `untargz`
-            This method is provided by `MITgcmTools`
-            and now activated by `using MITgcmTools` ")
+            This method is provided by `MITgcm.jl`
+            and now activated by `using MITgcm` ")
         end    
         mv(joinpath(tmp_path,fil[1:end-7]),joinpath(ScratchSpaces.ECCO,fil[1:end-7]))
         rm(joinpath(ScratchSpaces.ECCO,fil))
