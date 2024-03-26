@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.29
+# v0.19.30
 
 using Markdown
 using InteractiveUtils
@@ -163,16 +163,13 @@ md"""### Transport Across One Section"""
 md"""### Transport Across Multiple Sections"""
 
 # ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
-
+md"""## Appendix"""
 
 # ╔═╡ 58befe75-5b00-475b-838e-6f64231549a6
 begin
 	procs=inc.procs
 	plots=inc.plots
 end
-
-# ╔═╡ 64cd25be-2875-4249-b59c-19dcda28a127
-
 
 # ╔═╡ a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 P=procs.parameters()
@@ -269,7 +266,7 @@ end
 MC.outputs[:map]=plots.map(procs.map(nammap,P,statmap,timemap,pth_out)...)
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
-MC.outputs[:TimeLat]=plots.TimeLat(procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac)...)
+MC.outputs[:TimeLat]=plots.TimeLat(procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)...)
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
 MC.outputs[:TimeLatAnom]=plots.TimeLat(procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)...)
@@ -422,9 +419,6 @@ For more on the underlying software and additional notebooks like this, take a l
 - [OceanObs 2020 workshop](https://github.com/JuliaOcean/JuliaOceanSciencesMeeting2020) ; Julia (language) users and tools for oceanography.
 - [JuliaCon 2021 workshop](https://github.com/JuliaOcean/MarineEcosystemsJuliaCon2021.jl) ; Modeling Marine Ecosystems At Multiple Scales Using Julia.
 """
-
-
-# ╔═╡ 6100db56-1681-4f9f-bc53-3792da75e85e
 
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -2518,7 +2512,6 @@ version = "3.5.0+0"
 # ╟─91f04e7e-4645-11ec-2d30-ddd4d9932541
 # ╟─8dccce78-c665-4105-9f6b-fb295af8fbd0
 # ╟─58befe75-5b00-475b-838e-6f64231549a6
-# ╟─64cd25be-2875-4249-b59c-19dcda28a127
 # ╟─a522d3ef-1c94-4eb4-87bc-355965d2ac4a
 # ╟─c46f0656-3627-448b-a779-dad2d980e3cf
 # ╟─8fced956-e527-4ed0-94d4-321368f09773
@@ -2532,6 +2525,5 @@ version = "3.5.0+0"
 # ╟─c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
 # ╟─ff40a006-915a-4d35-847f-5f10085f60a2
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
-# ╠═6100db56-1681-4f9f-bc53-3792da75e85e
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
