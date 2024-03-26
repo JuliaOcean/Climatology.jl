@@ -434,8 +434,8 @@ function read_monthly_default(P,nam,t)
             end
         catch
             error("failed: call to `read_nctiles`
-            This method is provided by `MITgcmTools`
-            and now activated by `using MITgcmTools` ")
+            This method is provided by `MITgcm.jl`
+            and now activated by `using MITgcm` ")
         end
     elseif (sol=="ECCOv4r4_analysis")
         y0=Int(floor((t-1)/12))+1992

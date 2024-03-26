@@ -1,4 +1,4 @@
-using Documenter, OceanStateEstimation, MITgcmTools, MeshArrays, NCDatasets, Pkg
+using Documenter, OceanStateEstimation, MITgcm, MeshArrays, NCDatasets, Pkg
 import PlutoSliderServer, CairoMakie
 Pkg.precompile()
 

@@ -119,7 +119,7 @@ function glo(pth_out,nam,k,year0,year1)
 		k>1 ? rng=extrema(tmp) : nothing
 	else
 		nt=length(tmp[:])
-		occursin("THETA",fil) ? rng=(3.55,3.65) : rng=(34.724,34.728)
+		occursin("THETA",fil) ? rng=(3.58,3.70) : rng=(34.724,34.728)
 		txt=ln
 	end
 
@@ -150,7 +150,7 @@ function map(nammap,P,statmap,timemap,pth_out)
 	return P.λ,DD,levs,ttl
 end
 
-function TimeLat(namzm,pth_out,year0,year1,cmap_fac)
+function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)
 	fn(x)=transpose(x);
 	if namzm=="MXLDEPTH"
 		levs=(0.0:50.0:400.0); cm=:turbo
@@ -180,7 +180,7 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac)
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm,:])
 		x=vec(0.5:size(tmp,3))
-		addon1=" at $(Int(round(Γ.RC[k_zm])))m "
+		addon1=" at $(Int(round(P.Γ.RC[k_zm])))m "
 	else
 		z=fn(tmp[:,:])
 		x=vec(0.5:size(tmp,2))
@@ -275,8 +275,9 @@ nt=size(tmp,3)
 
 #a. subtract monthly mean
 ref1="1992-2011 monthy mean"
+m0=(1992-year0)*12
 for m in 1:12
-	zmean=vec(mean(z[m:12:240,:],dims=1))
+	zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
 	[z[t,:]=z[t,:]-zmean for t in m:12:nt]
 end
 #b. subtract time mean
@@ -325,7 +326,7 @@ module plots
 		valsmo[1:5].=NaN
 		valsmo[end-4:end].=NaN
 		lines!(ax,x,valsmo,linewidth=4.0,color=:red)
-		xlims!(ax,(year0,year1))
+		xlims!(ax,(1980,2025))
 	end
 
 	function transport(namtrs,ncols,pth_out,list_trsp,year0,year1)
@@ -366,7 +367,7 @@ module plots
 			ov[end-4:end].=NaN
 			hm1=lines!(x,ov,label="$(lats[ll])N")
 		end
-		xlims!(ax1,(year0,year1))
+		xlims!(ax1,(1980,2025))
 		low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
 		fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
 
@@ -387,7 +388,7 @@ module plots
 		ClipToRange ? to_range!(z,levs) : nothing
 	
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, 92-11)",
+		ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, time mean)",
 				xlabel="latitude",ylabel="depth (in m)")
 		hm1=contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs))
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
@@ -401,7 +402,7 @@ module plots
 	
 		x=vec(-89.0:89.0)
 		fig1 = Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Axis(fig1[1,1], title="Northward Heat Transport (in PW, 92-11)",
+		ax1 = Axis(fig1[1,1], title="Northward Heat Transport (in PW, time mean)",
 			xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
 			xlabel="latitude",ylabel="Transport (in PW)")
 		hm1=lines!(x,MT)
@@ -428,7 +429,7 @@ module plots
 		ax1 = Axis(fig1[1,1], title=ttl,
 			xticks=collect(year0:4:year1),ylabel=zlb)
 		hm1=lines!(ax1,gl1.x,y)
-		xlims!(ax1,(year0,year1))
+		xlims!(ax1,(1980,2025))
 		ylims!(ax1,rng)
 		fig1
 	end
@@ -440,7 +441,7 @@ module plots
 			xticks=collect(year0:4:year1))
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,year0,year1)
+		xlims!(ax1,1980,2025)
 		ylims!(ax1,RC1,RC0)
 		
 		fig1
@@ -453,7 +454,7 @@ module plots
 			xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,year0,year1)
+		xlims!(ax1,1980,2025)
 		ylims!(ax1,y0,y1)
 		fig1
 	end

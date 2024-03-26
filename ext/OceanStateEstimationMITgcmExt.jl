@@ -1,8 +1,8 @@
-module OceanStateEstimationMITgcmToolsExt
+module OceanStateEstimationMITgcmExt
 
     import OceanStateEstimation: read_nctiles_alias, untargz_alias 
     
-    import MITgcmTools: read_nctiles, untargz
+    import MITgcm: read_nctiles, untargz
 
     read_nctiles_alias(args...;kwargs...)=read_nctiles(args...;kwargs...)
 
