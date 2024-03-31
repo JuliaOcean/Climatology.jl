@@ -1,7 +1,7 @@
 name = "OceanStateEstimation"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.4"
+version = "0.4.1"
 
 [deps]
 Dataverse = "9c0b9be8-e31e-490f-90fe-77697562404d"
