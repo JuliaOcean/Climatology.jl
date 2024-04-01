@@ -331,9 +331,9 @@ module plots
 
 	function transport(namtrs,ncols,pth_out,list_trsp,year0,year1)
 		if ncols > 1
-			fig1 = Figure(resolution = (2000,1000),markersize=0.1)
+			fig1 = Figure(size = (2000,1000),markersize=0.1)
 		else
-			fig1 = Figure(resolution = (900,400),markersize=0.1)
+			fig1 = Figure(size = (900,400),markersize=0.1)
 		end
 		for na in 1:length(namtrs)
 			txt=namtrs[na]
@@ -356,7 +356,7 @@ module plots
 		x=year0 .+ x./12.0
 		lats=vec(-89.0:89.0)
 
-		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1],ylabel="Sv",
 			title="Global Overturning, in Sv, at kk=$(kk)",
 			xticks=(year0:4:year1))
@@ -387,7 +387,7 @@ module plots
 		levs=(-40.0:5.0:40.0)
 		ClipToRange ? to_range!(z,levs) : nothing
 	
-		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, time mean)",
 				xlabel="latitude",ylabel="depth (in m)")
 		hm1=contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs))
@@ -401,7 +401,7 @@ module plots
 		MT=vec(mean(tmp[:,1:240],dims=2))
 	
 		x=vec(-89.0:89.0)
-		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title="Northward Heat Transport (in PW, time mean)",
 			xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
 			xlabel="latitude",ylabel="Transport (in PW)")
@@ -425,7 +425,7 @@ module plots
 			y=gl1.y
 		end
 
-		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
 			xticks=collect(year0:4:year1),ylabel=zlb)
 		hm1=lines!(ax1,gl1.x,y)
@@ -436,7 +436,7 @@ module plots
 
 	function DepthTime(x,y,z,levs,ttl,RC1,RC0,year0,year1; ClipToRange=true)
 		ClipToRange ? to_range!(z,levs) : nothing
-		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
 			xticks=collect(year0:4:year1))
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
@@ -449,7 +449,7 @@ module plots
 
 	function TimeLat(x,y,z,levs,ttl,y0,y1,year0,year1; ClipToRange=true)
 		ClipToRange ? to_range!(z,levs) : nothing
-		fig1 = Figure(resolution = (900,400),markersize=0.1)
+		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=ttl,
 			xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
@@ -461,7 +461,7 @@ module plots
 
 	function map(λ,DD,levs,ttl; ClipToRange=true)
 		ClipToRange ? to_range!(DD,levs) : nothing
-		fig = Figure(resolution = (900,600), backgroundcolor = :grey95)
+		fig = Figure(size = (900,600), backgroundcolor = :grey95)
 		ax = Axis(fig[1,1], title=ttl,xlabel="longitude",ylabel="latitude")
 		hm1=contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
 		Colorbar(fig[1,2], hm1, height = Relative(0.65))

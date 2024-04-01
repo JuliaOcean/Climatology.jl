@@ -37,7 +37,7 @@ Chl_from_Sat=NCTiles.NCDataset(fil_sat,"r")["Chl"][:]
 ## plotting functions
 
 function PacificMapFig(val,lev,ttl)
-	fig = Mkie.Figure(resolution = (600,400), backgroundcolor = :grey95, fontsize=12)
+	fig = Mkie.Figure(size = (600,400), backgroundcolor = :grey95, fontsize=12)
 	ax = Mkie.Axis(fig[1,1], title=ttl*" units: $(uni)",xlabel="longitude",ylabel="latitude")
 	_,hm1=PacificMap!(ax,val,lev,ttl)
 	Mkie.Colorbar(fig[1,2], hm1, height = Mkie.Relative(0.65))
@@ -109,7 +109,7 @@ end
 if selectPlot<3
 	fig[1]
 elseif selectPlot==3 #12 monthly misfit maps
-	FIG = Mkie.Figure(resolution = (900,1200), backgroundcolor = :grey95, fontsize=12)
+	FIG = Mkie.Figure(size = (900,1200), backgroundcolor = :grey95, fontsize=12)
 	f(x)=Int(ceil(x/3.0))
 	g(x)=Int(x-3*(f(x)-1.0))
 	for m in 1:12
@@ -122,7 +122,7 @@ elseif selectPlot==3 #12 monthly misfit maps
 	end
 	FIG
 elseif selectPlot==4 #12 monthly anomaly map
-	FIG = Mkie.Figure(resolution = (900,1200), backgroundcolor = :grey95, fontsize=12)
+	FIG = Mkie.Figure(size = (900,1200), backgroundcolor = :grey95, fontsize=12)
 	f(x)=Int(ceil(x/3.0))
 	g(x)=Int(x-3*(f(x)-1.0))
 	for m in 1:12
