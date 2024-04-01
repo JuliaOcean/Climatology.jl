@@ -1,7 +1,7 @@
 name = "OceanStateEstimation"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.4.1"
+version = "0.4.2"
 
 [deps]
 Dataverse = "9c0b9be8-e31e-490f-90fe-77697562404d"
@@ -29,7 +29,7 @@ OceanStateEstimationNCDatasetsExt = ["NCDatasets"]
 Dataverse = "0.2"
 Downloads = "1"
 Glob = "1"
-JLD2 = "0.4.35"
+JLD2 = "0.4"
 MITgcm = "0.3"
 MeshArrays = "0.3"
 NCDatasets = "0.12, 0.13, 0.14"
