@@ -472,7 +472,7 @@ let
 
 	SST=▶a(fil1,1)
 
-	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
+	fig = Mkie.Figure(size = (900,600), backgroundcolor = :grey95)
 	ax = Mkie.Axis(fig[1,1], title="SST in degC",xlabel="longitude",ylabel="latitude")
 	hm1=Mkie.contourf!(ax,lon[:,1],lat[1,:],SST,levels = -2.0:2.0:34.0, tickfont = (4, :black))
 	xlims!(ax, (-180.0, 180.0)); ylims!(ax, (-90.0, 90.0))
@@ -497,7 +497,7 @@ let
 
 	RMSE=dropdims(sqrt.(sum((clim-pml).^2,dims=3)/12),dims=3)
 
-	fig = Mkie.Figure(resolution = (900,600), backgroundcolor = :grey95)
+	fig = Mkie.Figure(size = (900,600), backgroundcolor = :grey95)
 	ax = Mkie.Axis(fig[1,1], title="log10(RMSE)",xlabel="longitude",ylabel="latitude")
 	hm1=Mkie.contourf!(ax,lon[:,1],lat[1,:],log10.(RMSE), tickfont = (4, :black))
 	xlims!(ax, (-180.0, 180.0)); ylims!(ax, (-90.0, 90.0))
