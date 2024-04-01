@@ -306,6 +306,8 @@ module plots
 		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
 	end
 
+        years_to_display=(1992,2012)
+
 	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1)
 		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
 
@@ -326,7 +328,7 @@ module plots
 		valsmo[1:5].=NaN
 		valsmo[end-4:end].=NaN
 		lines!(ax,x,valsmo,linewidth=4.0,color=:red)
-		xlims!(ax,(1980,2025))
+		xlims!(ax,years_to_display)
 	end
 
 	function transport(namtrs,ncols,pth_out,list_trsp,year0,year1)
@@ -367,7 +369,7 @@ module plots
 			ov[end-4:end].=NaN
 			hm1=lines!(x,ov,label="$(lats[ll])N")
 		end
-		xlims!(ax1,(1980,2025))
+		xlims!(ax1,years_to_display)
 		low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
 		fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
 
@@ -429,7 +431,7 @@ module plots
 		ax1 = Axis(fig1[1,1], title=ttl,
 			xticks=collect(year0:4:year1),ylabel=zlb)
 		hm1=lines!(ax1,gl1.x,y)
-		xlims!(ax1,(1980,2025))
+		xlims!(ax1,years_to_display)
 		ylims!(ax1,rng)
 		fig1
 	end
@@ -441,7 +443,7 @@ module plots
 			xticks=collect(year0:4:year1))
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,1980,2025)
+		xlims!(ax1,years_to_display)
 		ylims!(ax1,RC1,RC0)
 		
 		fig1
@@ -454,7 +456,7 @@ module plots
 			xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
 		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,1980,2025)
+		xlims!(ax1,years_to_display)
 		ylims!(ax1,y0,y1)
 		fig1
 	end
