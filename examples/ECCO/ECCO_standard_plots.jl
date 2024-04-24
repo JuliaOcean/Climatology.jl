@@ -51,7 +51,7 @@ md"""## Zonal Mean vs Time"""
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
 	k_zm_select = @bind k_zm PlutoUI.Slider(1:50, default=1, show_value=true)
-	namzm_select = @bind namzm PlutoUI.Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
+	namzm_select = @bind namzm PlutoUI.Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"],default="THETA")
 	
 	md"""Select a quantity and plot it as a function of time and latitude.
 	
@@ -69,7 +69,7 @@ md"""## Zonal Mean vs Time (anomalies)"""
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
-	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"],default="SALT")
+	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"],default="THETA")
 	k_zm2d_select = @bind k_zm2d PlutoUI.Slider(1:50,show_value=true)
 	cmap_fac_select = @bind cmap_fac Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
 	l0_select = @bind l0 PlutoUI.Slider(1:90;default=1, show_value=true)
@@ -176,7 +176,7 @@ P=procs.parameters()
 
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
 begin
-	nammap_select = @bind nammap Select(P.clim_longname)
+	nammap_select = @bind nammap Select(P.clim_longname,default=P.clim_longname[11])
 	statmap_select = @bind statmap Select(["mean","std","mon"])	
 	timemap_select = @bind timemap Select(1:12)
 	md"""
@@ -218,7 +218,7 @@ Changing solution will update all plots.
 
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
 begin
-	sol_select = @bind sol Select(P.sol_list,default="ECCOv4r5_rc2_analysis")
+	sol_select = @bind sol Select(P.sol_list,default="OCCA2r1_analysis")
 	md"""select a solution : $(sol_select)"""
 end
 

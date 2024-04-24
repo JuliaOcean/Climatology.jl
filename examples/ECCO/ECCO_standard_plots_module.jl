@@ -37,15 +37,15 @@ end
 function years_min_max(sol)
 	year0=1992
 	year1=2011
-	if occursin("r3",sol)
+	if occursin("ECCOv4r3",sol)
 		year1=2015
-	elseif occursin("r4",sol)
+	elseif occursin("ECCOv4r4",sol)
 		year1=2017
-	elseif occursin("r5",sol)
+	elseif occursin("ECCOv4r5",sol)
 		year1=2019
-	elseif occursin("43y",sol)
-		year0=1982
-		year1=2023
+	elseif occursin("OCCA2",sol)
+		year0=1980
+		year1=2024
 	end
 	return year0,year1
 end
@@ -76,7 +76,7 @@ function parameters()
 
 	##
 	
-	sol_list=glob("ECCOv4*_analysis",ScratchSpaces.ECCO)
+	sol_list=glob("*_analysis",ScratchSpaces.ECCO)
 	sol_list=[basename(i) for i in sol_list]
 
 	fil_trsp=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis/trsp/trsp.jld2")
@@ -119,7 +119,7 @@ function glo(pth_out,nam,k,year0,year1)
 		k>1 ? rng=extrema(tmp) : nothing
 	else
 		nt=length(tmp[:])
-		occursin("THETA",fil) ? rng=(3.58,3.70) : rng=(34.724,34.728)
+		occursin("THETA",fil) ? rng=(3.57,3.63) : rng=(34.724,34.728)
 		txt=ln
 	end
 
@@ -306,7 +306,7 @@ module plots
 		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
 	end
 
-	years_to_display=(1992,2020)
+	years_to_display=(1979,2025)
 
 	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1)
 		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
