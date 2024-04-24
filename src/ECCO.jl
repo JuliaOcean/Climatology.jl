@@ -120,11 +120,11 @@ function parameters(pth0::String,sol0::String,params)
       pth_in=joinpath(pth0,sol0,"diags")
     end
 
-    !ispath(pth_in) ? pth_in=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly") : nothing
+    !ispath(pth_in) ? pth_in=joinpath(pth0,"diags") : nothing
     list_steps=list_time_steps(pth_in)
 
     if sol0=="r1"||sol0=="r2"
-        fil=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly","THETA","THETA.0001.nc")
+        fil=joinpath(pth_in,"THETA","THETA.0001.nc")
         if isfile(fil)
             nt=read_Dataset(fil) do ds
                 data = length(ds["tim"][:])
