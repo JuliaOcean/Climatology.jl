@@ -416,6 +416,8 @@ function read_monthly_BSF(P,t)
     #vector Potential
     TrspPsi=VectorPotential(TxR,TyR,Γ)
 
+    GC.gc()
+
     return TrspPsi
 end
 
