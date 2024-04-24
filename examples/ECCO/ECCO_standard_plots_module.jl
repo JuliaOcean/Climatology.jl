@@ -306,7 +306,7 @@ module plots
 		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
 	end
 
-        years_to_display=(1992,2012)
+	years_to_display=(1992,2020)
 
 	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1)
 		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
