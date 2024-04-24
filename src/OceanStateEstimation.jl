@@ -9,6 +9,7 @@ pkg_pth=dirname(pathof(OceanStateEstimation))
 function read_Dataset end
 function untargz_alias end
 function read_nctiles_alias end
+function read_mdsio_alias end
 
 include("downloads.jl")
 include("ECCO.jl")
