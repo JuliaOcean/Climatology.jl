@@ -163,7 +163,7 @@ end
     ECCOdiags_add(nam::String)
 
 Add data to the scratch space folder. Known options for `nam` include 
-"release1", "release2", "release3", "release4", and "interp_coeffs".
+"release1", "release2", "release3", "release4", "release5", and "OCCA2HR1".
 """
 function ECCOdiags_add(nam::String)
     if nam=="release1"
@@ -181,6 +181,8 @@ function ECCOdiags_add(nam::String)
     elseif nam=="release5"
         url="https://zenodo.org/record/7869067/files/ECCOv4r5_rc2_analysis.tar.gz"
         fil="ECCOv4r5_rc2_analysis.tar.gz"
+    elseif nam="OCCA2HR1"
+        fil="https://zenodo.org/records/11062685/files/OCCA2HR1_analysis.tar.gz"
     else
         println("unknown release name")
         url=missing

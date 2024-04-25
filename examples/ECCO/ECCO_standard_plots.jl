@@ -218,7 +218,7 @@ Changing solution will update all plots.
 
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
 begin
-	sol_select = @bind sol Select(P.sol_list,default="OCCA2r1_analysis")
+	sol_select = @bind sol Select(P.sol_list,default="OCCA2HR1_analysis")
 	md"""select a solution : $(sol_select)"""
 end
 
