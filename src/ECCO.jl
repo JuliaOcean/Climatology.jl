@@ -568,6 +568,7 @@ function main_clim(P)
 
     @sync @distributed for m in 1:12
         comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
+        GC.gc()
     end
 
     tmp0=read(tmp_m[:],γ)
@@ -613,6 +614,7 @@ function main_glo(P)
     glo = SharedArray{Float64}(nr,nt)
     @sync @distributed for t in 1:nt
         comp_glo(P,glo,t)
+        GC.gc()
     end
 
     if calc=="glo2d"
@@ -722,12 +724,14 @@ function main_zonmean(P)
         zm = SharedArray{Float64}(nl,nr,nt)
         @sync @distributed for t in 1:nt
             comp_zonmean(P,zm,t,msk0,zm0,idx0)
+            GC.gc()
         end
     else
         zm = SharedArray{Float64}(nl,nt)
         @sync @distributed for t in 1:nt
             comp_zonmean2d(P,zm,t,msk0,zm0)
-        end
+            GC.gc()
+	end
     end
     save_object(joinpath(pth_out,calc*".jld2"),collect(zm))
 
@@ -769,6 +773,7 @@ function main_overturn(P)
     ov = SharedArray{Float64}(nl,nr,nt)
     @sync @distributed for t in 1:nt
         comp_overturn(P,ov,t)
+        GC.gc()
     end
     
     save_object(joinpath(pth_out,calc*".jld2"),collect(ov))
@@ -804,9 +809,10 @@ function main_MHT(P)
     MHT = SharedArray{Float64}(nl,nt)
     @sync @distributed for t in 1:nt
         comp_MHT(P,MHT,t)
+        GC.gc()
     end
     save_object(joinpath(pth_out,calc*".jld2"),collect(MHT))
-	"Done with MHT"
+    "Done with MHT"
 end
 
 ##
@@ -841,6 +847,7 @@ function main_trsp(P)
     trsp = SharedArray{Float64}(ntr,nr,nt)
     @sync @distributed for t in 1:nt
         comp_trsp(P,trsp,t)
+        GC.gc()
     end
     
     trsp=[(nam=list_trsp[itr],val=trsp[itr,:,:]) for itr=1:ntr]
