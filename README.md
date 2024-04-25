@@ -11,9 +11,9 @@ _It is in early development stage; breaking changes remain likely._
 
 ### Use Examples
 
-- [Sea Level Time Series & More](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev/examples/NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/NSLCT/NSLCT_notebook.jl))
 - [Physical Ocean, Currents, & Climate](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl))
-- [Marine Ecosystem & BGC Models](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev/examples/CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl))
+- [Sea Level Time Series & More](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev/examples/NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/NSLCT/NSLCT_notebook.jl))
+- [Marine Ecosystems & Biogeochemistry](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev/examples/CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl))
 
 Please refer to the [docs](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev) for detail and additional notebooks.
 

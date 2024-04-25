@@ -27,14 +27,19 @@ Pkg.activate(pth)
 Pkg.instantiate()
 ```
 """
-function standard_analysis_setup(pth0="")
+function standard_analysis_setup(pth0="",sol0="")
 	
 	#1. setup run folder and create link to ECCO data folder
 	pth=joinpath(tempdir(),"ECCO_diags_dev"); 
 	!isdir(pth) ? mkdir(pth) : nothing
-	pth1=joinpath(pth,"ECCOv4r2")
-	!isdir(pth1) ? mkdir(pth1) : nothing
-	link0=joinpath(pth1,"nctiles_monthly")
+        if in(sol0,["r2","r3","r4","r5"])
+          pth1=joinpath(pth,"ECCOv4"*sol0)
+        else
+          pth1=joinpath(pth,sol0)
+        end
+
+        !isdir(pth1) ? mkdir(pth1) : nothing
+	link0=joinpath(pth1,"diags")
 	!isfile(link0)&& !islink(link0)&& !isempty(pth0) ? symlink(pth0,link0) : nothing
 	
 	#2. copy Project.toml to run folder
@@ -53,7 +58,7 @@ end
 
 module ECCO_helpers
 
-using MeshArrays, TOML, JLD2
+using MeshArrays, TOML, JLD2, Glob
 import OceanStateEstimation: read_Dataset
 
 """
@@ -107,10 +112,19 @@ function parameters(pth0::String,sol0::String,params)
     calc=params.calc
     nam=params.nam
     kk=params.lev
-    sol="ECCOv4"*sol0*"_analysis"
+    if in(sol0,["r2","r3","r4","r5"])
+      sol="ECCOv4"*sol0*"_analysis"
+      pth_in=joinpath(pth0,"ECCOv4"*sol0,"diags")
+    else
+      sol=sol0*"_analysis"
+      pth_in=joinpath(pth0,sol0,"diags")
+    end
+
+    !ispath(pth_in) ? pth_in=joinpath(pth0,"diags") : nothing
+    list_steps=list_time_steps(pth_in)
 
     if sol0=="r1"||sol0=="r2"
-        fil=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly","THETA","THETA.0001.nc")
+        fil=joinpath(pth_in,"THETA","THETA.0001.nc")
         if isfile(fil)
             nt=read_Dataset(fil) do ds
                 data = length(ds["tim"][:])
@@ -124,14 +138,9 @@ function parameters(pth0::String,sol0::String,params)
         nt=312
     elseif sol0=="r5"
         nt=336
-    end
-
-    if sol0!=="r5"
-        pth_in=joinpath(pth0,"ECCOv4"*sol0,"nctiles_monthly")
     else
-        pth_in=joinpath(pth0,"ECCOv4"*sol0,"diags")
+        nt=length(list_steps)
     end
-    list_steps=list_time_steps(pth_in)
 
     pth_out=joinpath(pth0,sol)
 
@@ -155,11 +164,11 @@ end
 #    'DFxE_TH ' 'DFyE_TH ' 'ADVx_TH ' 'ADVy_TH ' 'DFxE_SLT' 'DFyE_SLT' 'ADVx_SLT' 'ADVy_SLT'
 
 function list_time_steps(pth_in)
-    if isdir(joinpath(pth_in,"STATE"))
-        list=readdir(joinpath(pth_in,"STATE"))
-        list=list[findall(occursin.(Ref("state_3d_set1"),list))]
-        list=list[findall(occursin.(Ref("data"),list))]
-        [list[i][15:end] for i in 1:length(list)]
+    println(pth_in)
+    if !isempty(glob("STATE/state_3d_set1*.data",pth_in))
+        list=basename.(glob("STATE/state_3d_set1*.data",pth_in)) 
+    elseif !isempty(glob("state_3d_set1*.data",pth_in))
+        list=basename.(glob("state_3d_set1*.data",pth_in))
     else
         list=[]
     end
@@ -242,10 +251,10 @@ function standard_list_toml(fil)
     push!(allcalc,allnam,allkk;calc="overturn")
     [push!(allcalc,allnam,allkk;calc="clim",nam="THETA",kk=kk) for kk in [1 10 20 29 38 44]]
     [push!(allcalc,allnam,allkk;calc="clim",nam="SALT",kk=kk) for kk in [1 10 20 29 38 44]]
-    push!(allcalc,allnam,allkk;calc="clim",nam="BSF")
     push!(allcalc,allnam,allkk;calc="clim",nam="SSH")
     push!(allcalc,allnam,allkk;calc="clim",nam="MXLDEPTH")
     push!(allcalc,allnam,allkk;calc="clim",nam="SIarea")
+    push!(allcalc,allnam,allkk;calc="clim",nam="BSF")
 
     tmp1=Dict("calc"=>allcalc,"nam"=>allnam,"kk"=>allkk)
     if !isempty(fil)
@@ -321,8 +330,7 @@ end #module ECCO_helpers
 module ECCO_io
 
 using MeshArrays
-
-import OceanStateEstimation: read_nctiles_alias, read_Dataset
+import OceanStateEstimation: read_nctiles_alias, read_Dataset, read_mdsio_alias
 
 """
     read_monthly(P,nam,t)
@@ -408,6 +416,8 @@ function read_monthly_BSF(P,t)
     #vector Potential
     TrspPsi=VectorPotential(TxR,TyR,Γ)
 
+    GC.gc()
+
     return TrspPsi
 end
 
@@ -416,13 +426,23 @@ function read_monthly_default(P,nam,t)
 
     var_list3d=("THETA","SALT","UVELMASS","VVELMASS",
                 "ADVx_TH","ADVy_TH","DFxE_TH","DFyE_TH")
-    mdsio_list3d=("STATE/state_3d_set1","STATE/state_3d_set1",
+    if ispath(joinpath(pth_in,"STATE"))
+      mdsio_list3d=("STATE/state_3d_set1","STATE/state_3d_set1",
         "TRSP/trsp_3d_set1","TRSP/trsp_3d_set1","TRSP/trsp_3d_set2",
         "TRSP/trsp_3d_set2","TRSP/trsp_3d_set2","TRSP/trsp_3d_set2")
+    else
+      mdsio_list3d=("state_3d_set1","state_3d_set1",
+        "trsp_3d_set1","trsp_3d_set1","trsp_3d_set2",
+        "trsp_3d_set2","trsp_3d_set2","trsp_3d_set2")
+    end
 
     var_list2d=("MXLDEPTH","SIarea","sIceLoad","ETAN")
-    mdsio_list2d=("STATE/state_2d_set1","STATE/state_2d_set1",
-                  "STATE/state_2d_set1","STATE/state_2d_set1")
+    if ispath(joinpath(pth_in,"STATE"))
+      mdsio_list2d=("STATE/state_2d_set1","STATE/state_2d_set1",
+        "STATE/state_2d_set1","STATE/state_2d_set1")
+    else
+      mdsio_list2d=("state_2d_set1","state_2d_set1","state_2d_set1","state_2d_set1")
+    end
 
     if (sol=="ECCOv4r1_analysis")||(sol=="ECCOv4r2_analysis")||(sol=="ECCOv4r3_analysis")
         nct_path=joinpath(pth_in,nam)
@@ -466,11 +486,12 @@ function read_monthly_default(P,nam,t)
     else
       if !isempty(findall(var_list3d.==nam))
         fil=mdsio_list3d[ findall(var_list3d.==nam)[1] ]
-        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]),Symbol(nam))
+        fil1=joinpath(pth_in,fil*list_steps[t][14:end])
+	tmp=read_mdsio_alias(fil1,Symbol(nam))
         tmp=P.Γ.mskC*read(tmp,γ)     
       else
         fil=mdsio_list2d[ findall(var_list2d.==nam)[1] ]
-        tmp=read_mdsio(joinpath(pth_in,fil*list_steps[t][14:end]),Symbol(nam))
+        tmp=read_mdsio_alias(joinpath(pth_in,fil*list_steps[t][14:end]),Symbol(nam))
         tmp=P.Γ.mskC[:,1]*read(tmp,P.Γ.XC)
       end
     end
@@ -626,18 +647,35 @@ function comp_msk0(P,msk0,zm0,l)
     zm0[l,:]=1.0 ./nansum(tmp2,2)
 end
 
+function zmsum!(tmp1,tmp,msk,idx)
+   tmp1.=0.0
+   for j in 1:length(tmp1)
+     for i in 1:length(idx)
+       tmp1[j]+=tmp[idx[i],j]*msk[idx[i]]
+     end
+   end
+end
+
 function comp_zonmean(P,zm,t,msk0,zm0)
+    (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
+    nl=size(msk0,3)
+    idx0=[findall(msk0[:,:,l].>0) for l in 1:nl]
+    comp_zonmean(P,zm,t,msk0,zm0,idx0)
+end
+
+function comp_zonmean(P,zm,t,msk0,zm0,idx0)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
     nr=length(Γ.DRF)
 
     lats=load(joinpath(pth_out,calc*"_lats.jld2"),"single_stored_object")
     nl=length(lats)
 
-    tmp=ECCO_io.read_monthly(P,nam,t)
+    tmp=write(ECCO_io.read_monthly(P,nam,t))
+    tmp[findall(isnan.(tmp))].=0.0
+    tmp1=zeros(nr)
     for l in 1:nl
-        mskrac=read(msk0[:,:,l],γ)
-        tmp1=[nansum(tmp[i,j].*mskrac[i]) for j in 1:nr, i in eachindex(Γ.RAC)]
-        zm[l,:,t]=nansum(tmp1,2).*zm0[l,:]
+        zmsum!(tmp1,tmp,msk0[:,:,l],idx0[l])
+        zm[l,:,t]=tmp1.*zm0[l,:]
     end
 end
 
@@ -678,11 +716,12 @@ function main_zonmean(P)
 
     msk0=load(joinpath(pth_out,calc*"_msk0.jld2"),"single_stored_object")
     zm0=load(joinpath(pth_out,calc*"_zm0.jld2"),"single_stored_object")
+    idx0=[findall(msk0[:,:,l].>0) for l in 1:nl]
 
     if (calc=="zonmean")
         zm = SharedArray{Float64}(nl,nr,nt)
         @sync @distributed for t in 1:nt
-            comp_zonmean(P,zm,t,msk0,zm0)
+            comp_zonmean(P,zm,t,msk0,zm0,idx0)
         end
     else
         zm = SharedArray{Float64}(nl,nt)

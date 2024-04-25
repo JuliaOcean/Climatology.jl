@@ -19,7 +19,7 @@ makedocs(;
 
 OceanStateEstimation.CBIOMESclim_download()
 OceanStateEstimation.ECCOdiags_add("release2")
-OceanStateEstimation.ECCOdiags_add("release4")
+OceanStateEstimation.ECCOdiags_add("OCCA2HR1")
 interpolation_setup()
 
 #lst=("CBIOMES_climatogy_create.jl",)
