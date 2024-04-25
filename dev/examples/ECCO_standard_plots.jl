@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.40
+# v0.19.41
 
 using Markdown
 using InteractiveUtils
@@ -33,12 +33,18 @@ PlutoUI.TableOfContents()
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
 md"""#  Standard Views of The Ocean State
 
+The ocean state history for the 1980-2023 period is depicted in this notebook using the [OCCA2](https://doi.org/10.21203/rs.3.rs-3979671/v1) ocean state estimate. The displayed quantities were calculated via the [OceanStateEstimation.jl](https://github.com/JuliaOcean/OceanStateEstimation.jl#readme) Julia package. The same variables can also be viewed for the [ECCO4](https://doi.org/10.5194/gmd-8-3071-2015) ocean state estimates.
+
+**References :**
+
+- Gaël Forget. Energy Imbalance in the Sunlit Ocean Layer, 11 April 2024, PREPRINT (under review), https://doi.org/10.21203/rs.3.rs-3979671/v1
+- Forget, G., Campin, J.-M., Heimbach, P., Hill, C. N., Ponte, R. M., and Wunsch, C.: ECCO version 4: an integrated framework for non-linear inverse modeling and global ocean state estimation, Geosci. Model Dev., 8, 3071–3104, https://doi.org/10.5194/gmd-8-3071-2015, 2015
 
 !!! introduction
-	This [Julia](https://julialang.org) [notebook](https://github.com/fonsp/Pluto.jl) let's you explore [ECCO](https://ecco-group.org) ocean state estimates interactively -- [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) [releases 1 to 4](https://ecco-group.org/products.htm) initially. 
+	This [Julia](https://julialang.org) [notebook](https://github.com/fonsp/Pluto.jl) let's you explore [ECCO](https://ecco-group.org) ocean state estimates interactively -- [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) [releases 1 to 5](https://ecco-group.org/products.htm) initially. 
 
 !!! note
-    - In you are viewing a live version of the notebook, plots will update according to drop down menus as seen in this [video demo](https://youtu.be/UEmBnzspSRg). Directions to run the notebook via [Pluto.jl](https://github.com/fonsp/Pluto.jl), are provided at the bottom of the page. 
+    - If you are running a live version of this notebook in a web browser, then the plots should update according to drop down menus as seen in this [video demo](https://youtu.be/UEmBnzspSRg). If something seems to have gone wrong, please refer to the `user directions` at the bottom of this page. 
     - If instead you are viewing the static html version hosted online, then this interactivity is disabled.
 """
 
@@ -51,7 +57,7 @@ md"""## Zonal Mean vs Time"""
 # ╔═╡ bb3b3089-ab83-4683-9cf0-860a55a9af97
 begin
 	k_zm_select = @bind k_zm PlutoUI.Slider(1:50, default=1, show_value=true)
-	namzm_select = @bind namzm PlutoUI.Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"])
+	namzm_select = @bind namzm PlutoUI.Select(["MXLDEPTH","THETA","SALT","SSH","SIarea"],default="THETA")
 	
 	md"""Select a quantity and plot it as a function of time and latitude.
 	
@@ -69,7 +75,7 @@ md"""## Zonal Mean vs Time (anomalies)"""
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
-	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"],default="SALT")
+	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"],default="THETA")
 	k_zm2d_select = @bind k_zm2d PlutoUI.Slider(1:50,show_value=true)
 	cmap_fac_select = @bind cmap_fac Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
 	l0_select = @bind l0 PlutoUI.Slider(1:90;default=1, show_value=true)
@@ -176,7 +182,7 @@ P=procs.parameters()
 
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
 begin
-	nammap_select = @bind nammap Select(P.clim_longname)
+	nammap_select = @bind nammap Select(P.clim_longname,default=P.clim_longname[11])
 	statmap_select = @bind statmap Select(["mean","std","mon"])	
 	timemap_select = @bind timemap Select(1:12)
 	md"""
@@ -218,7 +224,7 @@ Changing solution will update all plots.
 
 # ╔═╡ 8fced956-e527-4ed0-94d4-321368f09773
 begin
-	sol_select = @bind sol Select(P.sol_list,default="ECCOv4r2_analysis")
+	sol_select = @bind sol Select(P.sol_list,default="OCCA2HR1_analysis")
 	md"""select a solution : $(sol_select)"""
 end
 
@@ -382,31 +388,40 @@ md""" ### User Directions
 $(space)
 
 !!! summary
-    Running this notebook on a local computer requires [downloading julia](https://julialang.org/downloads/) (version 1.7 and above), if not already done, and then one can proceed as show below. `Code for steps 2 to 4` is given first in the `grey box`. These commands should be executed in the Julia terminal window (the `REPL`) after installing `julia` in step 1.
+    Running this notebook on a local computer requires [julia](https://julialang.org/downloads/), packages added below, and data files downloaded below.
+"""
+
+# ╔═╡ 5cdad78c-095b-49a0-a123-caecbf69f0f8
+if false
+	import OceanStateEstimation, MITgcm, MeshArrays
+	OceanStateEstimation.ECCOdiags_add("OCCA2HR1")
+	MeshArrays.interpolation_setup()
+end
+
+# ╔═╡ 4bc4a859-93f6-409f-8bf3-77cd6ceb0836
+md"""
+Once [Pluto](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto) opens, the notebook will start to run.
+
+!!! note
+    At first, it may take a **couple minutes** for the whole suite of plots to get display, as code compilation takes place (on the fly). Afterwards, since compiled code is available, things should update much faster when using the drop down menus. Another point to note is that notebooks like this one can be executed in various ways outside of Pluto as well.
+
+$(space)
+
+To add more solutions:
 
 ```
-using Pluto
-
 import OceanStateEstimation
-OceanStateEstimation.ECCOdiags_add("release5")
-OceanStateEstimation.interpolation_setup()
 
 #optional : ~250M each
-OceanStateEstimation.ECCOdiags_add("release4")
-OceanStateEstimation.ECCOdiags_add("release3")
-OceanStateEstimation.ECCOdiags_add("release2")
-OceanStateEstimation.ECCOdiags_add("release1")
+#OceanStateEstimation.ECCOdiags_add("release4")
+#OceanStateEstimation.ECCOdiags_add("release3")
+#OceanStateEstimation.ECCOdiags_add("release2")
+#OceanStateEstimation.ECCOdiags_add("release1")
 
-Pluto.run()
+Pluto.run(notebook="ECCO_standard_plots.jl")
 ```
 
-1. [start julia](https://docs.julialang.org/en/v1/manual/getting-started/)
-1. download input files (_incl. in code shown above_)
-1. [add Pluto](https://github.com/fonsp/Pluto.jl) using [Pkg.jl](https://pkgdocs.julialang.org/v1/getting-started/) (_incl. in code shown above_)
-1. [start Pluto](https://github.com/fonsp/Pluto.jl/wiki/🔎-Basic-Commands-in-Pluto) (_incl. in code shown above_)
-1. Once Pluto opens, in your web browser, paste the [notebook url](https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl) (not the julia code) and click open.
-
-**At first, it may take a couple minutes** for the whole suite of plots to get display, as code compilation takes place (on the fly). Afterwards, since compiled code is available, things should update much faster when using the drop down menus. Another point to note is that notebooks like this one can be executed in various ways outside of Pluto as well.
+### Learn more 
 
 For more on the underlying software and additional notebooks like this, take a look at the list below.
 
@@ -428,11 +443,23 @@ CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ClimateModels = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+MITgcm = "dce5fa8e-68ce-4431-a242-9469c69627a0"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 OceanStateEstimation = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 RollingFunctions = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+CairoMakie = "~0.11.9"
+ClimateModels = "~0.3.2"
+Glob = "~1.3.1"
+JLD2 = "~0.4.46"
+MITgcm = "~0.3.6"
+MeshArrays = "~0.3.2"
+OceanStateEstimation = "~0.4.1"
+PlutoUI = "~0.7.58"
+RollingFunctions = "~0.8.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -441,7 +468,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "db93a60b56fc7d39912a4442dead6ab3eaf62ef9"
+project_hash = "05f5fa4ce044d4de3f96a8781672520601c30d95"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -980,6 +1007,11 @@ git-tree-sha1 = "9c68794ef81b08086aeb32eeaf33531668d5f5fc"
 uuid = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
 version = "1.3.7"
 
+[[deps.FortranFiles]]
+git-tree-sha1 = "f8cec967f151a65f03afd826650c6e91d8b1da16"
+uuid = "c58ffaec-ab22-586d-bfc5-781a99fd0b10"
+version = "0.6.0"
+
 [[deps.ForwardDiff]]
 deps = ["CommonSubexpressions", "DiffResults", "DiffRules", "LinearAlgebra", "LogExpFunctions", "NaNMath", "Preferences", "Printf", "Random", "SpecialFunctions"]
 git-tree-sha1 = "cf0fe81336da9fb90944683b8c41984b08793dad"
@@ -1497,6 +1529,12 @@ version = "1.9.4+0"
 git-tree-sha1 = "65f28ad4b594aebe22157d6fac869786a255b7eb"
 uuid = "6c6e2e6c-3030-632d-7369-2d6c69616d65"
 version = "0.1.4"
+
+[[deps.MITgcm]]
+deps = ["ClimateModels", "CodecZlib", "Dataverse", "Dates", "Distributed", "Downloads", "FortranFiles", "Glob", "MeshArrays", "Printf", "Scratch", "SharedArrays", "SparseArrays", "Statistics", "Tar", "UUIDs"]
+git-tree-sha1 = "3766a3eb5669c57f644b39bbde3272d75670c957"
+uuid = "dce5fa8e-68ce-4431-a242-9469c69627a0"
+version = "0.3.6"
 
 [[deps.MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl"]
@@ -2666,5 +2704,7 @@ version = "3.5.0+0"
 # ╟─c6ca87f7-fa0d-4cb5-9050-5204f43e0d69
 # ╟─ff40a006-915a-4d35-847f-5f10085f60a2
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
+# ╠═5cdad78c-095b-49a0-a123-caecbf69f0f8
+# ╟─4bc4a859-93f6-409f-8bf3-77cd6ceb0836
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
