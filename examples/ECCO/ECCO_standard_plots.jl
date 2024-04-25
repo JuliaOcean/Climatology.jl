@@ -33,6 +33,12 @@ PlutoUI.TableOfContents()
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
 md"""#  Standard Views of The Ocean State
 
+The ocean state history for the 1980-2023 period is depicted in this notebook using the [OCCA2](https://doi.org/10.21203/rs.3.rs-3979671/v1) ocean state estimate. The displayed quantities were calculated via the [OceanStateEstimation.jl](https://github.com/JuliaOcean/OceanStateEstimation.jl#readme) Julia package. The same variables can also be viewed for the [ECCO4](https://doi.org/10.5194/gmd-8-3071-2015) ocean state estimates.
+
+**References :**
+
+- Gaël Forget. Energy Imbalance in the Sunlit Ocean Layer, 11 April 2024, PREPRINT (under review), https://doi.org/10.21203/rs.3.rs-3979671/v1
+- Forget, G., Campin, J.-M., Heimbach, P., Hill, C. N., Ponte, R. M., and Wunsch, C.: ECCO version 4: an integrated framework for non-linear inverse modeling and global ocean state estimation, Geosci. Model Dev., 8, 3071–3104, https://doi.org/10.5194/gmd-8-3071-2015, 2015
 
 !!! introduction
 	This [Julia](https://julialang.org) [notebook](https://github.com/fonsp/Pluto.jl) let's you explore [ECCO](https://ecco-group.org) ocean state estimates interactively -- [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) [releases 1 to 5](https://ecco-group.org/products.htm) initially. 
@@ -388,7 +394,7 @@ $(space)
 # ╔═╡ 5cdad78c-095b-49a0-a123-caecbf69f0f8
 if false
 	import OceanStateEstimation, MITgcm, MeshArrays
-	OceanStateEstimation.ECCOdiags_add("release5")
+	OceanStateEstimation.ECCOdiags_add("OCCA2HR1")
 	MeshArrays.interpolation_setup()
 end
 
