@@ -181,7 +181,7 @@ function ECCOdiags_add(nam::String)
     elseif nam=="release5"
         url="https://zenodo.org/record/7869067/files/ECCOv4r5_rc2_analysis.tar.gz"
         fil="ECCOv4r5_rc2_analysis.tar.gz"
-    elseif nam="OCCA2HR1"
+    elseif nam=="OCCA2HR1"
         fil="https://zenodo.org/records/11062685/files/OCCA2HR1_analysis.tar.gz"
     else
         println("unknown release name")
