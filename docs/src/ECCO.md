@@ -1,7 +1,7 @@
 
 The workflow presented here is as follows.
 
-- set up recommended for running analyses of `ECCO estimates`.
+- set up for running analyses of `ECCO estimates`.
 - run one computation loop on the `ECCO monthly` files.
 
 ```@docs
