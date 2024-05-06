@@ -51,7 +51,7 @@ function MITPROFclim_download()
     if !isdir(dir_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.MITprof)
         tmp_path=Dataverse.untargz(joinpath(ScratchSpaces.MITprof,fil))
-        mv(joinpath(tmp_path,fil[1:end-7]),dir_out)
+        mv(tmp_path,dir_out)
         rm(joinpath(ScratchSpaces.MITprof,fil))
     end
 end
