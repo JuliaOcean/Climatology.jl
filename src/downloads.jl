@@ -1,6 +1,7 @@
 module ScratchSpaces
 
-using Downloads, Scratch
+using Dataverse, Scratch
+using Dataverse.downloads.Downloads
 
 # This will be filled in inside `__init__()`
 ECCO = ""
@@ -33,7 +34,6 @@ module downloads
 import OceanStateEstimation: pkg_pth
 import OceanStateEstimation: ScratchSpaces
 import OceanStateEstimation: read_nctiles_alias
-import OceanStateEstimation: untargz_alias
 using Statistics, MeshArrays
 using Dataverse
 
@@ -50,13 +50,7 @@ function MITPROFclim_download()
     dir_out=joinpath(ScratchSpaces.MITprof,fil[1:end-7])
     if !isdir(dir_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.MITprof)
-        tmp_path=try
-            untargz_alias(joinpath(ScratchSpaces.MITprof,fil))
-        catch
-            error("failed: call to `untargz`
-            This method is provided by `MITgcm.jl`
-            and now activated by `using MITgcm` ")
-        end    
+        tmp_path=Dataverse.untargz(joinpath(ScratchSpaces.MITprof,fil))
         mv(tmp_path,dir_out)
         rm(joinpath(ScratchSpaces.MITprof,fil))
     end
@@ -73,13 +67,7 @@ function CBIOMESclim_download()
     fil_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
     if !isfile(fil_out)
         ScratchSpaces.download_dataset(url,ScratchSpaces.CBIOMES)
-        tmp_path=try
-            untargz_alias(joinpath(ScratchSpaces.CBIOMES,fil))
-        catch
-            error("failed: call to `untargz`
-            This method is provided by `MITgcm.jl`
-            and now activated by `using MITgcm` ")
-        end
+        tmp_path=Dataverse.untargz(joinpath(ScratchSpaces.CBIOMES,fil))
         mv(joinpath(tmp_path,fil[1:end-7]),fil_out)
         rm(joinpath(ScratchSpaces.CBIOMES,fil))
     end
@@ -193,13 +181,7 @@ function ECCOdiags_add(nam::String)
     if (!ismissing(url))&&(!isdir(joinpath(ScratchSpaces.ECCO,fil)[1:end-7]))
         println("downloading "*nam*" ... started")
         ScratchSpaces.download_dataset(url,ScratchSpaces.ECCO)
-        tmp_path=try
-            untargz_alias(joinpath(ScratchSpaces.ECCO,fil))
-        catch
-            error("failed: call to `untargz`
-            This method is provided by `MITgcm.jl`
-            and now activated by `using MITgcm` ")
-        end    
+        tmp_path=Dataverse.untargz(joinpath(ScratchSpaces.ECCO,fil))
         mv(joinpath(tmp_path,fil[1:end-7]),joinpath(ScratchSpaces.ECCO,fil[1:end-7]))
         rm(joinpath(ScratchSpaces.ECCO,fil))
         println("downloading "*nam*" ... done")
