@@ -3,7 +3,7 @@
 
 module procs
 
-using JLD2, MeshArrays, Statistics, OceanStateEstimation, Glob, TOML
+using JLD2, MeshArrays, Statistics, OceanStateEstimation, TOML
 
 function longname(n)
 	if occursin("_k",n)
@@ -59,10 +59,6 @@ function parameters()
 	Γ=GridLoad(γ;option="full")
 	#LC=LatitudeCircles(-89.0:89.0,Γ)
 
-	##
-
-	#ECCOdiags_add("release5")
-	interpolation_setup()
 	μ = land_mask(Γ)
 
 	λ_file = joinpath(tempdir(),"interp_coeffs_halfdeg.jld2")
@@ -76,10 +72,9 @@ function parameters()
 
 	##
 	
-	sol_list=glob("*_analysis",ScratchSpaces.ECCO)
-	sol_list=[basename(i) for i in sol_list]
+	path0=OceanStateEstimation.downloads.datadep"OCCA2HR1-stdiags"
 
-	fil_trsp=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis/trsp/trsp.jld2")
+	fil_trsp=joinpath(path0,"trsp","trsp.jld2") #
 	ntr=length(load(fil_trsp,"single_stored_object"))
 	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
 	list_trsp=[i[1:end-5] for i in list_trsp]
@@ -89,13 +84,12 @@ function parameters()
 	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
 
 
-	pth_tmp01=joinpath(ScratchSpaces.ECCO,"ECCOv4r2_analysis")
-	clim_files=climatology_files(pth_tmp01)
+	clim_files=climatology_files(path0)
 	clim_name=[split(basename(f),'.')[1] for f in clim_files]
 	clim_longname=longname.(clim_name) 
 
 	#"Done with listing solutions, file names, color codes"
-	(γ=γ,Γ=Γ,λ=λ,μ=μ,sol_list=sol_list,list_trsp=list_trsp,
+	(γ=γ,Γ=Γ,λ=λ,μ=μ,list_trsp=list_trsp,
 	clim_colors1=clim_colors1,clim_colors2=clim_colors2,
 	clim_files=clim_files,clim_name=clim_name,clim_longname=clim_longname)
 end
