@@ -18,7 +18,7 @@ function download_dataset(url,path)
     return fname
 end
 
-function __init__()
+function __init__scratch()
     global ECCO = @get_scratch!("ECCO")
     global OCCA = @get_scratch!("OCCA")
     global CBIOMES = @get_scratch!("CBIOMES")
@@ -35,7 +35,7 @@ import OceanStateEstimation: pkg_pth
 import OceanStateEstimation: ScratchSpaces
 import OceanStateEstimation: read_nctiles_alias
 using Statistics, MeshArrays
-using Dataverse
+using Dataverse, DataDeps, Glob
 
 ##
 
@@ -147,44 +147,85 @@ end
 
 ## zenodo.org Downloads
 
+
+st_d_md(txt="ECCO version 4 release 2") = 
+    """
+    Dataset: standard analysis for the $(txt) ocean state estimate.
+    Authors: Gaël Forget
+    """
+
+"""
+    unpackDV(filepath)
+
+Like DataDeps's `:unpack` but using `Dataverse.untargz` and remove the `.tar.gz` file.
+"""    
+function unpackDV(filepath)
+    tmp_path=Dataverse.untargz(filepath)
+    tmp_path=joinpath(tmp_path,basename(filepath)[1:end-7])
+    #mv(tmp_path,joinpath(dirname(filepath),"jld"))
+    [mv(p,joinpath(dirname(filepath),basename(p))) for p in glob("*",tmp_path)]
+    rm(filepath)
+    "done with unpack2"
+end
+
+"""
+    __init__standard_diags()
+
+Register data dependency with DataDep.
+"""
+function __init__standard_diags()
+    register(DataDep("ECCO4R1-stdiags",st_d_md("ECCO4 release 1"),
+        ["https://zenodo.org/record/6123262/files/ECCOv4r1_analysis.tar.gz"],
+        post_fetch_method=unpackDV))
+    register(DataDep("ECCO4R2-stdiags",st_d_md("ECCO4 release 2"),
+        ["https://zenodo.org/record/6123272/files/ECCOv4r2_analysis.tar.gz"],
+        post_fetch_method=unpackDV))
+    register(DataDep("ECCO4R3-stdiags",st_d_md("ECCO4 release 3"),
+        ["https://zenodo.org/record/6123288/files/ECCOv4r3_analysis.tar.gz"],
+        post_fetch_method=unpackDV))
+    register(DataDep("ECCO4R4-stdiags",st_d_md("ECCO4 release 4"),
+        ["https://zenodo.org/record/6123127/files/ECCOv4r4_analysis.tar.gz"],
+        post_fetch_method=unpackDV))
+    register(DataDep("ECCO4R5-stdiags",st_d_md("ECCO4 release 5"),
+        ["https://zenodo.org/record/7869067/files/ECCOv4r5_rc2_analysis.tar.gz"],
+        post_fetch_method=unpackDV))
+    register(DataDep("OCCA2HR1-stdiags",st_d_md("OCCA2 historical run 1"),
+        ["https://zenodo.org/records/11062685/files/OCCA2HR1_analysis.tar.gz"],
+        post_fetch_method=unpackDV))
+end
+
 """
     ECCOdiags_add(nam::String)
 
 Add data to the scratch space folder. Known options for `nam` include 
 "release1", "release2", "release3", "release4", "release5", and "OCCA2HR1".
+
+Under the hood this is the same as:
+
+```
+OceanStateEstimation.downloads.datadep"ECCO4R1-stdiags"
+OceanStateEstimation.downloads.datadep"ECCO4R2-stdiags"
+OceanStateEstimation.downloads.datadep"ECCO4R3-stdiags"
+OceanStateEstimation.downloads.datadep"ECCO4R4-stdiags"
+OceanStateEstimation.downloads.datadep"ECCO4R5-stdiags"
+OceanStateEstimation.downloads.datadep"OCCA2HR1-stdiags"
+```
 """
 function ECCOdiags_add(nam::String)
     if nam=="release1"
-        url="https://zenodo.org/record/6123262/files/ECCOv4r1_analysis.tar.gz"
-        fil="ECCOv4r1_analysis.tar.gz"
+        datadep"ECCO4R1-stdiags"
     elseif nam=="release2"
-        url="https://zenodo.org/record/6123272/files/ECCOv4r2_analysis.tar.gz"
-        fil="ECCOv4r2_analysis.tar.gz"
+        datadep"ECCO4R2-stdiags"
     elseif nam=="release3"
-        url="https://zenodo.org/record/6123288/files/ECCOv4r3_analysis.tar.gz"
-        fil="ECCOv4r3_analysis.tar.gz"
+        datadep"ECCO4R3-stdiags"
     elseif nam=="release4"
-        url="https://zenodo.org/record/6123127/files/ECCOv4r4_analysis.tar.gz"
-        fil="ECCOv4r4_analysis.tar.gz"
+        datadep"ECCO4R4-stdiags"
     elseif nam=="release5"
-        url="https://zenodo.org/record/7869067/files/ECCOv4r5_rc2_analysis.tar.gz"
-        fil="ECCOv4r5_rc2_analysis.tar.gz"
+        datadep"ECCO4R5-stdiags"
     elseif nam=="OCCA2HR1"
-        url="https://zenodo.org/records/11062685/files/OCCA2HR1_analysis.tar.gz"
-        fil="OCCA2HR1_analysis.tar.gz"
+        datadep"OCCA2HR1-stdiags"
     else
-        println("unknown release name")
-        url=missing
-        fil=missing
-    end
-
-    if (!ismissing(url))&&(!isdir(joinpath(ScratchSpaces.ECCO,fil)[1:end-7]))
-        println("downloading "*nam*" ... started")
-        ScratchSpaces.download_dataset(url,ScratchSpaces.ECCO)
-        tmp_path=Dataverse.untargz(joinpath(ScratchSpaces.ECCO,fil))
-        mv(joinpath(tmp_path,fil[1:end-7]),joinpath(ScratchSpaces.ECCO,fil[1:end-7]))
-        rm(joinpath(ScratchSpaces.ECCO,fil))
-        println("downloading "*nam*" ... done")
+        println("unknown solution")
     end
 end
 

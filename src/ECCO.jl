@@ -48,7 +48,7 @@ function standard_analysis_setup(pth0="",sol0="")
 	tmp2=joinpath(pth,"Project.toml")
 	!isfile(tmp2) ? cp(tmp1,tmp2) : nothing
 		
-	return pth
+	return pth1
 end
 
 

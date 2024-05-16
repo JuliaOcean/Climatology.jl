@@ -2,6 +2,8 @@ using Documenter, OceanStateEstimation, MITgcm, MeshArrays, NCDatasets, Pkg
 import PlutoSliderServer, CairoMakie
 Pkg.precompile()
 
+ENV["DATADEPS_ALWAYS_ACCEPT"]=true
+
 makedocs(;
     modules=[OceanStateEstimation],
     format=Documenter.HTML(),

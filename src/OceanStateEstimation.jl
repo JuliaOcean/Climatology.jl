@@ -44,4 +44,9 @@ export get_occa_variable_if_needed, get_occa_velocity_if_needed
 export ECCO, ECCO_helpers, ECCO_io, ECCO_diagnostics
 export ScratchSpaces
 
+__init__() = begin
+    ScratchSpaces.__init__scratch()
+    downloads.__init__standard_diags()
+end
+
 end # module

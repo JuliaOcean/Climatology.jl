@@ -1,6 +1,8 @@
 using OceanStateEstimation, MITgcm, MeshArrays, NCDatasets, Statistics
 using Test
 
+ENV["DATADEPS_ALWAYS_ACCEPT"]=true
+
 p=dirname(pathof(OceanStateEstimation))
 
 @testset "OceanStateEstimation.jl" begin
