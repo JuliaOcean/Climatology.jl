@@ -35,8 +35,6 @@ module inc
     end
 
 	P=procs.parameters()
-
-    MeshArrays.interpolation_setup()
 end
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
