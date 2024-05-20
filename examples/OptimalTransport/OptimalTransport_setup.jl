@@ -12,7 +12,7 @@ using Statistics, LinearAlgebra, JLD2
 
 ## load files
 
-fil_out=joinpath(OceanStateEstimation.CBIOMESclim_path,"CBIOMES-global-alpha-climatology.nc")
+fil_out=joinpath(datadep"CBIOMES-clim1","CBIOMES-global-alpha-climatology.nc")
 nc=NCTiles.NCDataset(fil_out,"r")
 lon=nc["lon"][:]
 lat=nc["lat"][:]
@@ -25,6 +25,7 @@ j1=findall( (lat.>-20.0).*(lat.<50.0) )
 
 ## main arrays
 Chl_from_Mod=nc["Chl"][i1,j1,:]
+#DataDeps?
 fil_sat="examples_climatology_prep/gridded_geospatial_montly_clim_360_720_ver_0_2.nc"
 Chl_from_Sat=NCTiles.NCDataset(fil_sat,"r")["Chl"][i1,j1,:]
 
