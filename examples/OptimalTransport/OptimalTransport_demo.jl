@@ -65,11 +65,10 @@ begin
 	lons=-179.75:0.5:-120.25
 	lats=-19.75:0.5:49.75
 	
-	pth=joinpath(tempdir(),"OptimalTransport_example")
-	url="https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/OptimalTransport/M.csv"
-	M=Tables.matrix(CSV.read(Downloads.download(url),DataFrame))
-	url="https://raw.githubusercontent.com/gaelforget/OceanStateEstimation.jl/master/examples/OptimalTransport/S.csv"
-	S=Tables.matrix(CSV.read(Downloads.download(url),DataFrame))
+    fil=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples","OptimalTransport","M.csv")
+	M=Tables.matrix(CSV.read(fil,DataFrame))
+    fil=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples","OptimalTransport","S.csv")
+	S=Tables.matrix(CSV.read(fil,DataFrame))
 
 	nx=size(M,1)
 	Cost=Float64.([abs(i-j) for i in 1:nx, j in 1:nx])

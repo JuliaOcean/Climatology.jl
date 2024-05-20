@@ -37,42 +37,6 @@ import OceanStateEstimation: read_nctiles_alias
 using Statistics, MeshArrays
 using Dataverse, DataDeps, Glob
 
-##
-
-"""
-    MITPROFclim_download()
-
-Download lazy artifact to scratch space.
-"""   
-function MITPROFclim_download()
-    url = "https://zenodo.org/record/5101243/files/gcmfaces_climatologies.tar.gz"
-    fil="gcmfaces_climatologies.tar.gz"
-    dir_out=joinpath(ScratchSpaces.MITprof,fil[1:end-7])
-    if !isdir(dir_out)
-        ScratchSpaces.download_dataset(url,ScratchSpaces.MITprof)
-        tmp_path=Dataverse.untargz(joinpath(ScratchSpaces.MITprof,fil))
-        mv(tmp_path,dir_out)
-        rm(joinpath(ScratchSpaces.MITprof,fil))
-    end
-end
-    
-"""
-    CBIOMESclim_download()
-
-Download lazy artifact to scratch space.
-"""
-function CBIOMESclim_download()
-    url="https://zenodo.org/record/5598417/files/CBIOMES-global-alpha-climatology.nc.tar.gz"
-    fil="CBIOMES-global-alpha-climatology.nc.tar.gz"
-    fil_out=joinpath(ScratchSpaces.CBIOMES,fil[1:end-7])
-    if !isfile(fil_out)
-        ScratchSpaces.download_dataset(url,ScratchSpaces.CBIOMES)
-        tmp_path=Dataverse.untargz(joinpath(ScratchSpaces.CBIOMES,fil))
-        mv(joinpath(tmp_path,fil[1:end-7]),fil_out)
-        rm(joinpath(ScratchSpaces.CBIOMES,fil))
-    end
-end
-
 ## Dataverse Donwloads
 
 """
@@ -145,8 +109,7 @@ function get_occa_velocity_if_needed()
     "done"
 end
 
-## zenodo.org Downloads
-
+## zenodo.org and other ownloads
 
 st_d_md(txt="ECCO version 4 release 2") = 
     """
@@ -161,11 +124,12 @@ Like DataDeps's `:unpack` but using `Dataverse.untargz` and remove the `.tar.gz`
 """    
 function unpackDV(filepath)
     tmp_path=Dataverse.untargz(filepath)
-    tmp_path=joinpath(tmp_path,basename(filepath)[1:end-7])
-    #mv(tmp_path,joinpath(dirname(filepath),"jld"))
+    tmp_path2=joinpath(tmp_path,basename(filepath)[1:end-7])
+    tmp_path=(ispath(tmp_path2) ? tmp_path2 : tmp_path)
     [mv(p,joinpath(dirname(filepath),basename(p))) for p in glob("*",tmp_path)]
+    [println(joinpath(dirname(filepath),basename(p))) for p in glob("*",tmp_path)]
     rm(filepath)
-    "done with unpack2"
+    "done with unpackDV for "*filepath
 end
 
 """
@@ -192,6 +156,12 @@ function __init__standard_diags()
     register(DataDep("OCCA2HR1-stdiags",st_d_md("OCCA2 historical run 1"),
         ["https://zenodo.org/records/11062685/files/OCCA2HR1_analysis.tar.gz"],
         post_fetch_method=unpackDV))
+    register(DataDep("CBIOMES-clim1","CBIOMES global model climatology",
+        ["https://zenodo.org/record/5598417/files/CBIOMES-global-alpha-climatology.nc.tar.gz"],
+        post_fetch_method=unpackDV))
+    register(DataDep("MITprof-clim1","MITprof gridded climatologies",
+        ["https://zenodo.org/record/5101243/files/gcmfaces_climatologies.tar.gz"],
+        post_fetch_method=unpackDV))
 end
 
 """
@@ -203,12 +173,13 @@ Add data to the scratch space folder. Known options for `nam` include
 Under the hood this is the same as:
 
 ```
-OceanStateEstimation.downloads.datadep"ECCO4R1-stdiags"
-OceanStateEstimation.downloads.datadep"ECCO4R2-stdiags"
-OceanStateEstimation.downloads.datadep"ECCO4R3-stdiags"
-OceanStateEstimation.downloads.datadep"ECCO4R4-stdiags"
-OceanStateEstimation.downloads.datadep"ECCO4R5-stdiags"
-OceanStateEstimation.downloads.datadep"OCCA2HR1-stdiags"
+using OceanStateEstimation
+datadep"ECCO4R1-stdiags"
+datadep"ECCO4R2-stdiags"
+datadep"ECCO4R3-stdiags"
+datadep"ECCO4R4-stdiags"
+datadep"ECCO4R5-stdiags"
+datadep"OCCA2HR1-stdiags"
 ```
 """
 function ECCOdiags_add(nam::String)
@@ -228,5 +199,19 @@ function ECCOdiags_add(nam::String)
         println("unknown solution")
     end
 end
+
+"""
+    MITPROFclim_download()
+
+Download lazy artifact to scratch space.
+"""   
+MITPROFclim_download() = datadep"MITprof-clim1"
+    
+"""
+    CBIOMESclim_download()
+
+Download lazy artifact to scratch space.
+"""
+CBIOMESclim_download() = datadep"CBIOMES-clim1"
 
 end

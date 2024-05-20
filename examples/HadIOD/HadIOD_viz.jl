@@ -89,8 +89,9 @@ begin
 	fig=Figure()
 	ax1=Axis(fig[1,1],xlabel="potemp",ylabel="depth",
 	    title="profile no "*string(prof))
-	lines!(ax1,potemp,-depth,label="uncorrected")
-	scatter!(ax1,potemp+BT+BP,-depth,marker=:x,markersize=10.0,label="corrected")
+	scatter!(ax1,potemp,-depth,label="uncorrected")
+	scatter!(ax1,potemp+BT+BP,-depth,color=:red,
+		marker=:x,markersize=5.0,label="corrected")
 	axislegend(ax1,position=:rb)
 	
 	ax2=Axis(fig[1,2],xlabel="latitude",ylabel="temp[1] (i.e., sst)",
@@ -98,7 +99,8 @@ begin
 	nn=length(sst)
 	nn>200 ? ii=shuffle(1:nn)[1:200] : ii=1:nn
 	scatter!(ax2,lat[ii],sst[ii],label="uncorrected")
-	scatter!(ax2,lat[ii],sst[ii]+sst_corr[ii],marker=:x,markersize=20.0,label="corrected")
+	scatter!(ax2,lat[ii],sst[ii]+sst_corr[ii],
+		color=:red,marker=:x,markersize=8.0,label="corrected")
 	axislegend(ax2,position=:rt)
 	
 	fig

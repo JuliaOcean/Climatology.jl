@@ -12,15 +12,10 @@ function read_mdsio_alias end
 include("downloads.jl")
 include("ECCO.jl")
 
-get_ecco_files=downloads.get_ecco_files
-get_ecco_variable_if_needed=downloads.get_ecco_variable_if_needed
-get_ecco_velocity_if_needed=downloads.get_ecco_velocity_if_needed
-get_occa_variable_if_needed=downloads.get_occa_variable_if_needed
-get_occa_velocity_if_needed=downloads.get_occa_velocity_if_needed
-
-MITPROFclim_download=downloads.MITPROFclim_download
-CBIOMESclim_download=downloads.CBIOMESclim_download
-ECCOdiags_add=downloads.ECCOdiags_add
+import OceanStateEstimation.downloads: get_ecco_files, get_ecco_variable_if_needed, get_ecco_velocity_if_needed
+import OceanStateEstimation.downloads: get_occa_variable_if_needed, get_occa_velocity_if_needed
+import OceanStateEstimation.downloads: ECCOdiags_add, CBIOMESclim_download, MITPROFclim_download
+import DataDeps; import DataDeps: @datadep_str
 
 using Glob
 
@@ -37,7 +32,7 @@ function examples()
     ex=[glob("*/"*e,nb)[1] for e in ex_known]
 end
 
-export ECCOdiags_add
+export @datadep_str, ECCOdiags_add
 export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 export get_occa_variable_if_needed, get_occa_velocity_if_needed
 
