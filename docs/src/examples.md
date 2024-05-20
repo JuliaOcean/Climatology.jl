@@ -21,8 +21,8 @@ The [CBIOMES1](https://github.com/CBIOMES/global-ocean-model) climatology (alpha
 
 ## Other Notebooks
 
-- [OptimalTransport\_demo.jl](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev/examples/OptimalTransport_demo.html) : using optimal transport for e.g. model-data comparison
-- [HadIOD\_viz.jl](https://github.com/JuliaOcean/OceanStateEstimation.jl/blob/master/examples/HadIOD/HadIOD_viz.jl) : download, read, and plot a subset of the [HadIOD](https://www.metoffice.gov.uk/hadobs/hadiod/) T/S database
+- [OptimalTransport\_demo.jl](OptimalTransport_demo.html) : using optimal transport for e.g. model-data comparison
+- [HadIOD\_viz.jl](HadIOD_viz.jl) : download, read, and plot a subset of the [HadIOD](https://www.metoffice.gov.uk/hadobs/hadiod/) T/S database
 
 ## References
 
