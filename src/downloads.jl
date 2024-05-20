@@ -126,10 +126,15 @@ function unpackDV(filepath)
     tmp_path=Dataverse.untargz(filepath)
     tmp_path2=joinpath(tmp_path,basename(filepath)[1:end-7])
     tmp_path=(ispath(tmp_path2) ? tmp_path2 : tmp_path)
-    [mv(p,joinpath(dirname(filepath),basename(p))) for p in glob("*",tmp_path)]
-    [println(joinpath(dirname(filepath),basename(p))) for p in glob("*",tmp_path)]
-    rm(filepath)
-    "done with unpackDV for "*filepath
+    if isdir(tmp_path)
+        [mv(p,joinpath(dirname(filepath),basename(p))) for p in glob("*",tmp_path)]
+        [println(joinpath(dirname(filepath),basename(p))) for p in glob("*",tmp_path)]
+        rm(filepath)
+    else
+        rm(filepath)
+        mv(tmp_path,joinpath(dirname(filepath),basename(tmp_path)))
+    end
+    println("done with unpackDV for "*filepath)
 end
 
 """
