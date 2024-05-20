@@ -386,7 +386,7 @@ module plots
 		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, time mean)",
 				xlabel="latitude",ylabel="depth (in m)")
-		hm1=contourf!(ax1,x,y,z,levels=levs,clims=extrema(levs))
+		hm1=contourf!(ax1,x,y,z,levels=levs)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
 		fig1
 	end
