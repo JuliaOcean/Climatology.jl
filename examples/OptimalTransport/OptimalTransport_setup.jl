@@ -12,7 +12,6 @@ using Statistics, LinearAlgebra, JLD2
 
 ## load files
 
-#DataDeps?
 fil_out=joinpath(datadep"CBIOMES-clim1","CBIOMES-global-alpha-climatology.nc")
 nc=NCTiles.NCDataset(fil_out,"r")
 lon=nc["lon"][:]

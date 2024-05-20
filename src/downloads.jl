@@ -164,9 +164,11 @@ function __init__standard_diags()
     register(DataDep("CBIOMES-clim1","CBIOMES global model climatology",
         ["https://zenodo.org/record/5598417/files/CBIOMES-global-alpha-climatology.nc.tar.gz"],
         post_fetch_method=unpackDV))
+    register(DataDep("CBIOMES-PML1","CBIOMES global model climatology",
+        ["https://rsg.pml.ac.uk/shared_files/brj/CBIOMES_ecoregions/ver_0_2_6/gridded_darwin_montly_clim_360_720_ver_0_2_6.nc"]))
     register(DataDep("MITprof-clim1","MITprof gridded climatologies",
         ["https://zenodo.org/record/5101243/files/gcmfaces_climatologies.tar.gz"],
-        post_fetch_method=unpackDV))
+        post_fetch_method=unpackDV))        
 end
 
 """
@@ -217,6 +219,14 @@ MITPROFclim_download() = datadep"MITprof-clim1"
 
 Download lazy artifact to scratch space.
 """
-CBIOMESclim_download() = datadep"CBIOMES-clim1"
+CBIOMESclim_download(nam="clim1") = begin
+    if nam=="clim1"
+        datadep"CBIOMES-clim1"
+    elseif nam=="PML1"
+        datadep"CBIOMES-PML1"
+    else
+        println("unknown data set")
+    end
+end
 
 end
