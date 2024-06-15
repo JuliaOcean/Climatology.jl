@@ -21,5 +21,5 @@ ECCO_diagnostics.driver
 ```
 
 ```@autodocs
-Modules = [OceanStateEstimation.ECCO_io]
+Modules = [Climatology.ECCO_io]
 ```

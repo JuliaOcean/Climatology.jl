@@ -31,9 +31,9 @@ end
 
 module downloads
 
-import OceanStateEstimation: pkg_pth
-import OceanStateEstimation: ScratchSpaces
-import OceanStateEstimation: read_nctiles_alias
+import Climatology: pkg_pth
+import Climatology: ScratchSpaces
+import Climatology: read_nctiles_alias
 using Statistics, MeshArrays
 using Dataverse, DataDeps, Glob
 
@@ -43,9 +43,9 @@ using Dataverse, DataDeps, Glob
     get_ecco_files(γ::gcmgrid,v::String,t=1)
 
 ```
-using MeshArrays, OceanStateEstimation, MITgcm
+using MeshArrays, Climatology, MITgcm
 γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-tmp=OceanStateEstimation.get_ecco_files(γ,"oceQnet")
+tmp=Climatology.get_ecco_files(γ,"oceQnet")
 ```
 """
 function get_ecco_files(γ::gcmgrid,v::String,t=1)
@@ -180,7 +180,7 @@ Add data to the scratch space folder. Known options for `nam` include
 Under the hood this is the same as:
 
 ```
-using OceanStateEstimation
+using Climatology
 datadep"ECCO4R1-stdiags"
 datadep"ECCO4R2-stdiags"
 datadep"ECCO4R3-stdiags"

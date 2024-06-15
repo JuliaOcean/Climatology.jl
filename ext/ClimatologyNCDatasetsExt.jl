@@ -1,6 +1,6 @@
-module OceanStateEstimationNCDatasetsExt
+module ClimatologyNCDatasetsExt
 
-    import OceanStateEstimation: read_Dataset 
+    import Climatology: read_Dataset 
     
     import NCDatasets: Dataset
 

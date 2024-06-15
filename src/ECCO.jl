@@ -2,7 +2,7 @@
 module ECCO
 
 using Pkg
-import OceanStateEstimation: pkg_pth
+import Climatology: pkg_pth
 
 """
     ECCO.standard_analysis_setup(pth0::String)
@@ -14,7 +14,7 @@ Data folder `pth0` should be the path to ECCO data.
 For example:
 
 ```
-using OceanStateEstimation, Pkg
+using Climatology, Pkg
 pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
 ```
 
@@ -59,7 +59,7 @@ end
 module ECCO_helpers
 
 using MeshArrays, TOML, JLD2, Glob
-import OceanStateEstimation: read_Dataset
+import Climatology: read_Dataset
 
 """
     parameters(P0,params)
@@ -330,7 +330,7 @@ end #module ECCO_helpers
 module ECCO_io
 
 using MeshArrays
-import OceanStateEstimation: read_nctiles_alias, read_Dataset, read_mdsio_alias
+import Climatology: read_nctiles_alias, read_Dataset, read_mdsio_alias
 
 """
     read_monthly(P,nam,t)
@@ -504,7 +504,7 @@ end #module ECCO_io
 module ECCO_diagnostics
 
 using SharedArrays, Distributed, Printf, JLD2, MeshArrays
-import OceanStateEstimation: ECCO_io, ECCO_helpers
+import Climatology: ECCO_io, ECCO_helpers
 
 """
 List of variables derived in this module:

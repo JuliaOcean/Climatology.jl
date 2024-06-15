@@ -1,11 +1,11 @@
-using Documenter, OceanStateEstimation, MITgcm, MeshArrays, NCDatasets, Pkg
+using Documenter, Climatology, MITgcm, MeshArrays, NCDatasets, Pkg
 import PlutoSliderServer, CairoMakie
 Pkg.precompile()
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
 makedocs(;
-    modules=[OceanStateEstimation],
+    modules=[Climatology],
     format=Documenter.HTML(),
     pages=[
         "Home" => "index.md",
@@ -13,15 +13,15 @@ makedocs(;
         "ECCO" => "ECCO.md",
         "Files" => "API.md",
     ],
-    repo="https://github.com/JuliaOcean/OceanStateEstimation.jl/blob/{commit}{path}#L{line}",
-    sitename="OceanStateEstimation.jl",
+    repo="https://github.com/JuliaOcean/Climatology.jl/blob/{commit}{path}#L{line}",
+    sitename="Climatology.jl",
     authors="JuliaOcean <gforget@mit.edu>",
     warnonly = [:cross_references,:missing_docs],
 )
 
-OceanStateEstimation.CBIOMESclim_download()
-OceanStateEstimation.ECCOdiags_add("release2")
-OceanStateEstimation.ECCOdiags_add("OCCA2HR1")
+Climatology.CBIOMESclim_download()
+Climatology.ECCOdiags_add("release2")
+Climatology.ECCOdiags_add("OCCA2HR1")
 interpolation_setup()
 
 #lst=("CBIOMES_climatogy_create.jl",)
@@ -45,5 +45,5 @@ end
 end
 
 deploydocs(;
-    repo="github.com/JuliaOcean/OceanStateEstimation.jl",
+    repo="github.com/JuliaOcean/Climatology.jl",
 )

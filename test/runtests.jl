@@ -1,13 +1,13 @@
-using OceanStateEstimation, MITgcm, MeshArrays, NCDatasets, Statistics
+using Climatology, MITgcm, MeshArrays, NCDatasets, Statistics
 using Test
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
-p=dirname(pathof(OceanStateEstimation))
+p=dirname(pathof(Climatology))
 
-@testset "OceanStateEstimation.jl" begin
+@testset "Climatology.jl" begin
     γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-    tmp=OceanStateEstimation.get_ecco_files(γ,"oceQnet")
+    tmp=Climatology.get_ecco_files(γ,"oceQnet")
     tmp=[mean(tmp[j][findall((!isnan).(tmp[j]))]) for j=1:5]
     ref=[19.88214831145215,47.63055475475805,-44.1122401210416,
          3.4402271721659816,30.14270126344508]
@@ -23,9 +23,9 @@ p=dirname(pathof(OceanStateEstimation))
 
     ##
 
-    OceanStateEstimation.MITPROFclim_download()
-    OceanStateEstimation.CBIOMESclim_download()
-    OceanStateEstimation.ECCOdiags_add("release2")
+    Climatology.MITPROFclim_download()
+    Climatology.CBIOMESclim_download()
+    Climatology.ECCOdiags_add("release2")
     @test true 
 
     ##

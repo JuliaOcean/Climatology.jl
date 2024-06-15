@@ -1,6 +1,6 @@
-module OceanStateEstimationMITgcmExt
+module ClimatologyMITgcmExt
 
-    import OceanStateEstimation: read_nctiles_alias, read_mdsio_alias
+    import Climatology: read_nctiles_alias, read_mdsio_alias
 
     import MITgcm: read_nctiles, read_mdsio
 

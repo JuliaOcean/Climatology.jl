@@ -9,15 +9,15 @@ Climatologies are readily downloaded and accessed using the [Scratch.jl](https:/
 ECCO climatology files can downloaded using `get_ecco_files`. These files are for version 4 release 2, on the native model grid.
 
 ```@example 1
-using OceanStateEstimation, MeshArrays
+using Climatology, MeshArrays
 γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-tmp=OceanStateEstimation.get_ecco_files(γ,"ETAN")
+tmp=Climatology.get_ecco_files(γ,"ETAN")
 ```
 
 Precomputed quantities shown in [ECCO\_standard\_plots.jl](examples/ECCO_standard_plots.html) can be downloaded separately.
 
 ```@example 1
-OceanStateEstimation.ECCOdiags_add("release2")
+Climatology.ECCOdiags_add("release2")
 readdir(ScratchSpaces.ECCO)
 ```
 
@@ -69,5 +69,5 @@ Gridded fields are mostly retrieved from [Harvard Dataverse](https://dataverse.h
 ## Functions Reference
 
 ```@autodocs
-Modules = [OceanStateEstimation.downloads]
+Modules = [Climatology.downloads]
 ```

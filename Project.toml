@@ -1,4 +1,4 @@
-name = "OceanStateEstimation"
+name = "Climatology"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 authors = ["gaelforget <gforget@mit.edu>"]
 version = "0.4.6"
@@ -22,8 +22,8 @@ MITgcm = "dce5fa8e-68ce-4431-a242-9469c69627a0"
 NCDatasets = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
 
 [extensions]
-OceanStateEstimationMITgcmExt = ["MITgcm"]
-OceanStateEstimationNCDatasetsExt = ["NCDatasets"]
+ClimatologyMITgcmExt = ["MITgcm"]
+ClimatologyNCDatasetsExt = ["NCDatasets"]
 
 [compat]
 DataDeps = "0.7"

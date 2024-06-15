@@ -1,19 +1,19 @@
 
 ## Physical Oceanography
 
-- [Ocean State Estimate](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/ECCO/ECCO_standard_plots.jl)) : explore the Ocean climatology for temperature, currents, and more.
-- [Sea Level Estimates](NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/NSLCT/NSLCT_notebook.jl)) : plot global mean sea level data from NASA and Dataverse.
+- [Ocean State Estimate](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/ECCO/ECCO_standard_plots.jl)) : explore the Ocean climatology for temperature, currents, and more.
+- [Sea Level Estimates](NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/NSLCT/NSLCT_notebook.jl)) : plot global mean sea level data from NASA and Dataverse.
 
 ### Detail
 
-[ECCO\_standard\_plots.jl](ECCO_standard_plots.html) lets you explore climate indices and climatologies derived (via [this](https://github.com/JuliaOcean/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_calcs.jl) and [that](https://github.com/JuliaOcean/OceanStateEstimation.jl/blob/master/examples/ECCO/ECCO_standard_loop.jl)) from gridded, time-variable ocean climatologies (ECCO4, OCCA2). The data is retrieved from [dataverse.org](https://dataverse.harvard.edu/dataverse/ECCO), and intermediate results from [zenodo.org](https://zenodo.org).
+[ECCO\_standard\_plots.jl](ECCO_standard_plots.html) lets you explore climate indices and climatologies derived (via [this](https://github.com/JuliaOcean/Climatology.jl/blob/master/examples/ECCO/ECCO_standard_calcs.jl) and [that](https://github.com/JuliaOcean/Climatology.jl/blob/master/examples/ECCO/ECCO_standard_loop.jl)) from gridded, time-variable ocean climatologies (ECCO4, OCCA2). The data is retrieved from [dataverse.org](https://dataverse.harvard.edu/dataverse/ECCO), and intermediate results from [zenodo.org](https://zenodo.org).
 
 [NSLCT\_notebook.jl](NSLCT_notebook.html) lets you access sea level data from NASA and Dataver portals (`HTTP.jl`, `Dataverse.jl`), organize it into tables (`DataFrames.jl`), and plot it (`Makie.jl`).
 
 ## Marine Ecosystems
 
-- [Plankton, Chemistry, and Light](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl)) : visualize ocean colour and biomass climatologies
-- [CBIOMES\_climatology\_create](https://JuliaOcean.github.io/OceanStateEstimation.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanStateEstimation.jl/master/examples/CBIOMES/CBIOMES_climatology_create.jl)) : recreate the CBIOMES-global climatology files
+- [Plankton, Chemistry, and Light](CBIOMES_climatology_plot.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/CBIOMES/CBIOMES_climatology_plot.jl)) : visualize ocean colour and biomass climatologies
+- [CBIOMES\_climatology\_create](https://JuliaOcean.github.io/Climatology.jl/v0.1.13/examples/CBIOMES_model_climatogy.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/CBIOMES/CBIOMES_climatology_create.jl)) : recreate the CBIOMES-global climatology files
 
 ### Detail
 
@@ -51,7 +51,7 @@ The [CBIOMES1](https://github.com/CBIOMES/global-ocean-model) climatology (alpha
 !!! note
     To run the notebook on a local computer or in the cloud, please refer to the [Pluto docs](https://github.com/fonsp/Pluto.jl/wiki). Directions are also provided in the following pages.
 
-- [ECCO\_standard\_plots.jl](https://JuliaOcean.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html)
+- [ECCO\_standard\_plots.jl](https://JuliaOcean.github.io/Climatology.jl/dev/examples/ECCO_standard_plots.html)
 - [JuliaClimate How-To](https://juliaclimate.github.io/Notebooks/#directions) 
 - [ECCO/Julia storymap](https://ecco-group.org/storymaps.htm?id=69)
 - [video demonstration](https://www.youtube.com/watch?v=mZevMagHatc&list=PLXO7Tdh24uhPFZ5bph6Y_Q3-CRSfk5cDU)
