@@ -9,9 +9,13 @@ Climatologies are readily downloaded and accessed using the [Scratch.jl](https:/
 ECCO climatology files can downloaded using `get_ecco_files`. These files are for version 4 release 2, on the native model grid.
 
 ```@example 1
-using Climatology, MeshArrays
+using Climatology
+get_ecco_variable_if_needed("ETAN")
+
+using MeshArrays, MITgcm, NetCDF
+path=joinpath(ScratchSpaces.ECCO,"ETAN/ETAN")
 γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-tmp=Climatology.get_ecco_files(γ,"ETAN")
+tmp=read_nctiles(path,"ETAN",γ,I=(:,:,1))
 ```
 
 Precomputed quantities shown in [ECCO\_standard\_plots.jl](examples/ECCO_standard_plots.html) can be downloaded separately.
