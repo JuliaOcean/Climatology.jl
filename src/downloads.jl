@@ -45,19 +45,11 @@ using Dataverse, DataDeps, Glob
 ```
 using MeshArrays, Climatology, MITgcm
 γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-tmp=Climatology.get_ecco_files(γ,"oceQnet")
+Climatology.get_ecco_files(γ,"oceQnet")
+tmp=read_nctiles(joinpath(ScratchSpaces.ECCO,"oceQnet/oceQnet"),"oceQnet",γ,I=(:,:,1))
 ```
 """
-function get_ecco_files(γ::gcmgrid,v::String,t=1)
-    get_ecco_variable_if_needed(v)
-    try
-        read_nctiles_alias(joinpath(ScratchSpaces.ECCO,"$v/$v"),"$v",γ,I=(:,:,t))
-    catch
-        error("failed: call to `read_nctiles`
-        This method is provided by `MITgcm.jl`
-        and now activated by `using MITgcm` ")
-    end
-end
+get_ecco_files(γ::gcmgrid,v::String,t=1) = get_ecco_variable_if_needed(v)
 
 """
     get_ecco_variable_if_needed(v::String)
