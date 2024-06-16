@@ -3,7 +3,7 @@
 
 module procs
 
-using JLD2, MeshArrays, Statistics, OceanStateEstimation, TOML
+using JLD2, MeshArrays, Statistics, Climatology, TOML
 
 function longname(n)
 	if occursin("_k",n)
@@ -72,14 +72,14 @@ function parameters()
 
 	##
 	
-	path0=OceanStateEstimation.downloads.datadep"OCCA2HR1-stdiags"
+	path0=Climatology.downloads.datadep"OCCA2HR1-stdiags"
 
 	fil_trsp=joinpath(path0,"trsp","trsp.jld2") #
 	ntr=length(load(fil_trsp,"single_stored_object"))
 	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
 	list_trsp=[i[1:end-5] for i in list_trsp]
 
-	pth_colors=joinpath(dirname(pathof(OceanStateEstimation)),"..","examples","ECCO")	
+	pth_colors=joinpath(dirname(pathof(Climatology)),"..","examples","ECCO")	
 	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
 	clim_colors2=TOML.parsefile(joinpath(pth_colors,"clim_colors2.toml"))
 
@@ -134,7 +134,7 @@ function map(nammap,P,statmap,timemap,pth_out)
 		tmp=load(fil,statmap)[:,timemap]
 	end
 
-	DD=Interpolate(P.λ.μ*tmp,P.λ.f,P.λ.i,P.λ.j,P.λ.w)
+	DD=Interpolate(P.μ*tmp,P.λ.f,P.λ.i,P.λ.j,P.λ.w)
 	DD=reshape(DD,size(P.λ.lon))
 	#DD[findall(DD.==0.0)].=NaN
 	statmap=="std" ? rng=P.clim_colors2[nam] : rng=P.clim_colors1[nam]
