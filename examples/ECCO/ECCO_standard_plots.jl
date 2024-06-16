@@ -61,9 +61,6 @@ The ocean state history for the 1980-2023 period is depicted in this notebook us
 # ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 md"""## Climatology Map"""
 
-# ╔═╡ 0358d92a-2e09-4fde-ab68-cf2d05a453d7
-inc.P
-
 # ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
 begin
 	nammap_select = @bind nammap Select(inc.P.clim_longname,default=inc.P.clim_longname[11])
@@ -444,10 +441,11 @@ RollingFunctions = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-ClimateModels = "~0.3.2"
-JLD2 = "~0.4.47"
-MeshArrays = "~0.3.3"
-PlutoUI = "~0.7.58"
+CairoMakie = "~0.12.2"
+ClimateModels = "~0.3.5"
+JLD2 = "~0.4.48"
+MeshArrays = "~0.3.8"
+PlutoUI = "~0.7.59"
 RollingFunctions = "~0.8.0"
 """
 
@@ -457,7 +455,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "e2e3e52b246dadf36fe551a9839b4e45a2de287d"
+project_hash = "f381796ec2d133151d6d6c2372fd1defb57fef92"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -666,7 +664,7 @@ version = "0.3.5"
 
 [[deps.Climatology]]
 deps = ["DataDeps", "Dataverse", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "Scratch", "SharedArrays", "Statistics", "TOML"]
-path = "/Users/gaelforget/work/code/julia_pkg/OceanStateEstimation.jl"
+git-tree-sha1 = "f13673892d22239adc80f27ad3dd98e45aa4ffaf"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 version = "0.5.0"
 
@@ -2318,7 +2316,6 @@ version = "3.5.0+0"
 # ╟─63b0b781-c6b0-46a1-af06-a228af8211dc
 # ╟─8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 # ╟─4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-# ╠═0358d92a-2e09-4fde-ab68-cf2d05a453d7
 # ╟─17fc2e78-628e-4082-8191-adf07abcc3ff
 # ╟─60b73ddd-ec82-4a52-87b6-058728f150a4
 # ╟─1df3bd3c-1396-4cd0-bfd2-3a05dec68261

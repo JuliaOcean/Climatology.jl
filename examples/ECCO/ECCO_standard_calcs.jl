@@ -17,7 +17,7 @@ end
 # ╔═╡ 5671b654-cfa1-11ec-05c2-6b103f4ebc5f
 begin
 	using Pkg; Pkg.activate()
-	using Distributed, OceanStateEstimation, PlutoUI
+	using Distributed, Climatology, PlutoUI
 
 	pth0=pwd()
 	pth=ECCO.standard_analysis_setup(pth0)
@@ -32,7 +32,7 @@ TableOfContents()
 # ╔═╡ d85d789a-ca6d-4591-b969-5534fd472018
 md"""# Standard Diagnostic Computations
 
-Here we interactively compute standard diagnostics plotted in [ECCO\_standard\_plots.jl](https://gaelforget.github.io/OceanStateEstimation.jl/dev/examples/ECCO_standard_plots.html) from ECCO climatology.
+Here we interactively compute standard diagnostics plotted in [ECCO\_standard\_plots.jl](https://gaelforget.github.io/Climatology.jl/dev/examples/ECCO_standard_plots.html) from ECCO climatology.
 """
 
 # ╔═╡ 99a4f24c-863a-4939-b422-6791f14f6341
