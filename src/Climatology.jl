@@ -4,10 +4,13 @@ pkg_pth=dirname(pathof(Climatology))
 
 #read_Dataset : Placeholder to allow NCDatasets extension, which is activated by `using NCDatasets`.
 #read_nctiles_alias : Placeholder to allow MITgcmTools extension, which is activated by `using MITgcmTools`.
-
 function read_Dataset end
 function read_nctiles_alias end
 function read_mdsio_alias end
+
+#packages that extensions import from Climatology
+using Glob, RollingFunctions, JLD2, Statistics
+function plot_examples end; export plot_examples
 
 include("downloads.jl")
 include("ECCO.jl")
@@ -16,8 +19,6 @@ import Climatology.downloads: get_ecco_files, get_ecco_variable_if_needed, get_e
 import Climatology.downloads: get_occa_variable_if_needed, get_occa_velocity_if_needed
 import Climatology.downloads: ECCOdiags_add, CBIOMESclim_download, MITPROFclim_download
 import DataDeps; import DataDeps: @datadep_str
-
-using Glob
 
 """
    examples()
@@ -36,7 +37,7 @@ export @datadep_str, ECCOdiags_add
 export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 export get_occa_variable_if_needed, get_occa_velocity_if_needed
 
-export ECCO, ECCO_helpers, ECCO_io, ECCO_diagnostics
+export ECCO, ECCO_helpers, ECCO_io, ECCO_diagnostics, ECCO_procs
 export ScratchSpaces
 
 __init__() = begin
