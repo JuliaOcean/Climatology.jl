@@ -9,7 +9,7 @@ author: Gaël Forget
 - examples/gridded_darwin_montly_clim_360_720_ver_0_2_6.nc 
 """
 
-using OceanStateEstimation, JLD2, NCTiles, Statistics
+using Climatology, JLD2, NCTiles, Statistics
 import CairoMakie as Mkie
 
 ##

@@ -123,7 +123,7 @@ NCDatasets = "~0.14.4"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.3"
+julia_version = "1.10.4"
 manifest_format = "2.0"
 project_hash = "a5785ecc47cb4017f6ce092d62276d836bfa95db"
 
@@ -1671,10 +1671,10 @@ version = "3.5.0+0"
 """
 
 # ╔═╡ Cell order:
-# ╠═61f3aaed-8232-4b3f-9977-75f819ebaf82
-# ╠═bf3eb4a0-bb5e-42cd-ad84-37b76ca27eb2
-# ╠═b39a3ae4-75b1-40a4-bd5e-0f831719b514
-# ╠═882a2381-4653-4534-961a-a33918689048
-# ╠═98c77df6-16a1-11ef-38c9-bb04220b0d29
+# ╟─61f3aaed-8232-4b3f-9977-75f819ebaf82
+# ╟─bf3eb4a0-bb5e-42cd-ad84-37b76ca27eb2
+# ╟─b39a3ae4-75b1-40a4-bd5e-0f831719b514
+# ╟─882a2381-4653-4534-961a-a33918689048
+# ╟─98c77df6-16a1-11ef-38c9-bb04220b0d29
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

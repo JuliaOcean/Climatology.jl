@@ -1,7 +1,7 @@
-using Distributed, OceanStateEstimation
+using Distributed, Climatology
 
 @everywhere begin
-    using Pkg, OceanStateEstimation
+    using Pkg, Climatology
     pth0=pwd()
     pth=ECCO.standard_analysis_setup(pth0)
     Pkg.activate(pth)

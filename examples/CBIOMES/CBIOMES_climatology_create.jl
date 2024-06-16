@@ -6,7 +6,7 @@ using InteractiveUtils
 
 # ╔═╡ 4e55fa2e-3193-11ec-3a50-2defc49cc54d
 begin
-	using OceanStateEstimation, MeshArrays, NCTiles, MITgcmTools, OceanColorData
+	using Climatology, MeshArrays, NCTiles, MITgcmTools, OceanColorData
 	using PlutoUI, JLD2, CairoMakie
 	import CairoMakie as Mkie
 	"Done with packages"
@@ -551,7 +551,7 @@ MITgcmTools = "62725fbc-3a66-4df3-9000-e33e85b3a198"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 NCTiles = "4c1fdd90-559f-11e9-1abf-07ceafc4ffc0"
 OceanColorData = "39357346-8f20-4302-be7b-c20dcd116b7a"
-OceanStateEstimation = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
+Climatology = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
@@ -561,7 +561,7 @@ MITgcmTools = "~0.1.30"
 MeshArrays = "~0.2.25"
 NCTiles = "~0.1.13"
 OceanColorData = "~0.1.1"
-OceanStateEstimation = "~0.1.12"
+Climatology = "~0.1.12"
 PlutoUI = "~0.7.16"
 """
 
@@ -1423,7 +1423,7 @@ git-tree-sha1 = "63abcf2fbbf20e52204a4e7529514a6bd10e5b76"
 uuid = "39357346-8f20-4302-be7b-c20dcd116b7a"
 version = "0.1.1"
 
-[[OceanStateEstimation]]
+[[Climatology]]
 deps = ["Downloads", "FortranFiles", "MITgcmTools", "MeshArrays", "Pkg", "Statistics"]
 git-tree-sha1 = "649d102b549b31d1ee5fc7c068c9a8b92692b044"
 uuid = "891f6deb-a4f5-4bc5-a2e3-1e8f649cdd2c"
