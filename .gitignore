@@ -12,3 +12,4 @@ examples/GRID_LL360/
 examples/OCCA_climatology/
 examples/GRID_LLC90/
 examples/nctiles_climatology/
+test/Manifest.toml

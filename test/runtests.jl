@@ -1,13 +1,15 @@
-using Climatology, MITgcm, MeshArrays, NCDatasets, Statistics
-using Test
+using Test, Climatology, Statistics, MITgcm
+import NCDatasets, NetCDF, MeshArrays
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
 p=dirname(pathof(Climatology))
 
 @testset "Climatology.jl" begin
-    γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-    tmp=Climatology.get_ecco_files(γ,"oceQnet")
+    γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+    Climatology.get_ecco_files(γ,"oceQnet")
+    tmp=read_nctiles(joinpath(ScratchSpaces.ECCO,"oceQnet/oceQnet"),"oceQnet",γ,I=(:,:,1))
+    
     tmp=[mean(tmp[j][findall((!isnan).(tmp[j]))]) for j=1:5]
     ref=[19.88214831145215,47.63055475475805,-44.1122401210416,
          3.4402271721659816,30.14270126344508]
