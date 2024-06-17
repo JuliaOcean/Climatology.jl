@@ -292,22 +292,22 @@ MC.outputs[:DepthTime]=Climatology.plot_examples(:ECCO_DepthTime,
 begin
 	save_global=true
 	gl1=ECCO_procs.glo(pth_out,ngl1,kgl1,year0,year1)
-	MC.outputs[:global]=Climatology.plot_examples(:ECCO_glo,gl1,year0,year1)
+	MC.outputs[:global]=Climatology.plot_examples(:ECCO_GlobalMean,gl1,year0,year1)
 end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
 MC.outputs[:OHT]=Climatology.plot_examples(:ECCO_OHT,pth_out)
 
 # ╔═╡ 594c8843-f03f-4230-bdba-a943d535524d
-MC.outputs[:overturning]=Climatology.plot_examples(:ECCO_figov2,pth_out,P.Γ)
+MC.outputs[:overturning]=Climatology.plot_examples(:ECCO_Overturn2,pth_out,P.Γ)
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-MC.outputs[:overturnings]=Climatology.plot_examples(:ECCO_figov1,pth_out,ktr1,low1,year0,year1)
+MC.outputs[:overturnings]=Climatology.plot_examples(:ECCO_Overturn1,pth_out,ktr1,low1,year0,year1)
 
 # ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
 begin
 	save_transport=true
-	MC.outputs[:transport]=Climatology.plot_examples(:ECCO_transport,
+	MC.outputs[:transport]=Climatology.plot_examples(:ECCO_Transports,
         [ntr1],1,pth_out,P.list_trsp,year0,year1)
 end
 
@@ -315,7 +315,7 @@ end
 begin
     #namtrs=[ntr1,ntr1,ntr1,ntr1]
     ncols=Int(floor(sqrt(length(namtrs))))
-    MC.outputs[:transports]=Climatology.plot_examples(:ECCO_transport,
+    MC.outputs[:transports]=Climatology.plot_examples(:ECCO_Transports,
         namtrs,ncols,pth_out,P.list_trsp,year0,year1)
 end
 
