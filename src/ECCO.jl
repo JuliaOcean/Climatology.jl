@@ -1033,7 +1033,7 @@ function map(nammap,P,statmap,timemap,pth_out)
 	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
 	ttl=P.clim_longname[ii]
-	return P.λ,DD,levs,ttl
+	(λ=P.λ,field=DD,levels=levs,title=ttl)
 end
 
 function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)
@@ -1075,7 +1075,7 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)
 
 	x=year0 .+ x./12.0
 	ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
-	return x,y,z,cmap_fac*levs,ttl,-90.0,90.0,year0,year1
+	(x=x,y=y,z=z,levels=cmap_fac*levs,title=ttl,ylims=(-90.0,90.0),year0=year0,year1=year1)
 end
 
 function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
@@ -1133,7 +1133,7 @@ function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
 	x=1992.0-m0/12.0 .+ x./12.0
 	ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
 
-	return x,y,z,cmap_fac*levs,ttl,y[l0],y[l1],year0,year1
+	(x=x,y=y,z=z,levels=cmap_fac*levs,title=ttl,ylims=(y[l0],y[l1]),year0=year0,year1=year1)
 end
 
 fn_DepthTime(x)=transpose(x)	
@@ -1174,7 +1174,8 @@ end
 x=year0 .+ x./12.0
 ttl="$(longname(namzmanom)) -- minus $(ref1) $(addon1)"
 
-return x,y,z,facA*levs,ttl,P.Γ.RC[k1],P.Γ.RC[k0]
+(x=x,y=y,z=z,levels=facA*levs,title=ttl,ylims=(P.Γ.RC[k1],P.Γ.RC[k0]),year0=year0,year1=year1)
+
 end
 
 end #module ECCO_procs

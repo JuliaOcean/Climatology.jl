@@ -166,36 +166,35 @@ module ClimatologyMakieExt
 		fig1
 	end
 
-	function DepthTime(x,y,z,levs,ttl,RC1,RC0,year0,year1; ClipToRange=true)
-		ClipToRange ? to_range!(z,levs) : nothing
+	function DepthTime(XYZ; ClipToRange=true)
+		ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
 		fig1 = Figure(size = (900,400),markersize=0.1)
-		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(year0:4:year1))
-		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+		ax1 = Axis(fig1[1,1], title=XYZ.title,
+			xticks=collect(XYZ.year0:4:XYZ.year1))
+		hm1=contourf!(ax1,XYZ.x,XYZ.y,XYZ.z,levels=XYZ.levels,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
 		xlims!(ax1,years_to_display)
-		ylims!(ax1,RC1,RC0)
-		
+		ylims!(ax1,XYZ.ylims)
 		fig1
 	end
 
-	function TimeLat(x,y,z,levs,ttl,y0,y1,year0,year1; ClipToRange=true)
-		ClipToRange ? to_range!(z,levs) : nothing
+	function TimeLat(XYZ; ClipToRange=true)
+		ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
 		fig1 = Figure(size = (900,400),markersize=0.1)
-		ax1 = Axis(fig1[1,1], title=ttl,
-			xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
-		hm1=contourf!(ax1,x,y,z,levels=levs,colormap=:turbo)
+		ax1 = Axis(fig1[1,1], title=XYZ.title,
+			xticks=collect(XYZ.year0:4:XYZ.year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
+		hm1=contourf!(ax1,XYZ.x,XYZ.y,XYZ.z,levels=XYZ.levels,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
 		xlims!(ax1,years_to_display)
-		ylims!(ax1,y0,y1)
+		ylims!(ax1,XYZ.ylims...)
 		fig1
 	end
 
-	function map(λ,DD,levs,ttl; ClipToRange=true)
-		ClipToRange ? to_range!(DD,levs) : nothing
+	function map(X; ClipToRange=true)
+		ClipToRange ? to_range!(X.field,X.levels) : nothing
 		fig = Figure(size = (900,600), backgroundcolor = :grey95)
-		ax = Axis(fig[1,1], title=ttl,xlabel="longitude",ylabel="latitude")
-		hm1=contourf!(ax,λ.lon[:,1],λ.lat[1,:],DD,levels=levs,colormap=:turbo)
+		ax = Axis(fig[1,1], title=X.title,xlabel="longitude",ylabel="latitude")
+		hm1=contourf!(ax,X.λ.lon[:,1],X.λ.lat[1,:],X.field,levels=X.levels,colormap=:turbo)
 		Colorbar(fig[1,2], hm1, height = Relative(0.65))
 		fig	
 	end

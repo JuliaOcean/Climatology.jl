@@ -274,19 +274,19 @@ end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 MC.outputs[:map]=Climatology.plot_examples(:ECCO_map,
-    ECCO_procs.map(nammap,P,statmap,timemap,pth_out)...)
+    ECCO_procs.map(nammap,P,statmap,timemap,pth_out))
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
 MC.outputs[:TimeLat]=Climatology.plot_examples(:ECCO_TimeLat,
-    ECCO_procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)...)
+    ECCO_procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P))
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
 MC.outputs[:TimeLatAnom]=Climatology.plot_examples(:ECCO_TimeLatAnom,
-    ECCO_procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)...)
+    ECCO_procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P))
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
 MC.outputs[:DepthTime]=Climatology.plot_examples(:ECCO_DepthTime,
-    ECCO_procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P)...,year0,year1)
+    ECCO_procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P))
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
 begin
@@ -654,7 +654,7 @@ version = "0.3.5"
 
 [[deps.Climatology]]
 deps = ["DataDeps", "Dataverse", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
-git-tree-sha1 = "f13673892d22239adc80f27ad3dd98e45aa4ffaf"
+path = "/Users/gaelforget/work/code/julia_pkg/Climatology.jl"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 version = "0.5.0"
 
