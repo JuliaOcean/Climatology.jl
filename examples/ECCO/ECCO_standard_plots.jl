@@ -16,25 +16,16 @@ end
 
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin	
-	using ClimateModels, Climatology, PlutoUI	
+	using ClimateModels, Climatology, PlutoUI, CairoMakie
+
+    function save_fig(fig,trigger)
+		fil=tempname()*".png"
+		save(fil,fig)
+		fil
+	end
 
 	space = html"<br><br>"	
 	"Done with packages"
-end
-
-# ╔═╡ 8dccce78-c665-4105-9f6b-fb295af8fbd0
-module inc
-	using CairoMakie, JLD2, RollingFunctions, Statistics, MeshArrays, Climatology
-
-    if isfile("ECCO_standard_plots_module.jl")
-    	include("ECCO_standard_plots_module.jl")
-    else
-		fil=joinpath(dirname(pathof(Climatology)),
-			"..","examples","ECCO","ECCO_standard_plots_module.jl")	
-    	include(fil)
-    end
-
-	P=procs.parameters()
 end
 
 # ╔═╡ 6f721618-d955-4c51-ba44-2873f8609831
@@ -60,18 +51,6 @@ The ocean state history for the 1980-2023 period is depicted in this notebook us
 
 # ╔═╡ 8c4093d7-30aa-4ebe-a429-5d2c2f72fdc3
 md"""## Climatology Map"""
-
-# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
-begin
-	nammap_select = @bind nammap Select(inc.P.clim_longname,default=inc.P.clim_longname[11])
-	statmap_select = @bind statmap Select(["mean","std","mon"])	
-	timemap_select = @bind timemap Select(1:12)
-	md"""
-	- file for time mean map : $(nammap_select)
-	- choice of statistic for time mean map : $(statmap_select)
-	- (optional) if `mon` was selected then show month # : $(timemap_select)
-	"""
-end
 
 # ╔═╡ 1df3bd3c-1396-4cd0-bfd2-3a05dec68261
 md"""## Zonal Mean vs Time"""
@@ -187,9 +166,30 @@ end
 # ╔═╡ ac1cb355-5d59-4d98-9b0a-181a89625b21
 md"""### Transport Across One Section"""
 
+# ╔═╡ 0b8ce7b9-8f41-451f-9ec5-5bff418bcafb
+md"""### Transport Across Multiple Sections"""
+
+# ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
+md"""## Appendix"""
+
+# ╔═╡ 8dccce78-c665-4105-9f6b-fb295af8fbd0
+P=ECCO_procs.parameters()
+
+# ╔═╡ 17fc2e78-628e-4082-8191-adf07abcc3ff
+begin
+	nammap_select = @bind nammap Select(P.clim_longname,default=P.clim_longname[11])
+	statmap_select = @bind statmap Select(["mean","std","mon"])	
+	timemap_select = @bind timemap Select(1:12)
+	md"""
+	- file for time mean map : $(nammap_select)
+	- choice of statistic for time mean map : $(statmap_select)
+	- (optional) if `mon` was selected then show month # : $(timemap_select)
+	"""
+end
+
 # ╔═╡ aa340276-cfed-4f0d-a2f1-e6cc18c0bba8
 begin
-	ntr1_select = @bind ntr1 Select(inc.P.list_trsp)
+	ntr1_select = @bind ntr1 Select(P.list_trsp)
 	
 	md"""Settings:
 	
@@ -197,12 +197,9 @@ begin
 	"""
 end
 
-# ╔═╡ 0b8ce7b9-8f41-451f-9ec5-5bff418bcafb
-md"""### Transport Across Multiple Sections"""
-
 # ╔═╡ 8b286e86-692f-419c-83c1-f9120e4e35de
 begin
-	ntr2_select = @bind namtrs MultiCheckBox(inc.P.list_trsp; orientation=:row, select_all=true, default=[inc.P.list_trsp[1],inc.P.list_trsp[2]])
+	ntr2_select = @bind namtrs MultiCheckBox(P.list_trsp; orientation=:row, select_all=true, default=[P.list_trsp[1],P.list_trsp[2]])
 	
 	md"""Select Sections:
 	
@@ -214,14 +211,8 @@ $(ntr2_select)
 	"""
 end
 
-# ╔═╡ 0f308191-13ca-4056-a85f-3a0061958e28
-md"""## Appendix"""
-
 # ╔═╡ 58befe75-5b00-475b-838e-6f64231549a6
-begin
-	procs=inc.procs
-	plots=inc.plots
-end
+
 
 # ╔═╡ c97dfbbc-c0f0-4b93-86a9-fc9f83157a6f
 datadepspath=dirname(Climatology.downloads.datadep"OCCA2HR1-stdiags")
@@ -242,7 +233,7 @@ begin
 end
 
 # ╔═╡ 09b47016-c954-4fe3-a972-e3de81f40171
-year0,year1=procs.years_min_max(sol)
+year0,year1=ECCO_procs.years_min_max(sol)
 
 # ╔═╡ 79a9794e-85c6-400e-8b44-3742b56544a2
 begin
@@ -282,44 +273,50 @@ begin
 end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-MC.outputs[:map]=plots.map(procs.map(nammap,inc.P,statmap,timemap,pth_out)...)
+MC.outputs[:map]=Climatology.plot_examples(:ECCO_map,
+    ECCO_procs.map(nammap,P,statmap,timemap,pth_out)...)
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
-MC.outputs[:TimeLat]=plots.TimeLat(procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,inc.P)...)
+MC.outputs[:TimeLat]=Climatology.plot_examples(:ECCO_TimeLat,
+    ECCO_procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)...)
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
-MC.outputs[:TimeLatAnom]=plots.TimeLat(procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,inc.P)...)
+MC.outputs[:TimeLatAnom]=Climatology.plot_examples(:ECCO_TimeLatAnom,
+    ECCO_procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)...)
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
-MC.outputs[:DepthTime]=plots.DepthTime(procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,inc.P)...,year0,year1)
+MC.outputs[:DepthTime]=Climatology.plot_examples(:ECCO_DepthTime,
+    ECCO_procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P)...,year0,year1)
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
 begin
 	save_global=true
-	gl1=procs.glo(pth_out,ngl1,kgl1,year0,year1)
-	MC.outputs[:global]=plots.glo(gl1,year0,year1)
+	gl1=ECCO_procs.glo(pth_out,ngl1,kgl1,year0,year1)
+	MC.outputs[:global]=Climatology.plot_examples(:ECCO_glo,gl1,year0,year1)
 end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
-MC.outputs[:OHT]=plots.OHT(pth_out)
+MC.outputs[:OHT]=Climatology.plot_examples(:ECCO_OHT,pth_out)
 
 # ╔═╡ 594c8843-f03f-4230-bdba-a943d535524d
-MC.outputs[:overturning]=plots.figov2(pth_out,inc.P.Γ)
+MC.outputs[:overturning]=Climatology.plot_examples(:ECCO_figov2,pth_out,P.Γ)
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-MC.outputs[:overturnings]=plots.figov1(pth_out,ktr1,low1,year0,year1)
+MC.outputs[:overturnings]=Climatology.plot_examples(:ECCO_figov1,pth_out,ktr1,low1,year0,year1)
 
 # ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
 begin
 	save_transport=true
-	MC.outputs[:transport]=plots.transport([ntr1],1,pth_out,inc.P.list_trsp,year0,year1)
+	MC.outputs[:transport]=Climatology.plot_examples(:ECCO_transport,
+        [ntr1],1,pth_out,P.list_trsp,year0,year1)
 end
 
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
-		#namtrs=[ntr1,ntr1,ntr1,ntr1]
-		ncols=Int(floor(sqrt(length(namtrs))))
-		MC.outputs[:transports]=plots.transport(namtrs,ncols,pth_out,inc.P.list_trsp,year0,year1)
+    #namtrs=[ntr1,ntr1,ntr1,ntr1]
+    ncols=Int(floor(sqrt(length(namtrs))))
+    MC.outputs[:transports]=Climatology.plot_examples(:ECCO_transport,
+        namtrs,ncols,pth_out,P.list_trsp,year0,year1)
 end
 
 # ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
@@ -369,7 +366,7 @@ md""" $(bind_SaveOnePlot) for $(bind_SelectePlot) in $(sol_select)"""
 
 # ╔═╡ c1c4e3c1-d581-4103-8f46-e555c64df86a
 let
-	SelectPlot!=="N/A" ? fil=plots.save_fig(MC.outputs[SelectPlot],SaveOnePlot) : fil="N/A"
+	SelectPlot!=="N/A" ? fil=save_fig(MC.outputs[SelectPlot],SaveOnePlot) : fil="N/A"
 	md"""File = $(fil)"""
 end
 
@@ -390,7 +387,7 @@ begin
 	listplots=("overturning","overturnings","transport","transports","OHT",
 		"global","DepthTime","TimeLat","TimeLatAnom","map")
 	if !isempty(MC.outputs)
-		[plots.save(joinpath(p,f*".png"),MC.outputs[Symbol(f)]) for f in listplots]
+		[save(joinpath(p,f*".png"),MC.outputs[Symbol(f)]) for f in listplots]
 	end
 
 	display(readdir(p))
@@ -434,19 +431,12 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ClimateModels = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-RollingFunctions = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
 CairoMakie = "~0.12.2"
 ClimateModels = "~0.3.5"
-JLD2 = "~0.4.48"
-MeshArrays = "~0.3.8"
 PlutoUI = "~0.7.59"
-RollingFunctions = "~0.8.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -455,7 +445,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "f381796ec2d133151d6d6c2372fd1defb57fef92"
+project_hash = "7399de601ce68a8b015267424095931190a91b64"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -663,17 +653,19 @@ version = "0.3.5"
     PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 
 [[deps.Climatology]]
-deps = ["DataDeps", "Dataverse", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "Scratch", "SharedArrays", "Statistics", "TOML"]
+deps = ["DataDeps", "Dataverse", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
 git-tree-sha1 = "f13673892d22239adc80f27ad3dd98e45aa4ffaf"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 version = "0.5.0"
 
     [deps.Climatology.extensions]
     ClimatologyMITgcmExt = ["MITgcm"]
+    ClimatologyMakieExt = ["Makie"]
     ClimatologyNCDatasetsExt = ["NCDatasets"]
 
     [deps.Climatology.weakdeps]
     MITgcm = "dce5fa8e-68ce-4431-a242-9469c69627a0"
+    Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
     NCDatasets = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
 
 [[deps.CloseOpenIntervals]]
