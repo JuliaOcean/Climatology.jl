@@ -32,13 +32,13 @@ function standard_analysis_setup(pth0="",sol0="")
 	#1. setup run folder and create link to ECCO data folder
 	pth=joinpath(tempdir(),"ECCO_diags_dev"); 
 	!isdir(pth) ? mkdir(pth) : nothing
-        if in(sol0,["r2","r3","r4","r5"])
-          pth1=joinpath(pth,"ECCOv4"*sol0)
-        else
-          pth1=joinpath(pth,sol0)
-        end
+    if in(sol0,["r2","r3","r4","r5"])
+        pth1=joinpath(pth,"ECCOv4"*sol0)
+    else
+        pth1=joinpath(pth,sol0)
+    end
 
-        !isdir(pth1) ? mkdir(pth1) : nothing
+    !isdir(pth1) ? mkdir(pth1) : nothing
 	link0=joinpath(pth1,"diags")
 	!isfile(link0)&& !islink(link0)&& !isempty(pth0) ? symlink(pth0,link0) : nothing
 	

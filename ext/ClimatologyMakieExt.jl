@@ -13,15 +13,15 @@ module ClimatologyMakieExt
 			TimeLat(stuff...)
 		elseif ID==:ECCO_DepthTime
 			DepthTime(stuff...)
-		elseif ID==:ECCO_glo
+		elseif ID==:ECCO_GlobalMean
 			glo(stuff...)
 		elseif ID==:ECCO_OHT
 			OHT(stuff...)
-		elseif ID==:ECCO_figov2
-			figov2(stuff...)
-		elseif ID==:ECCO_figov1
+		elseif ID==:ECCO_Overturn1
 			figov1(stuff...)
-		elseif ID==:ECCO_transport
+		elseif ID==:ECCO_Overturn2
+			figov2(stuff...)
+		elseif ID==:ECCO_Transports
 			transport(stuff...)
 		else
 			println("unknown plot ID")
