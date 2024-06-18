@@ -1,7 +1,7 @@
 name = "Climatology"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
