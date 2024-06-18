@@ -274,40 +274,40 @@ end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
 MC.outputs[:map]=Climatology.plot_examples(:ECCO_map,
-    ECCO_procs.map(nammap,P,statmap,timemap,pth_out)...)
+    ECCO_procs.map(nammap,P,statmap,timemap,pth_out))
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
 MC.outputs[:TimeLat]=Climatology.plot_examples(:ECCO_TimeLat,
-    ECCO_procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)...)
+    ECCO_procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P))
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
 MC.outputs[:TimeLatAnom]=Climatology.plot_examples(:ECCO_TimeLatAnom,
-    ECCO_procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)...)
+    ECCO_procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P))
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
 MC.outputs[:DepthTime]=Climatology.plot_examples(:ECCO_DepthTime,
-    ECCO_procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P)...,year0,year1)
+    ECCO_procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P))
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
 begin
 	save_global=true
 	gl1=ECCO_procs.glo(pth_out,ngl1,kgl1,year0,year1)
-	MC.outputs[:global]=Climatology.plot_examples(:ECCO_glo,gl1,year0,year1)
+	MC.outputs[:global]=Climatology.plot_examples(:ECCO_GlobalMean,gl1,year0,year1)
 end
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
 MC.outputs[:OHT]=Climatology.plot_examples(:ECCO_OHT,pth_out)
 
 # ╔═╡ 594c8843-f03f-4230-bdba-a943d535524d
-MC.outputs[:overturning]=Climatology.plot_examples(:ECCO_figov2,pth_out,P.Γ)
+MC.outputs[:overturning]=Climatology.plot_examples(:ECCO_Overturn2,pth_out,P.Γ)
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-MC.outputs[:overturnings]=Climatology.plot_examples(:ECCO_figov1,pth_out,ktr1,low1,year0,year1)
+MC.outputs[:overturnings]=Climatology.plot_examples(:ECCO_Overturn1,pth_out,ktr1,low1,year0,year1)
 
 # ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
 begin
 	save_transport=true
-	MC.outputs[:transport]=Climatology.plot_examples(:ECCO_transport,
+	MC.outputs[:transport]=Climatology.plot_examples(:ECCO_Transports,
         [ntr1],1,pth_out,P.list_trsp,year0,year1)
 end
 
@@ -315,7 +315,7 @@ end
 begin
     #namtrs=[ntr1,ntr1,ntr1,ntr1]
     ncols=Int(floor(sqrt(length(namtrs))))
-    MC.outputs[:transports]=Climatology.plot_examples(:ECCO_transport,
+    MC.outputs[:transports]=Climatology.plot_examples(:ECCO_Transports,
         namtrs,ncols,pth_out,P.list_trsp,year0,year1)
 end
 
@@ -654,7 +654,7 @@ version = "0.3.5"
 
 [[deps.Climatology]]
 deps = ["DataDeps", "Dataverse", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
-git-tree-sha1 = "f13673892d22239adc80f27ad3dd98e45aa4ffaf"
+path = "/Users/gaelforget/work/code/julia_pkg/Climatology.jl"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 version = "0.5.0"
 
