@@ -191,20 +191,22 @@ datadep"OCCA2HR1-stdiags"
 ```
 """
 function ECCOdiags_add(nam::String)
-    if nam=="release1"
-        datadep"ECCO4R1-stdiags"
-    elseif nam=="release2"
-        datadep"ECCO4R2-stdiags"
-    elseif nam=="release3"
-        datadep"ECCO4R3-stdiags"
-    elseif nam=="release4"
-        datadep"ECCO4R4-stdiags"
-    elseif nam=="release5"
-        datadep"ECCO4R5-stdiags"
-    elseif nam=="OCCA2HR1"
-        datadep"OCCA2HR1-stdiags"
-    else
-        println("unknown solution")
+    withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
+        if nam=="release1"
+            datadep"ECCO4R1-stdiags"
+        elseif nam=="release2"
+            datadep"ECCO4R2-stdiags"
+        elseif nam=="release3"
+            datadep"ECCO4R3-stdiags"
+        elseif nam=="release4"
+            datadep"ECCO4R4-stdiags"
+        elseif nam=="release5"
+            datadep"ECCO4R5-stdiags"
+        elseif nam=="OCCA2HR1"
+            datadep"OCCA2HR1-stdiags"
+        else
+            println("unknown solution")
+        end
     end
 end
 
