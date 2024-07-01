@@ -20,7 +20,7 @@ makedocs(;
 Climatology.CBIOMESclim_download()
 Climatology.ECCOdiags_add("release2")
 Climatology.ECCOdiags_add("OCCA2HR1")
-interpolation_setup()
+withenv(interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 
 #lst=("CBIOMES_climatogy_create.jl",)
 lst=("CBIOMES/CBIOMES_climatology_plot.jl","ECCO/ECCO_standard_plots.jl",
