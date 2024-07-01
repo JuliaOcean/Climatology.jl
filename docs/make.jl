@@ -2,8 +2,6 @@ using Documenter, Climatology, MITgcm, MeshArrays, NCDatasets, Pkg
 import PlutoSliderServer, CairoMakie
 Pkg.precompile()
 
-ENV["DATADEPS_ALWAYS_ACCEPT"]=true
-
 makedocs(;
     modules=[Climatology],
     format=Documenter.HTML(),
