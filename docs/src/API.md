@@ -38,7 +38,7 @@ To retrieve the CBIOMES climatology, in the `julia REPL` for example :
 
 ```@example 1
 withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
-	path_clim1=datadep"CBIOMES-clim1")
+	path_clim1=datadep"CBIOMES-clim1"
 	readdir(path_clim1)
 end
 ```
