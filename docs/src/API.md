@@ -47,6 +47,7 @@ And the files, now found in `datadep"CBIOMES-clim1"`, can then be read using oth
 
 ```@example 1
 using NCDatasets
+path_clim1=datadep"CBIOMES-clim1"
 fil=joinpath(path_clim1,"CBIOMES-global-alpha-climatology.nc")
 nc=NCDataset(fil,"r")
 keys(nc)
