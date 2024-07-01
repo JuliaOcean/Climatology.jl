@@ -37,15 +37,17 @@ readdir(ScratchSpaces.OCCA)
 To retrieve the CBIOMES climatology, in the `julia REPL` for example :
 
 ```@example 1
-println(datadep"CBIOMES-clim1")
-readdir(datadep"CBIOMES-clim1")
+withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
+	path_clim1=datadep"CBIOMES-clim1"
+	readdir(path_clim1)
+end
 ```
 
 And the files, now found in `datadep"CBIOMES-clim1"`, can then be read using other libraries.
 
 ```@example 1
 using NCDatasets
-fil=joinpath(datadep"CBIOMES-clim1","CBIOMES-global-alpha-climatology.nc")
+fil=joinpath(path_clim1,"CBIOMES-global-alpha-climatology.nc")
 nc=NCDataset(fil,"r")
 keys(nc)
 ```
@@ -55,7 +57,9 @@ keys(nc)
 To retrieve the MITprof climatologies :
 
 ```@example 1
-readdir(datadep"MITprof-clim1")
+withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
+	readdir(datadep"MITprof-clim1")
+end
 ```
 
 ## Path Names
