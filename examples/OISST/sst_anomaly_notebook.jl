@@ -144,7 +144,7 @@ begin
 end
 
 # ╔═╡ f7eeddd6-4256-4743-b0e4-3006cee86484
-do_climate_projection=false
+do_climate_projection=true
 
 # ╔═╡ d5a92490-636a-4d61-b843-64a6eda9d83b
 md"""## Appendix"""
@@ -361,10 +361,8 @@ function projection_map(fil_sst1,mon_sst,offset)
 		ds["sst"][:,:,1,1]
 	end
 
-	files_climatology="files_climatology/1992_2011_sst_month$(mon_sst).nc"
-	sst_clim = inc.NCDataset(files_climatology,"r") do ds
-		ds["sst"][:,:,1,1]
-	end
+	files_climatology="files_climatology/OISST_mean_monthly_1992_2011.nc"
+	sst_clim = inc.NCDataset(files_climatology)["sst"][:,:,mon_sst]
 
 	fig,ax,im=inc.plots.map_base()
 	hm=heatmap!(ax,G.lon,G.lat,offset .+sst-sst_clim,colormap=:curl,colorrange=4 .*(-1.0,1.0))
@@ -378,13 +376,6 @@ end
 if do_climate_projection
 	projection_map(fil_sst1,mon_sst,offset)
 end
-
-# ╔═╡ b3b7f43f-d9a6-4d1c-935e-3c337eb554bb
-#let
-#      area_kdf=[inc.coarse_grain.areaintegral(ones(size(G.msk)),x.i,x.j,G) for x in kdf]
-#      inc.plots.lowres_scatter(kdf,input=log10.(area_kdf))
-#end
-
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -2228,6 +2219,5 @@ version = "3.5.0+0"
 # ╠═c925f69f-6ecc-428e-aae1-0a2446baddb8
 # ╠═b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 # ╠═3178b826-8f9d-4cf6-955f-c40887e15476
-# ╟─b3b7f43f-d9a6-4d1c-935e-3c337eb554bb
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
