@@ -16,7 +16,7 @@ end
 
 # ╔═╡ 882b8a60-ea87-11ed-3518-8db7b95f5a9f
 begin
-  using CairoMakie, PlutoUI, Glob
+	using CairoMakie, PlutoUI, Glob
 	using Pkg; Pkg.status()
 end
 
@@ -38,13 +38,13 @@ The NOAA 1/4° daily Optimum Interpolation Sea Surface Temperature (or daily OIS
 **Data source :** [ncei.noaa.gov](https://www.ncei.noaa.gov/products/climate-data-records/sea-surface-temperature-optimum-interpolation)
 
 **Plots for comparison :** [climatereanalyzer.org](https://climatereanalyzer.org/clim/sst_daily/)
+
+!!! note
+    This notebook requires output from `sst_files_download.jl`, `sst_climatology.jl`, and `sst_coarse_grain.jl`.
 """
 
 # ╔═╡ 2f945738-a4ba-46a7-be41-58261b939d17
 TableOfContents()
-
-# ╔═╡ 044069e5-0d35-440e-9e62-561e11de6d18
-doSave=true
 
 # ╔═╡ ad758a95-5a23-4a84-afbf-2228f5938904
 md"""## OISST Anomaly Map"""
@@ -108,7 +108,7 @@ Global and zonal means are calculated from the coarse grained data set (like the
 # ╔═╡ 227000e4-e4c4-4619-8f9b-0f999863658d
 md"""#### Closer Look
 
-_Note : 15.618 is incorrect_
+_Note : first left hand side value is incorrect_
 """
 
 # ╔═╡ f3a46bdc-8541-423c-8c86-b9dd7413d42d
@@ -125,8 +125,12 @@ Extended Reconstructed Sea Surface Temperature (ERSST) is a global monthly analy
 **Data source** : [ncei.noaa.gov](https://www.ncei.noaa.gov/products/extended-reconstructed-sst)
 """
 
+# ╔═╡ f7d8e391-53e7-438f-a237-cf65e57af950
+do_ERSST_map=false
+
 # ╔═╡ cfd95718-7e1e-4b0c-931c-9dce8a3faea0
 begin
+	dfp = @bind do_future_projection Select([true,false],default=false)
 	b_ny = @bind ny Select(0:10:80)
 	b_showgrid = @bind showgrid Select([true,false],default=false)
 	b_scenario = @bind scenario Select([119,126,245,370,585],default=245)
@@ -138,13 +142,11 @@ begin
 	
 	If `fast foward` >0 then we extrapolate in time by `ny` years using climate `scenario`.
 
-	- fast foward by $(b_ny) years
+	- show climate projection? $(dfp)
+	- fast forward by $(b_ny) years
 	- following scenario ssp$(b_scenario)
 	"""
 end
-
-# ╔═╡ f7eeddd6-4256-4743-b0e4-3006cee86484
-do_climate_projection=true
 
 # ╔═╡ d5a92490-636a-4d61-b843-64a6eda9d83b
 md"""## Appendix"""
@@ -193,26 +195,8 @@ begin
 	(year_sst,mon_sst,day_sst)
 end
 
-# ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
-let
-	ersst_fil=inc.sst_files.@sprintf "files_ersst/ersst.v5.%i%02i.nc" year_sst mon_sst
-	(year_sst==2023&&mon_sst>7)||(year_sst>2023) ? ersst_fil="files_ersst/ersst.v5.202307.nc" : nothing
-
-	ersst=inc.Dataset(ersst_fil)
-	ersst_ssta=fill(NaN,(180,89))
-	tmp1=ersst[:ssta][:,:]
-	[ersst_ssta[i]=Float64.(tmp1[i]) for i in findall((!ismissing).(tmp1))]
-
-	fig,ax,im=inc.plots.map_base()
-	hm=heatmap!(ax,ersst[:lon][:],ersst[:lat][:],ersst_ssta,colormap=:curl,colorrange=4 .*(-1.0,1.0))
-	ax.title=ersst_fil
-	Colorbar(fig[1, 2],hm)
-
-	inc.plots.save_fig(fig,doSave,file="sst_anomaly_map_ERSST.png")
-end
-
 # ╔═╡ d37e8f34-77e8-4283-b871-d8ce0497accf
-if do_climate_projection
+if do_future_projection
 	offset=inc.scenarios.calc_offset(year_sst,ny,scenario)
 	"SST offset = $(offset)"
 end
@@ -220,21 +204,9 @@ end
 # ╔═╡ 0468be31-8bff-4606-902a-474d4225d108
 ts=inc.timeseries.calc(kdf0,list,gdf=gdf)
 
-# ╔═╡ d6d3e960-c150-40fd-81fd-36bd0a9f8f40
-let
-	f3b=inc.plots.by_year(ts)
-	inc.plots.save_fig(f3b,doSave,file="sst_local_by_year.png")
-end
-
-# ╔═╡ cd786d83-1b65-4e3d-8e1f-46a9994a827b
-let
-	f4=inc.plots.by_time(ts,show_anom=show_anom,show_clim=show_clim)
-	inc.plots.save_fig(f4,doSave,file="sst_local.png")
-end
-
 # ╔═╡ 0fd9ae44-89cb-468a-9921-5fe8c16093b7
 if do_plot_WHOTS
-	using Dates
+	using Dates, Statistics
 	runmean(x,n1)=[mean(x[i:i-1+n1]) for i in 1:length(x)-n1]
 	TEMP=runmean(WHOTS.TEMP,5*24)
 	TIM=[1992 .+ (t-DateTime("1992-01-01","yyyy-mm-dd")).value/86400000/365 for t in WHOTS.TIME]
@@ -245,36 +217,8 @@ if do_plot_WHOTS
 	f4
 end
 
-# ╔═╡ e87d0817-827d-4b44-a8b6-f566b61391c2
-let
-	f3=inc.plots.MHW(ts)
-	inc.plots.save_fig(f3,doSave,file="sst_local_MHW.png")
-end
-
 # ╔═╡ c925f69f-6ecc-428e-aae1-0a2446baddb8
 G=inc.coarse_grain.grid(list.fil[1]);
-
-# ╔═╡ 1bed0676-4984-4909-a6af-4d25d894aa69
-let
-	fig,ax,im=inc.plots.map_base()
- 	if ano_ncei
-		hm=heatmap!(ax,G.lon,G.lat,anom,colormap=:curl,colorrange=4 .*(-1.0,1.0))
-		ttl="SST anomaly (NCEI) for time "*fil_sst[end-10:end-3]
-	elseif ano_sst
-		hm=heatmap!(ax,G.lon,G.lat,sst-sst_clim,colormap=:curl,colorrange=4 .*(-1.0,1.0))
-		ttl="SST anomaly (GF) for $(year_sst) / $(mon_sst) / $(day_sst)"
-	else
-		hm=heatmap!(ax,G.lon,G.lat,sst,colormap=:thermal)
-		ttl="SST for time "*fil_sst[end-10:end-3]
-	end
-	showgrid ? lowres_scatter(ax) : nothing
-	scatter!(ax,lon1,lat1,marker=:circle,color=:blue,markersize=30)
-	scatter!(ax,lon1,lat1,marker=:x,color=:yellow,markersize=15)
-	Colorbar(fig[1, 2],hm)
-	ax.title=ttl
-	fig
-	inc.plots.save_fig(fig,doSave,file="sst_anomaly_map.png")
-end
 
 # ╔═╡ 9f7d8596-1576-4d96-803f-21d9b5c53aa4
 if do_zonal_mean
@@ -288,12 +232,6 @@ if do_zonal_mean
 	size(zm)
 end
 
-# ╔═╡ 9516cb99-ba91-4c5e-b5a4-db0b2f702934
-if do_zonal_mean
-	f5=inc.plots.TimeLat(list,zm,"OISST anomaly")
-	inc.plots.save_fig(f5,doSave,file="sst_zonal_mean.png")
-end
-
 # ╔═╡ 9aaa7fd5-3103-48f9-9cfb-ce6d775c05f8
 begin
 	gdf1=inc.groupby(df, :t)
@@ -302,30 +240,6 @@ begin
 
 	glmsst=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf1]
 	ts_global=inc.timeseries.calc(glmsst,list,title="Global Mean SST")
-end
-
-# ╔═╡ 679faf60-95db-40bc-a07d-672f7510e8fb
-let
-	f5=inc.plots.local_and_global(ts,ts_global,kdf0)
-	inc.plots.save_fig(f5,doSave,file="sst_global_local.png")
-end
-
-# ╔═╡ f5d4c0db-5b68-4ce8-badb-11ac0c9d85de
-let
-	f1=inc.plots.by_time(ts_global,show_anom=show_anom,show_clim=show_clim)
-	inc.plots.save_fig(f1,doSave,file="sst_global_mean.png")
-end
-
-# ╔═╡ 3c0da51f-109a-4b3d-bfe2-82103a1d7270
-let
-	f2=inc.plots.by_year(ts_global)
-	inc.plots.save_fig(f2,doSave,file="sst_global_mean_by_year.png")
-end
-
-# ╔═╡ 5c73d087-c0bb-40ff-85f9-2d5ddd0690f1
-let
-	f3c=inc.plots.MHW(ts_global)
-	inc.plots.save_fig(f3c,doSave,file="sst_global_mean_MHW.png")
 end
 
 # ╔═╡ b8d4025a-20f4-4032-825b-5e218fae4b9a
@@ -373,8 +287,103 @@ function projection_map(fil_sst1,mon_sst,offset)
 end
 
 # ╔═╡ fb9334f7-c57f-4c1e-8430-e0f81a15a17e
-if do_climate_projection
-	projection_map(fil_sst1,mon_sst,offset)
+do_future_projection ? projection_map(fil_sst1,mon_sst,offset) : "climate projection turned off"
+
+# ╔═╡ 044069e5-0d35-440e-9e62-561e11de6d18
+doSave=true
+
+# ╔═╡ 1bed0676-4984-4909-a6af-4d25d894aa69
+let
+	fig,ax,im=inc.plots.map_base()
+ 	if ano_ncei
+		hm=heatmap!(ax,G.lon,G.lat,anom,colormap=:curl,colorrange=4 .*(-1.0,1.0))
+		ttl="SST anomaly (NCEI) for time "*fil_sst[end-10:end-3]
+	elseif ano_sst
+		hm=heatmap!(ax,G.lon,G.lat,sst-sst_clim,colormap=:curl,colorrange=4 .*(-1.0,1.0))
+		ttl="SST anomaly (GF) for $(year_sst) / $(mon_sst) / $(day_sst)"
+	else
+		hm=heatmap!(ax,G.lon,G.lat,sst,colormap=:thermal)
+		ttl="SST for time "*fil_sst[end-10:end-3]
+	end
+	showgrid ? lowres_scatter(ax) : nothing
+	scatter!(ax,lon1,lat1,marker=:circle,color=:blue,markersize=30)
+	scatter!(ax,lon1,lat1,marker=:x,color=:yellow,markersize=15)
+	Colorbar(fig[1, 2],hm)
+	ax.title=ttl
+	fig
+	inc.plots.save_fig(fig,doSave,file="sst_anomaly_map.png")
+end
+
+# ╔═╡ 679faf60-95db-40bc-a07d-672f7510e8fb
+let
+	f5=inc.plots.local_and_global(ts,ts_global,kdf0)
+	inc.plots.save_fig(f5,doSave,file="sst_global_local.png")
+end
+
+# ╔═╡ d6d3e960-c150-40fd-81fd-36bd0a9f8f40
+let
+	f3b=inc.plots.by_year(ts)
+	inc.plots.save_fig(f3b,doSave,file="sst_local_by_year.png")
+end
+
+# ╔═╡ cd786d83-1b65-4e3d-8e1f-46a9994a827b
+let
+	f4=inc.plots.by_time(ts,show_anom=show_anom,show_clim=show_clim)
+	inc.plots.save_fig(f4,doSave,file="sst_local.png")
+end
+
+# ╔═╡ 9516cb99-ba91-4c5e-b5a4-db0b2f702934
+if do_zonal_mean
+	f5=inc.plots.TimeLat(list,zm,"OISST anomaly")
+	inc.plots.save_fig(f5,doSave,file="sst_zonal_mean.png")
+end
+
+# ╔═╡ f5d4c0db-5b68-4ce8-badb-11ac0c9d85de
+let
+	f1=inc.plots.by_time(ts_global,show_anom=show_anom,show_clim=show_clim)
+	inc.plots.save_fig(f1,doSave,file="sst_global_mean.png")
+end
+
+# ╔═╡ 3c0da51f-109a-4b3d-bfe2-82103a1d7270
+let
+	f2=inc.plots.by_year(ts_global)
+	inc.plots.save_fig(f2,doSave,file="sst_global_mean_by_year.png")
+end
+
+# ╔═╡ e87d0817-827d-4b44-a8b6-f566b61391c2
+let
+	f3=inc.plots.MHW(ts)
+	inc.plots.save_fig(f3,doSave,file="sst_local_MHW.png")
+end
+
+# ╔═╡ 5c73d087-c0bb-40ff-85f9-2d5ddd0690f1
+let
+	f3c=inc.plots.MHW(ts_global)
+	inc.plots.save_fig(f3c,doSave,file="sst_global_mean_MHW.png")
+end
+
+# ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
+if do_ERSST_map
+	function ERSST_map()
+		ersst_fil=inc.sst_files.@sprintf "files_ersst/ersst.v5.%i%02i.nc" year_sst mon_sst
+		(year_sst==2023&&mon_sst>7)||(year_sst>2023) ? ersst_fil="files_ersst/ersst.v5.202307.nc" : nothing
+	
+		ersst=inc.Dataset(ersst_fil)
+		ersst_ssta=fill(NaN,(180,89))
+		tmp1=ersst[:ssta][:,:]
+		[ersst_ssta[i]=Float64.(tmp1[i]) for i in findall((!ismissing).(tmp1))]
+	
+		fig,ax,im=inc.plots.map_base()
+		hm=heatmap!(ax,ersst[:lon][:],ersst[:lat][:],ersst_ssta,colormap=:curl,colorrange=4 .*(-1.0,1.0))
+		ax.title=ersst_fil
+		Colorbar(fig[1, 2],hm)
+
+		fig
+	end
+
+	fig=ERSST_map()
+
+	inc.plots.save_fig(fig,doSave,file="sst_anomaly_map_ERSST.png")
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -2174,7 +2183,6 @@ version = "3.5.0+0"
 # ╔═╡ Cell order:
 # ╟─714b333f-c35a-4035-9a57-8d3de33a87a2
 # ╟─2f945738-a4ba-46a7-be41-58261b939d17
-# ╟─044069e5-0d35-440e-9e62-561e11de6d18
 # ╟─ad758a95-5a23-4a84-afbf-2228f5938904
 # ╟─1bed0676-4984-4909-a6af-4d25d894aa69
 # ╟─1632750d-0908-4b06-98dc-861101449fef
@@ -2207,17 +2215,18 @@ version = "3.5.0+0"
 # ╟─e87d0817-827d-4b44-a8b6-f566b61391c2
 # ╟─5c73d087-c0bb-40ff-85f9-2d5ddd0690f1
 # ╟─4c2e8d98-d373-495d-9e1b-710d24a03312
+# ╟─f7d8e391-53e7-438f-a237-cf65e57af950
 # ╟─beb0a305-8261-475e-bf8d-be84d8386f68
 # ╟─cfd95718-7e1e-4b0c-931c-9dce8a3faea0
-# ╟─f7eeddd6-4256-4743-b0e4-3006cee86484
-# ╟─d37e8f34-77e8-4283-b871-d8ce0497accf
-# ╟─2dcbb093-48f8-44cc-a756-c0c46f6d0844
 # ╟─fb9334f7-c57f-4c1e-8430-e0f81a15a17e
+# ╟─d37e8f34-77e8-4283-b871-d8ce0497accf
 # ╟─d5a92490-636a-4d61-b843-64a6eda9d83b
 # ╟─882b8a60-ea87-11ed-3518-8db7b95f5a9f
-# ╠═eef0a2d4-855a-49e4-a83d-8ef244052bee
+# ╟─eef0a2d4-855a-49e4-a83d-8ef244052bee
+# ╟─2dcbb093-48f8-44cc-a756-c0c46f6d0844
 # ╠═c925f69f-6ecc-428e-aae1-0a2446baddb8
 # ╠═b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 # ╠═3178b826-8f9d-4cf6-955f-c40887e15476
+# ╟─044069e5-0d35-440e-9e62-561e11de6d18
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
