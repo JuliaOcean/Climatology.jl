@@ -32,9 +32,11 @@ url="https://www.ncei.noaa.gov/thredds/dodsC/OisstBase/NetCDF/V2.1/AVHRR/198201/
 url="https://www.ncei.noaa.gov/thredds/fileServer/OisstBase/NetCDF/V2.1/AVHRR/198201/oisst-avhrr-v02r01.19820101.nc"
 ```
 """
-function file_lists(;path=tempdir())
+function file_lists(;path=tempname())
     url0="https://www.ncei.noaa.gov/thredds/fileServer/OisstBase/NetCDF/V2.1/AVHRR/"
 
+    !ispath(path) ? mkdir(path) : nothing
+    
     ndays=( today()-Date(1982,1,1) ).value
     file_list=DataFrame(fil=String[],url=String[],todo=Bool[])
     for t in 1:ndays
@@ -43,7 +45,7 @@ function file_lists(;path=tempdir())
         m=month(dd)
         d=day(dd)
         url=@sprintf "%s%04i%02i%s%04i%02i%02i.nc" url0 y m "/oisst-avhrr-v02r01." y m d
-        fil=@sprintf "files/%04i%02i%s%04i%02i%02i.nc" y m "/oisst-avhrr-v02r01." y m d
+        fil=@sprintf "%s/%04i%02i%s%04i%02i%02i.nc" path y m "/oisst-avhrr-v02r01." y m d
         push!(file_list,(fil=fil,url=url,todo=!isfile(fil)))
     end
 

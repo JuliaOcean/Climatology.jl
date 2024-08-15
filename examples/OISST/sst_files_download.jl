@@ -5,8 +5,11 @@ using Distributed
 
 @everywhere begin
     using Downloads
-    #list=sst_files.read_files_list(file="ersst_to_get_file_list.csv",add_ymd=false)
-    list=sst_files.read_files_list(file="oisst_to_get_file_list.csv",add_ymd=false)
+    path=joinpath(tempdir(),"demo_OISST")
+    !ispath(path) ? mkdir(path) : nothing
+    fil,_=sst_files.file_lists(path=path)
+    list=sst_files.read_files_list(path=path)
+    list=list[end-10:end,:]
     n_per_workwer=Int(ceil(length(list.fil)/nworkers()))
 end
 
@@ -23,7 +26,11 @@ if !isempty(list.fil)
           try
             Downloads.download(r.url,r.fil)
           catch
-            Downloads.download(r.url[1:end-3]*"_preliminary.nc",r.fil[1:end-3]*"_preliminary.nc")
+            try
+              Downloads.download(r.url[1:end-3]*"_preliminary.nc",r.fil[1:end-3]*"_preliminary.nc")
+            catch
+              println("file not found online : "*r.fil[1:end-3])
+            end
           end
         end
     end
