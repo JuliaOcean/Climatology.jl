@@ -38,6 +38,9 @@ The NOAA 1/4° daily Optimum Interpolation Sea Surface Temperature (or daily OIS
 **Data source :** [ncei.noaa.gov](https://www.ncei.noaa.gov/products/climate-data-records/sea-surface-temperature-optimum-interpolation)
 
 **Plots for comparison :** [climatereanalyzer.org](https://climatereanalyzer.org/clim/sst_daily/)
+
+!!! note
+    This notebook requires output from `sst_files_download.jl`, `sst_climatology.jl`, and `sst_coarse_grain.jl`.
 """
 
 # ╔═╡ 2f945738-a4ba-46a7-be41-58261b939d17
