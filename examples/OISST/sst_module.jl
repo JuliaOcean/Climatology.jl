@@ -193,7 +193,7 @@ end
 
 module coarse_grain
 
-using NCDatasets, Statistics, DataFrames, CSV, NCDatasets, Glob
+using Statistics, DataFrames, CSV, NCDatasets, Glob
 
 nl=720
 #dnl=40 #for 10 degree squares

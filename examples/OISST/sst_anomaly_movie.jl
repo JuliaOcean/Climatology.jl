@@ -1,10 +1,6 @@
 
 using GLMakie, PlutoUI, Printf, JLD2, MeshArrays, Colors, DataDeps
 
-#for source in glob("files*","/Users/gforget/mywork/data/OISST/")
-#symlink(source,basename(source))
-#end
- 
 module inc
 	using NCDatasets, Statistics, DataFrames, CSV, Glob, Dates
 	include("sst_module.jl")
