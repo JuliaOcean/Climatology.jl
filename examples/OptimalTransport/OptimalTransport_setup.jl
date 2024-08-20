@@ -7,7 +7,7 @@ author: Gaël Forget
 - examples/CBIOMES_climatology_compare.jl
 """
 
-import OceanStateEstimation, NCTiles
+import Climatology, NCTiles
 using Statistics, LinearAlgebra, JLD2
 
 ## load files
