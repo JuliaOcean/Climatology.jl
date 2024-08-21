@@ -895,7 +895,7 @@ end #module ECCO_diagnostics
 
 module ECCO_procs
 
-using JLD2, MeshArrays, Statistics, Climatology, TOML
+using JLD2, MeshArrays, DataDeps, Statistics, Climatology, TOML
 
 function longname(n)
 	if occursin("_k",n)
@@ -952,19 +952,8 @@ function parameters()
 	#LC=LatitudeCircles(-89.0:89.0,Γ)
 
 	μ = land_mask(Γ)
-
-	λ_file = joinpath(tempdir(),"interp_coeffs_halfdeg.jld2")
-	if !isfile(λ_file)
-		lon=[i for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]
-		lat=[j for i=-179.75:0.5:179.75, j=-89.75:0.5:89.75]		
-		(f,i,j,w)=InterpolationFactors(Γ,vec(lon),vec(lat))
-		jldsave(λ_file; lon=lon, lat=lat, f=f, i=i, j=j, w=w)
-	end
-	λ = interpolation_setup(λ_file)
-
-	##
-	
-	path0=Climatology.downloads.datadep"OCCA2HR1-stdiags"
+        λ = interpolation_setup()
+	path0=ECCOdiags_add("OCCA2HR1")
 
 	fil_trsp=joinpath(path0,"trsp","trsp.jld2") #
 	ntr=length(load(fil_trsp,"single_stored_object"))
