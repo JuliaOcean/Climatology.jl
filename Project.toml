@@ -5,6 +5,7 @@ version = "0.5.5"
 
 [deps]
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dataverse = "9c0b9be8-e31e-490f-90fe-77697562404d"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
@@ -30,6 +31,7 @@ ClimatologyNCDatasetsExt = ["NCDatasets"]
 
 [compat]
 DataDeps = "0.7"
+DataFrames = "1"
 Dataverse = "0.2"
 Glob = "1"
 JLD2 = "0.4"

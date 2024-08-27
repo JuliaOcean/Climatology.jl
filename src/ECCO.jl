@@ -1,7 +1,7 @@
 
 module ECCO
 
-using Pkg
+using Pkg, DataFrames
 import Climatology: pkg_pth
 
 """
@@ -51,6 +51,46 @@ function standard_analysis_setup(pth0="",sol0="")
 	return pth1
 end
 
+
+add_diag!(list,file=tempname(),name="variable",units="unknown",dims=("time",)) = begin
+    append!(list,DataFrame("file"=>file,"name"=>name,"units"=>units,"dims"=>dims))
+end
+
+#time series
+function diagnostics_set1(path_in=".")
+    list=DataFrame("file"=>String[],"name"=>String[],"units"=>String[],"dims"=>Tuple[])
+    add_diag!(list,joinpath(path_in,"THETA_glo3d","glo3d.jld2"),"temperature_global","degreeC",("time",))
+    add_diag!(list,joinpath(path_in,"THETA_glo2d","glo2d.jld2"),"temperature_global_level","degreeC",("depth","time"))
+    add_diag!(list,joinpath(path_in,"SALT_glo3d","glo3d.jld2"),"salinity_global","PSS",("time",))
+    add_diag!(list,joinpath(path_in,"SALT_glo2d","glo2d.jld2"),"salinity_global_level","PSS",("depth","time"))
+    add_diag!(list,joinpath(path_in,"trsp","trsp.jld2"),"volume_transport","m3/s",("section","depth","time"))
+    add_diag!(list,joinpath(path_in,"MHT","MHT.jld2"),"meridional_heat_transport","PW",("latMT","time"))
+    add_diag!(list,joinpath(path_in,"THETA_zonmean","zonmean.jld2"),"temperature_zonal_level","degreeC",("latZM","depth","time"))
+    add_diag!(list,joinpath(path_in,"SALT_zonmean","zonmean.jld2"),"salinity_zonal_level","PSS",("latZM","depth","time"))
+    add_diag!(list,joinpath(path_in,"MXLDEPTH_zonmean2d","zonmean2d.jld2"),"MLD_zonal","m",("latZM","time"))
+    add_diag!(list,joinpath(path_in,"SSH_zonmean2d","zonmean2d.jld2"),"SSH_zonal","m",("latZM","time"))
+    add_diag!(list,joinpath(path_in,"SIarea_zonmean2d","zonmean2d.jld2"),"SIarea_zonal","nondimensional",("latZM","time"))
+    add_diag!(list,joinpath(path_in,"overturn","overturn.jld2"),"overturn","m3/s",("latMT","depth","time"))
+    list
+end
+
+#2d climatologies on ECCO's LLC90 grid
+function diagnostics_set2(path_in=".")
+    list=DataFrame("file"=>String[],"name"=>String[],"units"=>String[],"dims"=>Tuple[])
+    add_diag!(list,joinpath(path_in,"BSF_clim","BSF.jld2"),"BSF_clim","m3/s",("time",))
+    add_diag!(list,joinpath(path_in,"MXLDEPTH_clim","MXLDEPTH.jld2"),"MXLDEPTH_clim","m",("time",))
+    add_diag!(list,joinpath(path_in,"SIarea_clim","SIarea.jld2"),"SIarea_clim","nondimensional",("time",))
+    add_diag!(list,joinpath(path_in,"SSH_clim","SSH.jld2"),"SSH_clim","m",("time",))
+    list
+end
+
+#3d climatologies on ECCO's LLC90 grid
+function diagnostics_set3(path_in=".")
+    list=DataFrame("file"=>String[],"name"=>String[],"units"=>String[],"dims"=>Tuple[])
+    add_diag!(list,joinpath(path_in,"THETA_clim","THETA_k01.jld2"),"THETA_clim","degreeC",("time",))
+    add_diag!(list,joinpath(path_in,"SALT_clim","SALT_k01.jld2"),"SALT_clim","PSS",("time",))
+    list
+end
 
 end
 

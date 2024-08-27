@@ -2,7 +2,9 @@
 module ClimatologyMakieExt
 
 	using Makie, Climatology
-	import Climatology: plot_examples, load, mean, runmean, ECCOdiag
+	import Climatology: Statistics, RollingFunctions, plot_examples, load, ECCOdiag
+	import Statistics: mean
+	import RollingFunctions: runmean
 
 	function plot_examples(ID=Symbol,stuff...)
         if ID==:ECCO_map
@@ -37,8 +39,8 @@ module ClimatologyMakieExt
 		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
 	end
 
-#	years_to_display=(1960,2023)
-	years_to_display=(1980,2024)
+	years_to_display=(1960,2023)
+#	years_to_display=(1980,2024)
 
 	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1;years_to_display=years_to_display)
 		itr=findall(list_trsp.==namtr)[1]
