@@ -278,49 +278,45 @@ begin
 end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-MC.outputs[:map]=Climatology.plot_examples(:ECCO_map,
-    ECCO_procs.map(nammap,P,statmap,timemap,pth_out))
+MC.outputs[:map]=plot(ECCOdiag(path=pth_out,name="tbd",options=
+    (plot_type=:ECCO_map,nammap=nammap,P=P,statmap=statmap,timemap=timemap)))
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
-MC.outputs[:TimeLat]=Climatology.plot_examples(:ECCO_TimeLat,
-    ECCO_procs.TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P))
+MC.outputs[:TimeLat]=plot(ECCOdiag(path=pth_out,name=namzm*"_clim",options=
+    (plot_type=:ECCO_TimeLat,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm,P=P,years_to_display=[year0 year1+1])))
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
-MC.outputs[:TimeLatAnom]=Climatology.plot_examples(:ECCO_TimeLatAnom,
-    ECCO_procs.TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P))
+MC.outputs[:TimeLatAnom]=plot(ECCOdiag(path=pth_out,name=namzmanom2d*"_clim",options=
+    (plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm2d,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1])))
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
-MC.outputs[:DepthTime]=Climatology.plot_examples(:ECCO_DepthTime,ECCO_procs.DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P))
+MC.outputs[:DepthTime]=plot(ECCOdiag(path=pth_out,name=namzmanom*"_clim",options=
+    (plot_type=:ECCO_DepthTime,facA=facA,l=l_Tzm,year0=year0,year1=year1,k0=k0,k1=k1,P=P,years_to_display=[year0 year1+1])))
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
-begin
-	save_global=true
-	gl1=ECCO_procs.glo(pth_out,ngl1,kgl1,year0,year1)
-	MC.outputs[:global]=Climatology.plot_examples(:ECCO_GlobalMean,gl1,year0,year1)
-end
+MC.outputs[:global]=plot(ECCOdiag(path=pth_out,name=ngl1,options=
+    (plot_type=:ECCO_GlobalMean,k=kgl1,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
-MC.outputs[:OHT]=Climatology.plot_examples(:ECCO_OHT,pth_out)
+MC.outputs[:OHT]=plot(ECCOdiag(path=pth_out,name="OHT",options=(plot_type=:ECCO_OHT1,)))
 
 # ╔═╡ 594c8843-f03f-4230-bdba-a943d535524d
-MC.outputs[:overturning]=Climatology.plot_examples(:ECCO_Overturn2,pth_out,P.Γ)
+MC.outputs[:overturning]=plot(ECCOdiag(path=pth_out,name="overturn",options=(plot_type=:ECCO_Overturn2,grid=P.Γ)))
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-MC.outputs[:overturnings]=Climatology.plot_examples(:ECCO_Overturn1,pth_out,ktr1,low1,year0,year1)
+MC.outputs[:overturnings]=plot(ECCOdiag(path=pth_out,name="overturn",options=
+    (plot_type=:ECCO_Overturn1,kk=ktr1,low1=low1,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
 
 # ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
-begin
-	save_transport=true
-	MC.outputs[:transport]=Climatology.plot_examples(:ECCO_Transports,
-        [ntr1],1,pth_out,P.list_trsp,year0,year1)
-end
+MC.outputs[:transport]=plot(ECCOdiag(path=pth_out,name="trsp",options=
+    (plot_type=:ECCO_Transports,namtrs=[ntr1],ncols=1,list_trsp=P.list_trsp,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
 
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
     #namtrs=[ntr1,ntr1,ntr1,ntr1]
     ncols=Int(floor(sqrt(length(namtrs))))
-    MC.outputs[:transports]=Climatology.plot_examples(:ECCO_Transports,
-        namtrs,ncols,pth_out,P.list_trsp,year0,year1)
+    MC.outputs[:transports]=plot(ECCOdiag(path=pth_out,name="trsp",options=
+        (plot_type=:ECCO_Transports,namtrs=namtrs,ncols=ncols,list_trsp=P.list_trsp,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
 end
 
 # ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
@@ -610,9 +606,9 @@ version = "1.1.0"
 
 [[deps.CairoMakie]]
 deps = ["CRC32c", "Cairo", "Cairo_jll", "Colors", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "PrecompileTools"]
-git-tree-sha1 = "57b139fd3cffdb82b7cc5756e9916ff68b88a690"
+git-tree-sha1 = "361dec06290d76b6d70d0c7dc888038eec9df63a"
 uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-version = "0.12.7"
+version = "0.12.9"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -653,10 +649,10 @@ version = "0.3.5"
     PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 
 [[deps.Climatology]]
-deps = ["DataDeps", "Dataverse", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
-git-tree-sha1 = "9bbbaa67639e31ab92dc2b06994d040ac43610df"
+deps = ["DataDeps", "DataFrames", "Dataverse", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
+git-tree-sha1 = "cc95dac7681ff551cfb88a92b5047c2db740f448"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-version = "0.5.4"
+version = "0.5.5"
 
     [deps.Climatology.extensions]
     ClimatologyMITgcmExt = ["MITgcm"]
@@ -932,10 +928,15 @@ uuid = "8fc22ac5-c921-52a6-82fd-178b2807b824"
 version = "0.8.3"
 
 [[deps.FilePathsBase]]
-deps = ["Compat", "Dates", "Mmap", "Printf", "Test", "UUIDs"]
-git-tree-sha1 = "9f00e42f8d99fdde64d40c8ea5d14269a2e2c1aa"
+deps = ["Compat", "Dates"]
+git-tree-sha1 = "7878ff7172a8e6beedd1dea14bd27c3c6340d361"
 uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
-version = "0.9.21"
+version = "0.9.22"
+weakdeps = ["Mmap", "Test"]
+
+    [deps.FilePathsBase.extensions]
+    FilePathsBaseMmapExt = "Mmap"
+    FilePathsBaseTestExt = "Test"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -1449,15 +1450,15 @@ version = "0.5.13"
 
 [[deps.Makie]]
 deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "Dates", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Format", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageIO", "InteractiveUtils", "IntervalSets", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "MakieCore", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "Packing", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "Showoff", "SignedDistanceFields", "SparseArrays", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun", "Unitful"]
-git-tree-sha1 = "05b01e6cae68aa40f9a64339c54aba2572cce7a7"
+git-tree-sha1 = "204f06860af9008fa08b3a4842f48116e1209a2c"
 uuid = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-version = "0.21.7"
+version = "0.21.9"
 
 [[deps.MakieCore]]
 deps = ["ColorTypes", "GeometryBasics", "IntervalSets", "Observables"]
-git-tree-sha1 = "1753d72dcf82beb1c582826d0a51a8253a719613"
+git-tree-sha1 = "b0e2e3473af351011e598f9219afb521121edd2b"
 uuid = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
-version = "0.8.5"
+version = "0.8.6"
 
 [[deps.ManualMemory]]
 git-tree-sha1 = "bcaef4fc7a0cfe2cba636d84cda54b5e4e4ca3cd"
