@@ -12,6 +12,7 @@ function read_mdsio_alias end
 using Glob, RollingFunctions, JLD2, Statistics
 function plot_examples end; export plot_examples
 
+include("types.jl")
 include("downloads.jl")
 include("ECCO.jl")
 

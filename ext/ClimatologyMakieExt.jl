@@ -2,7 +2,7 @@
 module ClimatologyMakieExt
 
 	using Makie, Climatology
-	import Climatology: plot_examples, load, mean, runmean
+	import Climatology: plot_examples, load, mean, runmean, ECCOdiag
 
 	function plot_examples(ID=Symbol,stuff...)
         if ID==:ECCO_map
@@ -37,13 +37,12 @@ module ClimatologyMakieExt
 		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
 	end
 
-	years_to_display=(1979,2025)
+#	years_to_display=(1960,2023)
+	years_to_display=(1980,2024)
 
-	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1)
-		fil_trsp=joinpath(pth_out,"trsp/trsp.jld2")
-
+	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1;years_to_display=years_to_display)
 		itr=findall(list_trsp.==namtr)[1]
-		tmp=vec(load(fil_trsp,"single_stored_object"))[itr]
+		tmp=vec(load(ECCOdiag(pth_out,"trsp")))[itr]
 		
 		nt=size(tmp.val,2)
 		x=vec(0.5:nt)
@@ -62,7 +61,7 @@ module ClimatologyMakieExt
 		xlims!(ax,years_to_display)
 	end
 
-	function transport(namtrs,ncols,pth_out,list_trsp,year0,year1)
+	function transport(namtrs,ncols,pth_out,list_trsp,year0,year1;years_to_display=years_to_display)
 		if ncols > 1
 			fig1 = Figure(size = (2000,1000),markersize=0.1)
 		else
@@ -74,15 +73,14 @@ module ClimatologyMakieExt
 			kk=na-(jj.-1)*ncols
 			ax1 = Axis(fig1[jj,kk], title=" $txt (in Sv)",
 				xticks=(year0:4:year1),ylabel="transport, in Sv")
-			axtr1(ax1,namtrs[na],pth_out,list_trsp,year0,year1)
+			axtr1(ax1,namtrs[na],pth_out,list_trsp,year0,year1,years_to_display=years_to_display)
+			#ylims!(ax1,rng)
 		end
-		#ylims!(ax1,rng)
 		fig1
 	end
 
-	function figov1(pth_out,kk,low1,year0,year1)
-		fil=joinpath(pth_out,"overturn/overturn.jld2")
-		tmp=-1e-6*load(fil,"single_stored_object")
+	function figov1(pth_out,kk,low1,year0,year1;years_to_display=years_to_display)
+		tmp=-1e-6*load(ECCOdiag(pth_out,"overturn"))
 	
 		nt=size(tmp,3)
 		x=vec(0.5:nt)
@@ -101,16 +99,15 @@ module ClimatologyMakieExt
 			hm1=lines!(x,ov,label="$(lats[ll])N")
 		end
 		xlims!(ax1,years_to_display)
+		ylims!(ax1,(5,20))
 		low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
 		fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
-
 	
 		fig1
 	end
 
 	function figov2(pth_out,Γ; ClipToRange=true)
-		fil=joinpath(pth_out,"overturn/overturn.jld2")
-		tmp=-1e-6*load(fil,"single_stored_object")
+		tmp=-1e-6*load(ECCOdiag(pth_out,"overturn"))
 		ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
 
 		x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
@@ -128,8 +125,7 @@ module ClimatologyMakieExt
 	end
 
 	function OHT(pth_out)
-		fil=joinpath(pth_out,"MHT/MHT.jld2")
-		tmp=load(fil,"single_stored_object")
+		tmp=load(ECCOdiag(pth_out,"MHT"))
 		MT=vec(mean(tmp[:,1:240],dims=2))
 
 		x=vec(-89.0:89.0)
@@ -142,7 +138,7 @@ module ClimatologyMakieExt
 		fig1
 	end
 
-	function glo(gl1,year0,year1)
+	function glo(gl1,year0,year1;years_to_display=years_to_display)
 		ttl="Global Mean $(gl1.txt)"
 		zlb=gl1.txt
 		rng=gl1.rng
@@ -166,19 +162,19 @@ module ClimatologyMakieExt
 		fig1
 	end
 
-	function DepthTime(XYZ; ClipToRange=true)
+	function DepthTime(XYZ; ClipToRange=true, years_to_display=years_to_display)
 		ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
 		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=XYZ.title,
 			xticks=collect(XYZ.year0:4:XYZ.year1))
 		hm1=contourf!(ax1,XYZ.x,XYZ.y,XYZ.z,levels=XYZ.levels,colormap=:turbo)
 		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,years_to_display)
+		haskey(XYZ,:years_to_display) ? xlims!(ax1,XYZ.years_to_display) : xlims!(ax1,years_to_display)
 		ylims!(ax1,XYZ.ylims)
 		fig1
 	end
 
-	function TimeLat(XYZ; ClipToRange=true)
+	function TimeLat(XYZ; ClipToRange=true, years_to_display=years_to_display)
 		ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
 		fig1 = Figure(size = (900,400),markersize=0.1)
 		ax1 = Axis(fig1[1,1], title=XYZ.title,
