@@ -2,15 +2,28 @@ module Climatology
 
 pkg_pth=dirname(pathof(Climatology))
 
-#read_Dataset : Placeholder to allow NCDatasets extension, which is activated by `using NCDatasets`.
-#read_nctiles_alias : Placeholder to allow MITgcmTools extension, which is activated by `using MITgcmTools`.
+## functions that extensions define more specifically
+
+#e.g. read_Dataset : Placeholder to allow NCDatasets extension, which is activated by `using NCDatasets`.
+#e.g. read_nctiles_alias : Placeholder to allow MITgcmTools extension, which is activated by `using MITgcmTools`.
+
+"""
+    read_Dataset
+
+alias for NCDatasets.Dataset that is defined by NCDatasets.jl extension
+"""
 function read_Dataset end
+function ECCOdiags_to_nc end
+function plot_examples end
+
 function read_nctiles_alias end
 function read_mdsio_alias end
 
-#packages that extensions import from Climatology
-using Glob, RollingFunctions, JLD2, Statistics
-function plot_examples end; export plot_examples
+## packages that extensions import from Climatology
+
+import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf
+
+## main set of functions provided by this package
 
 include("types.jl")
 include("downloads.jl")
@@ -34,12 +47,16 @@ function examples()
     ex=[glob("*/"*e,nb)[1] for e in ex_known]
 end
 
-export @datadep_str, ECCOdiags_add
+## export functionalities
+
+export @datadep_str, ECCOdiags_add, ECCOdiag, ECCOdiags_to_nc
 export get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 export get_occa_variable_if_needed, get_occa_velocity_if_needed
 
 export ECCO, ECCO_helpers, ECCO_io, ECCO_diagnostics, ECCO_procs
-export ScratchSpaces
+export ScratchSpaces, read_Dataset, plot_examples
+
+## initialize data deps
 
 __init__() = begin
     ScratchSpaces.__init__scratch()
