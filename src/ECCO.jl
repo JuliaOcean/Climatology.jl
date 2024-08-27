@@ -896,6 +896,7 @@ end #module ECCO_diagnostics
 module ECCO_procs
 
 using JLD2, MeshArrays, DataDeps, Statistics, Climatology, TOML
+import Climatology: ECCOdiag
 
 function longname(n)
 	if occursin("_k",n)
@@ -935,8 +936,11 @@ function years_min_max(sol)
 		year1=2017
 	elseif occursin("ECCOv4r5",sol)
 		year1=2019
-	elseif occursin("OCCA2",sol)
+	elseif occursin("OCCA2HR1",sol)
 		year0=1980
+		year1=2024
+	elseif occursin("OCCA2HR2",sol)
+		year0=1960
 		year1=2024
 	end
 	return year0,year1
@@ -952,12 +956,12 @@ function parameters()
 	#LC=LatitudeCircles(-89.0:89.0,Γ)
 
 	μ = land_mask(Γ)
-        λ = interpolation_setup()
+    λ = interpolation_setup()
 	path0=ECCOdiags_add("OCCA2HR1")
 
-	fil_trsp=joinpath(path0,"trsp","trsp.jld2") #
-	ntr=length(load(fil_trsp,"single_stored_object"))
-	list_trsp=[vec(load(fil_trsp,"single_stored_object"))[i].nam for i in 1:ntr] 
+    tmp=load(ECCOdiag(path0,"trsp"))
+	ntr=length(tmp)
+	list_trsp=[vec(tmp)[i].nam for i in 1:ntr] 
 	list_trsp=[i[1:end-5] for i in list_trsp]
 
 	pth_colors=joinpath(dirname(pathof(Climatology)),"..","examples","ECCO")	
@@ -978,23 +982,20 @@ end
 ##
 
 function glo(pth_out,nam,k,year0,year1)
-	if k>0
-		fil=fil=joinpath(pth_out,nam*"_glo2d/glo2d.jld2")
-	else
-		fil=joinpath(pth_out,nam*"_glo3d/glo3d.jld2")
-	end
-	tmp=vec(load(fil,"single_stored_object"))
-	occursin("THETA",fil) ? ln=longname("THETA") : ln=longname("SALT")
+    nam_full=nam*(k>0 ? "_glo2d" : "_glo3d")
+    tmp=load(ECCOdiag(pth_out,nam_full))
+
+	occursin("THETA",nam) ? ln=longname("THETA") : ln=longname("SALT")
 	if k>0
 		nt=Int(length(tmp[:])./50.0)
 		tmp=reshape(tmp,(nt,50))
 		tmp=tmp[:,k]
-		occursin("THETA",fil) ? rng=(18.0,19.0) : rng=(34.65,34.80)
+		occursin("THETA",fil) ? rng=[18.0,19.0] : rng=[34.65,34.80]
 		txt=ln*" -- level $(k)" 
-		k>1 ? rng=extrema(tmp) : nothing
+		k>1 ? rng=[extrema(tmp)...] : nothing
 	else
 		nt=length(tmp[:])
-		occursin("THETA",fil) ? rng=(3.57,3.63) : rng=(34.724,34.728)
+		occursin("THETA",nam) ? rng=[3.5,3.65] : rng=[34.724,34.728]
 		txt=ln
 	end
 
@@ -1006,14 +1007,10 @@ end
 
 function map(nammap,P,statmap,timemap,pth_out)
 	ii=findall(P.clim_longname.==nammap)[1]
-	nam=P.clim_name[ii]
-	
-	fil=joinpath(pth_out,P.clim_files[ii])
-	if statmap!=="mon"
-		tmp=load(fil,statmap)
-	else
-		tmp=load(fil,statmap)[:,timemap]
-	end
+	nam=P.clim_name[ii]; file=nam*".jld2"
+    nam_full=split(nam,"_")[1]*"_clim"
+    tmp=load(ECCOdiag(pth_out,nam_full),file=file,variable=statmap)
+	tmp=(statmap!=="mon" ? tmp : tmp[:,timemap])
 
 	DD=Interpolate(P.μ*tmp,P.λ.f,P.λ.i,P.λ.j,P.λ.w)
 	DD=reshape(DD,size(P.λ.lon))
@@ -1030,28 +1027,29 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)
 	if namzm=="MXLDEPTH"
 		levs=(0.0:50.0:400.0); cm=:turbo
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		nam=namzm*"_zonmean2d"
 	elseif namzm=="SIarea"
 		levs=(0.0:0.1:1.0); cm=:turbo
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		nam=namzm*"_zonmean2d"
 	elseif namzm=="THETA"
 		levs=(-2.0:2.0:34.0); cm=:turbo
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		nam=namzm*"_zonmean"
 	elseif namzm=="SALT"
 		levs=(32.6:0.2:36.2); cm=:turbo
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		nam=namzm*"_zonmean"
 	elseif (namzm=="ETAN")||(namzm=="SSH")
 		levs=10*(-0.15:0.02:0.15); cm=:turbo
 		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		nam=namzm*"_zonmean2d"
 	else
 		levs=missing
+        nam="missing"
 	end
 
-	tmp=load(fil,"single_stored_object")
+	tmp=load(ECCOdiag(pth_out,nam))
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm,:])
 		x=vec(0.5:size(tmp,3))
@@ -1071,25 +1069,26 @@ function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
 	namzm=namzmanom2d
 	if namzm=="MXLDEPTH"
 		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		nam=namzm*"_zonmean2d"
 	elseif namzm=="SIarea"
 		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
+		nam=namzm*"_zonmean2d"
 	elseif namzm=="THETA"
 		levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		nam=namzm*"_zonmean"
 	elseif namzm=="SALT"
 		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean/zonmean.jld2")
+		nam=namzm*"_zonmean"
 	elseif (namzm=="ETAN")||(namzm=="SSH")
 		levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
-		fil=joinpath(pth_out,namzm*"_zonmean2d/zonmean2d.jld2")
-	else
+        nam=namzm*"_zonmean2d"
+    else
 		fn=transpose
 		levs=missing
-	end
+        nam="missing"
+    end
 
-	tmp=load(fil,"single_stored_object")
+	tmp=load(ECCOdiag(pth_out,nam))
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm2d,:])
 		x=vec(0.5:size(tmp,3)); 
@@ -1130,18 +1129,17 @@ fn_DepthTime(x)=transpose(x)
 function DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P)
 if namzmanom=="THETA"
 	levs=(-3.0:0.4:3.0)/8.0; cm=:turbo
-	fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
 elseif namzmanom=="SALT"
 	levs=(-0.5:0.1:0.5)/10.0;cm=:turbo
-	fil=joinpath(pth_out,namzmanom*"_zonmean/zonmean.jld2")
 else
 	levs=missing;
 end
+nam_full=namzmanom*"_zonmean"
+tmp=load(ECCOdiag(pth_out,nam_full))
 
 dlat=2.0
 lats=(-90+dlat/2:dlat:90-dlat/2)
 
-tmp=load(fil,"single_stored_object")
 z=fn_DepthTime(tmp[l_Tzm,:,:])
 addon1=" -- at $(lats[l_Tzm])N "
 x=vec(0.5:size(tmp,3)); 
