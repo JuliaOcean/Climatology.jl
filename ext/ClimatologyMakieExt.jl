@@ -4,7 +4,41 @@ module ClimatologyMakieExt
 	using Makie, Climatology
 	import Climatology: Statistics, RollingFunctions, plot_examples, load, ECCOdiag
 	import Statistics: mean
+	import Makie: plot
 	import RollingFunctions: runmean
+
+	function plot(x::ECCOdiag)
+		if !isempty(x.options)
+			o=x.options
+			if string(o.plot_type)=="ECCO_map"
+				map(ECCO_procs.map(o.nammap,o.P,o.statmap,o.timemap,x.path))
+			elseif string(o.plot_type)=="ECCO_TimeLat"
+				nam=split(x.name,"_")[1]
+				TimeLat(ECCO_procs.TimeLat(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.P); years_to_display=o.years_to_display)
+			elseif string(o.plot_type)=="ECCO_TimeLatAnom"
+				nam=split(x.name,"_")[1]
+				TimeLat(ECCO_procs.TimeLatAnom(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.l0,o.l1,o.P); years_to_display=o.years_to_display)
+			elseif string(o.plot_type)=="ECCO_DepthTime"
+				nam=split(x.name,"_")[1]
+				DepthTime(ECCO_procs.DepthTime(nam,x.path,o.facA,o.l,o.year0,o.year1,o.k0,o.k1,o.P); years_to_display=o.years_to_display)
+			elseif string(o.plot_type)=="ECCO_GlobalMean"
+				gl1=ECCO_procs.glo(x.path,x.name,o.k,o.year0,o.year1)
+				glo(gl1,o.year0,o.year1; years_to_display=o.years_to_display)
+			elseif x.name=="OHT"&&string(o.plot_type)=="ECCO_OHT1"
+				OHT(x.path)
+			elseif x.name=="overturn"&&string(o.plot_type)=="ECCO_Overturn1"
+				figov1(x.path,o.kk,o.low1,o.year0,o.year1; years_to_display=o.years_to_display)
+			elseif x.name=="overturn"&&string(o.plot_type)=="ECCO_Overturn2"
+				figov2(x.path,o.grid)
+			elseif x.name=="trsp"&&string(o.plot_type)=="ECCO_Transports"
+				transport(o.namtrs,o.ncols,x.path,o.list_trsp,o.year0,o.year1,years_to_display=o.years_to_display)
+			else
+				println("unknown option (b)")	
+			end
+		else
+			println("unknown option (a)")
+		end
+	end
 
 	function plot_examples(ID=Symbol,stuff...)
         if ID==:ECCO_map
