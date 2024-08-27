@@ -3,9 +3,10 @@
 
 abstract type AbstractClimateDiagnostic <: Any end
 
-struct ECCOdiag <: AbstractClimateDiagnostic
-    path::String
-    name::String
+Base.@kwdef struct ECCOdiag <: AbstractClimateDiagnostic
+    path :: String = "unknown"
+    name :: String = "unknown"
+    options :: NamedTuple = NamedTuple()
 end
 
 import JLD2: load

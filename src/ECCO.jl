@@ -999,7 +999,7 @@ function parameters()
     λ = interpolation_setup()
 	path0=ECCOdiags_add("OCCA2HR1")
 
-    tmp=load(ECCOdiag(path0,"trsp"))
+    tmp=load(ECCOdiag(path=path0,name="trsp"))
 	ntr=length(tmp)
 	list_trsp=[vec(tmp)[i].nam for i in 1:ntr] 
 	list_trsp=[i[1:end-5] for i in list_trsp]
@@ -1023,7 +1023,7 @@ end
 
 function glo(pth_out,nam,k,year0,year1)
     nam_full=nam*(k>0 ? "_glo2d" : "_glo3d")
-    tmp=load(ECCOdiag(pth_out,nam_full))
+    tmp=load(ECCOdiag(path=pth_out,name=nam_full))
 
 	occursin("THETA",nam) ? ln=longname("THETA") : ln=longname("SALT")
 	if k>0
@@ -1049,7 +1049,7 @@ function map(nammap,P,statmap,timemap,pth_out)
 	ii=findall(P.clim_longname.==nammap)[1]
 	nam=P.clim_name[ii]; file=nam*".jld2"
     nam_full=split(nam,"_")[1]*"_clim"
-    tmp=load(ECCOdiag(pth_out,nam_full),file=file,variable=statmap)
+    tmp=load(ECCOdiag(path=pth_out,name=nam_full),file=file,variable=statmap)
 	tmp=(statmap!=="mon" ? tmp : tmp[:,timemap])
 
 	DD=Interpolate(P.μ*tmp,P.λ.f,P.λ.i,P.λ.j,P.λ.w)
@@ -1089,7 +1089,7 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)
         nam="missing"
 	end
 
-	tmp=load(ECCOdiag(pth_out,nam))
+	tmp=load(ECCOdiag(path=pth_out,name=nam))
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm,:])
 		x=vec(0.5:size(tmp,3))
@@ -1128,7 +1128,7 @@ function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
         nam="missing"
     end
 
-	tmp=load(ECCOdiag(pth_out,nam))
+	tmp=load(ECCOdiag(path=pth_out,name=nam))
 	if length(size(tmp))==3
 		z=fn(tmp[:,k_zm2d,:])
 		x=vec(0.5:size(tmp,3)); 
@@ -1175,7 +1175,7 @@ else
 	levs=missing;
 end
 nam_full=namzmanom*"_zonmean"
-tmp=load(ECCOdiag(pth_out,nam_full))
+tmp=load(ECCOdiag(path=pth_out,name=nam_full))
 
 dlat=2.0
 lats=(-90+dlat/2:dlat:90-dlat/2)

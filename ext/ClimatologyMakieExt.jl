@@ -44,7 +44,7 @@ module ClimatologyMakieExt
 
 	function axtr1(ax,namtr,pth_out,list_trsp,year0,year1;years_to_display=years_to_display)
 		itr=findall(list_trsp.==namtr)[1]
-		tmp=vec(load(ECCOdiag(pth_out,"trsp")))[itr]
+		tmp=vec(load(ECCOdiag(path=pth_out,name="trsp")))[itr]
 		
 		nt=size(tmp.val,2)
 		x=vec(0.5:nt)
@@ -82,7 +82,7 @@ module ClimatologyMakieExt
 	end
 
 	function figov1(pth_out,kk,low1,year0,year1;years_to_display=years_to_display)
-		tmp=-1e-6*load(ECCOdiag(pth_out,"overturn"))
+		tmp=-1e-6*load(ECCOdiag(path=pth_out,name="overturn"))
 	
 		nt=size(tmp,3)
 		x=vec(0.5:nt)
@@ -109,7 +109,7 @@ module ClimatologyMakieExt
 	end
 
 	function figov2(pth_out,Γ; ClipToRange=true)
-		tmp=-1e-6*load(ECCOdiag(pth_out,"overturn"))
+		tmp=-1e-6*load(ECCOdiag(path=pth_out,name="overturn"))
 		ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
 
 		x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
@@ -127,7 +127,7 @@ module ClimatologyMakieExt
 	end
 
 	function OHT(pth_out)
-		tmp=load(ECCOdiag(pth_out,"MHT"))
+		tmp=load(ECCOdiag(path=pth_out,name="MHT"))
 		MT=vec(mean(tmp[:,1:240],dims=2))
 
 		x=vec(-89.0:89.0)
