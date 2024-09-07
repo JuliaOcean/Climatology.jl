@@ -62,9 +62,11 @@ p=dirname(pathof(Climatology))
 
     ##
 
-    sol="OCCA2HR1"
+    sol="ECCO4R2"
     year0,year1=ECCO_procs.years_min_max(sol)
     pth_out=Climatology.downloads.ECCOdiags_add(sol)
+
+    ECCOdiags_to_nc(path_in=datadep"ECCO4R2-stdiags",year1=1992,nt=240)
 
     using CairoMakie
 
