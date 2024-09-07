@@ -40,30 +40,6 @@ module ClimatologyMakieExt
 		end
 	end
 
-	function plot_examples(ID=Symbol,stuff...)
-        if ID==:ECCO_map
-			map(stuff...)
-		elseif ID==:ECCO_TimeLat
-			TimeLat(stuff...)
-		elseif ID==:ECCO_TimeLatAnom
-			TimeLat(stuff...)
-		elseif ID==:ECCO_DepthTime
-			DepthTime(stuff...)
-		elseif ID==:ECCO_GlobalMean
-			glo(stuff...)
-		elseif ID==:ECCO_OHT
-			OHT(stuff...)
-		elseif ID==:ECCO_Overturn1
-			figov1(stuff...)
-		elseif ID==:ECCO_Overturn2
-			figov2(stuff...)
-		elseif ID==:ECCO_Transports
-			transport(stuff...)
-		else
-			println("unknown plot ID")
-		end
-	end
-
 	##
 
 	to_range!(DD,levs::Tuple) = to_range!(DD,range(levs[1],levs[2],length=10))
