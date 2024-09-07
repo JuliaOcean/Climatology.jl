@@ -60,4 +60,52 @@ p=dirname(pathof(Climatology))
     fil0=joinpath(P0.pth_out,"zonmean2d.jld2")
     @test isfile(fil0)
 
+    ##
+
+    sol="OCCA2HR1"
+    year0,year1=ECCO_procs.years_min_max(sol)
+    pth_out=Climatology.downloads.ECCOdiags_add(sol)
+
+    using CairoMakie
+
+    P=ECCO_procs.parameters()
+    nammap=P.clim_longname[11]
+    statmap="mean"
+    timemap=1
+    plot(ECCOdiag(path=pth_out,name="tbd",options=
+        (plot_type=:ECCO_map,nammap=nammap,P=P,statmap=statmap,timemap=timemap)))
+    
+    plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
+        (plot_type=:ECCO_TimeLat,year0=year0,year1=year1,cmap_fac=1.0,
+        k=1,P=P,years_to_display=[year0 year1+1])))
+
+    l0=1; l1=90
+    plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
+        (plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=1.0,
+        k=1,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1])))
+
+    k0=1; k1=30
+    plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
+        (plot_type=:ECCO_DepthTime,facA=1.0,l=28,year0=year0,year1=year1,
+        k0=k0,k1=k1,P=P,years_to_display=[year0 year1+1])))
+
+    plot(ECCOdiag(path=pth_out,name="THETA",options=
+        (plot_type=:ECCO_GlobalMean,k=0,year0=year0,year1=year1,
+        years_to_display=[year0 year1+1])))
+
+    plot(ECCOdiag(path=pth_out,name="OHT",options=(plot_type=:ECCO_OHT1,)))
+
+    plot(ECCOdiag(path=pth_out,name="overturn",options=(plot_type=:ECCO_Overturn2,grid=P.Γ)))
+
+    plot(ECCOdiag(path=pth_out,name="overturn",options=
+    (plot_type=:ECCO_Overturn1,kk=29,low1="auto",year0=year0,year1=year1,
+    years_to_display=[year0 year1+1])))
+
+    ntr1=P.list_trsp[1]
+    plot(ECCOdiag(path=pth_out,name="trsp",options=
+    (plot_type=:ECCO_Transports,namtrs=[ntr1],ncols=1,list_trsp=P.list_trsp,
+    year0=year0,year1=year1,years_to_display=[year0 year1+1])))
+
+    @test ispath(pth_out)
+
 end
