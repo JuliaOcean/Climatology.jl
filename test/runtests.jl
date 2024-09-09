@@ -36,6 +36,13 @@ p=dirname(pathof(Climatology))
     (fil1,fil2)=SST_FILES.ersst_file_lists()
     @test isfile(fil1)
 
+    (df,gdf,kdf)=SST_coarse_grain.lowres_read()
+	kdf0=kdf[SST_coarse_grain.lowres_index(205,25,kdf)]
+    (lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
+    #ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
+
+    @test isa(df,SST_FILES.DataFrame)
+
     ##
 
     γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
