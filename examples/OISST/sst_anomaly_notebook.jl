@@ -163,7 +163,9 @@ doSave=true
 
 # ╔═╡ b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 begin
-	(df,gdf,kdf)=SST_coarse_grain.lowres_read(fil="lowres_oisst_sst_10.0.csv",path=input_path)
+	dlon=10.0
+	dnl=Int(dlon/0.25)
+	(df,gdf,kdf)=SST_coarse_grain.lowres_read(fil="lowres_oisst_sst_$(dlon).csv",path=input_path)
 	show(df)
 end
 
@@ -332,11 +334,10 @@ end
 # ╔═╡ 9aaa7fd5-3103-48f9-9cfb-ce6d775c05f8
 begin
 	# should be in a function within SST_coarsegrain module
-	# and dnl (or dlon) should be a parameter (to match input file)
 	
 	gdf1=SST_FILES.groupby(df, :t)
 	tmp1=gdf1[end]
-	area_tmp=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G) for x in eachrow(tmp1)]
+	area_tmp=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G,dnl) for x in eachrow(tmp1)]
 
 	glmsst=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf1]
 	ts_global=SST_timeseries.calc(glmsst,list,title="Global Mean SST")
@@ -373,10 +374,10 @@ let
 	tmp1=SST_FILES.groupby(df, :t)[end]
 
 	#this first method is incorrect -- I think because of different orderings
-	area_kdf=[SST_coarse_grain.areaintegral(ones(size(G.msk)),x.i,x.j,G) for x in kdf]
+	area_kdf=[SST_coarse_grain.areaintegral(ones(size(G.msk)),x.i,x.j,G,dnl) for x in kdf]
 	r1=sum(tmp1.sst[:].*area_kdf)/sum(area_kdf)
 
-	tmp2=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G) for x in eachrow(tmp1)]
+	tmp2=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G,dnl) for x in eachrow(tmp1)]
 	r2=sum(tmp1.sst[:].*tmp2)/sum(tmp2)
 
 	(r1,r2)
@@ -390,8 +391,8 @@ let
 	tmp2=zeros(size(G.msk))
 	tmp2[ii].=sst[ii]
 
-	tmp1=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G) for x in kdf]
-	tmp2=[SST_coarse_grain.areaintegral(tmp2,x.i,x.j,G) for x in kdf]
+	tmp1=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G,dnl) for x in kdf]
+	tmp2=[SST_coarse_grain.areaintegral(tmp2,x.i,x.j,G,dnl) for x in kdf]
 	[tmp0 sum(tmp2)/sum(tmp1)]
 end
 
@@ -2502,7 +2503,7 @@ version = "3.6.0+0"
 # ╟─9f7d8596-1576-4d96-803f-21d9b5c53aa4
 # ╟─9516cb99-ba91-4c5e-b5a4-db0b2f702934
 # ╟─ce4ae175-8d7d-4da7-b01b-833ee38b115a
-# ╟─9aaa7fd5-3103-48f9-9cfb-ce6d775c05f8
+# ╠═9aaa7fd5-3103-48f9-9cfb-ce6d775c05f8
 # ╟─f5d4c0db-5b68-4ce8-badb-11ac0c9d85de
 # ╟─3c0da51f-109a-4b3d-bfe2-82103a1d7270
 # ╟─227000e4-e4c4-4619-8f9b-0f999863658d
