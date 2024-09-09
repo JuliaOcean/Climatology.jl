@@ -25,7 +25,7 @@
 ## Other Notebooks
 
 - [HadIOD\_viz.jl](HadIOD_viz.html) : download, read, and plot a subset of the [HadIOD](https://www.metoffice.gov.uk/hadobs/hadiod/) T/S database
-- [SatelliteAltimetry.html](SatelliteAhttps://juliaocean.github.io/OceanRobots.jl/dev/examples/SatelliteAltimetry.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanRobots.jl/master/examples/SatelliteAltimetry.jl)) : gridded satellite data for sea level anomaly
+- [SatelliteAltimetry.html](https://juliaocean.github.io/OceanRobots.jl/dev/examples/SatelliteAltimetry.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/OceanRobots.jl/master/examples/SatelliteAltimetry.jl)) : gridded satellite data for sea level anomaly
 - the suite of examples provided in [OceanRobots.jl](https://juliaocean.github.io/OceanRobots.jl/dev/examples/) that focus on observations collected at sea.
 
 ## References
