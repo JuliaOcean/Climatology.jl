@@ -4,9 +4,11 @@ authors = ["gaelforget <gforget@mit.edu>"]
 version = "0.5.6"
 
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dataverse = "9c0b9be8-e31e-490f-90fe-77697562404d"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
@@ -30,6 +32,7 @@ ClimatologyMakieExt = ["Makie"]
 ClimatologyNCDatasetsExt = ["NCDatasets"]
 
 [compat]
+CSV = "0.10"
 DataDeps = "0.7"
 DataFrames = "1"
 Dataverse = "0.2"

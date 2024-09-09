@@ -6,6 +6,21 @@ ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 p=dirname(pathof(Climatology))
 
 @testset "Climatology.jl" begin
+
+    input_path=Climatology.SST_demo_path
+
+    SST_processing.download_files(path=input_path,short_demo=true)
+    @test ispath(input_path)
+
+    output_path=SST_processing.coarse_grain(path=input_path,short_demo=true)
+    @test isfile(output_path)
+
+    #@everywhere using Climatology, NCDatasets
+    #output_path=SST_processing.monthly_climatology(path=input_path)
+    #mv(output_file,joinpath(input_path,basename(output_file)))
+
+    ##
+
     γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
     Climatology.get_ecco_files(γ,"oceQnet")
     tmp=read_nctiles(joinpath(ScratchSpaces.ECCO,"oceQnet/oceQnet"),"oceQnet",γ,I=(:,:,1))
