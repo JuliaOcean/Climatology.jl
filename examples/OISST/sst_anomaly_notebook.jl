@@ -318,13 +318,12 @@ end
 
 # ╔═╡ 9aaa7fd5-3103-48f9-9cfb-ce6d775c05f8
 begin
-	# should be in a function within SST_coarsegrain module
-	
+	# should be in a function within SST_coarsegrain module?	
 	gdf1=SST_FILES.groupby(df, :t)
 	tmp1=gdf1[end]
 	area_tmp=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G,dnl) for x in eachrow(tmp1)]
-
 	glmsst=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf1]
+	
 	ts_global=SST_timeseries.calc(glmsst,list,title="Global Mean SST")
 end
 
@@ -634,7 +633,7 @@ weakdeps = ["SparseArrays"]
 
 [[deps.Climatology]]
 deps = ["CSV", "DataDeps", "DataFrames", "Dataverse", "Dates", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
-path = "/Users/gaelforget/work/code/julia_pkg/Climatology.jl"
+git-tree-sha1 = "c58bf3ffd6dad29a246cdc3b7c8fd22abf9f9d22"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 version = "0.5.7"
 
