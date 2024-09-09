@@ -177,6 +177,8 @@ end
 Return `(lon=lon,lat=lat,msk=msk,area=area)` based on `fil`.
 """
 function grid(fil)
+    fil=(isfile(fil) ? fil : fil[1:end-3]*"_preliminary.nc")
+
     ds=read_Dataset(fil)
     lon=ds["lon"][:]
     lat=ds["lat"][:]

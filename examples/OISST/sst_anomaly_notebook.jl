@@ -18,9 +18,10 @@ end
 begin
 	using Climatology, NCDatasets, CairoMakie, PlutoUI, Glob
 	
-    #input_path=Climatology.SST_demo_path
-    input_path="files"
+    input_path=Climatology.SST_demo_path
+    #input_path="files"
     input_path_ersst="files_ersst"
+	path_OISST_stats=Climatology.downloads.OISST_stats_download()
 
     function save_fig(fig,trigger=true; file="")
 		isempty(file) ? fil=tempname()*".png" : fil=joinpath(tempdir(),file)
@@ -42,9 +43,6 @@ The NOAA 1/4° daily Optimum Interpolation Sea Surface Temperature (or daily OIS
 **Data source :** [ncei.noaa.gov](https://www.ncei.noaa.gov/products/climate-data-records/sea-surface-temperature-optimum-interpolation)
 
 **Plots for comparison :** [climatereanalyzer.org](https://climatereanalyzer.org/clim/sst_daily/)
-
-!!! note
-    This notebook requires output from `SST_FILES_download.jl`, `sst_climatology.jl`, and `sst_coarse_grain.jl`.
 """
 
 # ╔═╡ 2f945738-a4ba-46a7-be41-58261b939d17
@@ -165,7 +163,7 @@ doSave=true
 begin
 	dlon=10.0
 	dnl=Int(dlon/0.25)
-	(df,gdf,kdf)=SST_coarse_grain.lowres_read(fil="lowres_oisst_sst_$(dlon).csv",path=input_path)
+	(df,gdf,kdf)=SST_coarse_grain.lowres_read(fil="lowres_oisst_sst_$(dlon).csv",path=path_OISST_stats)
 	show(df)
 end
 
@@ -210,7 +208,7 @@ begin
 	anom = ds["anom"][:,:,1,1]
 	close(ds)
 
-	files_climatology=joinpath(input_path,"OISST_mean_monthly_1992_2011.nc")
+	files_climatology=joinpath(path_OISST_stats,"OISST_mean_monthly_1992_2011.nc")
 	sst_clim = Dataset(files_climatology)["sst"][:,:,mon_sst]
 
 	(year_sst,mon_sst,day_sst)
@@ -285,7 +283,7 @@ let
 end
 
 # ╔═╡ c925f69f-6ecc-428e-aae1-0a2446baddb8
-G=SST_coarse_grain.grid(list.fil[1])
+G=SST_coarse_grain.grid(list.fil[end])
 
 # ╔═╡ 1bed0676-4984-4909-a6af-4d25d894aa69
 let
