@@ -633,9 +633,9 @@ weakdeps = ["SparseArrays"]
 
 [[deps.Climatology]]
 deps = ["CSV", "DataDeps", "DataFrames", "Dataverse", "Dates", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
-git-tree-sha1 = "c58bf3ffd6dad29a246cdc3b7c8fd22abf9f9d22"
+git-tree-sha1 = "7be17e70b225b87a35ff3d0df29c3d4ab1b3564b"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-version = "0.5.7"
+version = "0.5.8"
 
     [deps.Climatology.extensions]
     ClimatologyMITgcmExt = ["MITgcm"]
