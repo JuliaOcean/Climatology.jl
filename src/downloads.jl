@@ -170,6 +170,9 @@ function __init__standard_diags()
     register(DataDep("MITprof-clim1","MITprof gridded climatologies",
         ["https://zenodo.org/record/5101243/files/gcmfaces_climatologies.tar.gz"],
         post_fetch_method=unpackDV))        
+    register(DataDep("OISST-stats1","SST climatology and time series",
+        ["https://zenodo.org/records/13736355/files/OISST_stats.tar.gz"],
+        post_fetch_method=unpackDV))        
 end
 
 """
@@ -215,14 +218,16 @@ end
 
 Download lazy artifact to scratch space.
 """   
-MITPROFclim_download() = datadep"MITprof-clim1"
-    
+MITPROFclim_download() = withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
+    datadep"MITprof-clim1"
+end
+
 """
     CBIOMESclim_download()
 
 Download lazy artifact to scratch space.
 """
-CBIOMESclim_download(nam="clim1") = begin
+CBIOMESclim_download(nam="clim1") = withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
     if nam=="clim1"
         datadep"CBIOMES-clim1"
     elseif nam=="PML1"
@@ -230,6 +235,15 @@ CBIOMESclim_download(nam="clim1") = begin
     else
         println("unknown data set")
     end
+end
+
+"""
+    OISSTstats_download()
+
+Download lazy artifact to scratch space.
+"""   
+OISST_stats_download() = withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
+    datadep"OISST-stats1"
 end
 
 end

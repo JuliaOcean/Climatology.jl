@@ -97,7 +97,7 @@ list_pb=sst_files.test_files(list)
 [Downloads.download(r.url,r.fil) for r in eachrow(list[list_pb,:])]
 ```
 """
-function test_files(list,ii=[])
+function test_files(list,ii=[]; print_fails=false)
     test=zeros(1,length(list.fil))
     isempty(ii) ? jj=collect(1:length(list.fil)) : jj=ii
     for f in jj
@@ -105,7 +105,7 @@ function test_files(list,ii=[])
         ds=read_Dataset(list.fil[f])
         close(ds)
        catch e
-        println(basename(list.fil[f]))
+        print_fails ? println(basename(list.fil[f])) : nothing
         test[f]=1
        end
     end
@@ -141,6 +141,34 @@ read_lon_lat(fil) = begin
     lon,lat
 end
 
+###
+
+"""
+    read_map(;variable="anom",file="",file_climatology="")
+
+variable can be "sst", "anom", or "anom_recompute"
+"""
+function read_map(;variable="anom",file="",file_climatology="")
+	(year_sst,mon_sst,day_sst)=ymd(file)	
+    isfile(file) ? fil_sst1=file : fil_sst1=file[1:end-3]*"_preliminary.nc"
+
+    ds= read_Dataset(fil_sst1)
+    sst=ds["sst"][:,:,1,1]
+    anom = ds["anom"][:,:,1,1]
+    close(ds)
+
+    x = if variable=="anom_recompute"
+    	sst_clim = read_Dataset(file_climatology)["sst"][:,:,mon_sst]
+        sst-sst_clim
+    elseif variable=="anom"
+        anom
+    else
+        sst
+    end
+
+	x
+end
+
 end 
 
 
@@ -151,24 +179,22 @@ module SST_coarse_grain
 using Statistics, DataFrames, CSV, Glob
 import Climatology: read_Dataset, SST_demo_path
 
-nl=720
-#dnl=40 #for 10 degree squares
-dnl=8 #for 2 degree squares
-nnl=Int(nl/dnl)
-
-@inline areamean(arr,ii,jj) = 
+@inline areamean(arr,ii,jj,dnl) = 
     mean(skipmissing(
         arr[(ii-1)*dnl.+collect(1:dnl),(jj-1)*dnl.+collect(1:dnl)]
         ))
 
-function indices(list)
+function indices(list,dlon=10.0)
+    dnl=Int(dlon/0.25)
+    nnl=Int(720/dnl)
+
     fil=(isfile(list.fil[1]) ? list.fil[1] : list.fil[1][1:end-3]*"_preliminary.nc")
     println(fil)
     arr=read_Dataset(fil)["sst"][:,:]
 
     ii=[ii for ii in 1:nnl*2, jj in 1:nnl]
     jj=[jj for ii in 1:nnl*2, jj in 1:nnl]    
-    tmp=[areamean(arr,ii,jj) for ii in 1:nnl*2, jj in 1:nnl]
+    tmp=[areamean(arr,ii,jj,dnl) for ii in 1:nnl*2, jj in 1:nnl]
     kk=findall((!isnan).(tmp))
     (i=ii[kk],j=jj[kk],k=kk)
 end
@@ -179,6 +205,8 @@ end
 Return `(lon=lon,lat=lat,msk=msk,area=area)` based on `fil`.
 """
 function grid(fil)
+    fil=(isfile(fil) ? fil : fil[1:end-3]*"_preliminary.nc")
+
     ds=read_Dataset(fil)
     lon=ds["lon"][:]
     lat=ds["lat"][:]
@@ -218,7 +246,7 @@ end
 @inline nansum(x) = sum(filter(!isnan,x))
 @inline nansum(x,y) = mapslices(nansum,x,dims=y)
 
-@inline areaintegral(arr,i::Int,j::Int,G::NamedTuple) = begin
+@inline areaintegral(arr,i::Int,j::Int,G::NamedTuple,dnl) = begin
     ii=(i-1)*dnl.+collect(1:dnl)
     jj=(j-1)*dnl.+collect(1:dnl)
     nansum(arr[ii,jj].*G.msk[ii,jj].*G.area[ii,jj])
@@ -241,14 +269,13 @@ end
 
 Merge all files found in chosen path.
 """
-function merge_files(;path=SST_demo_path,variable="sst")
+function merge_files(;path=SST_demo_path,variable="sst",dlon=10.0)
     path0=dirname(file_root(path=path,variable=variable))
     file_list=glob("$(variable)_lowres*csv",path0)
 
     df=DataFrame(i=Int[],j=Int[],t=Int[],sst=Float32[])
     [lowres_append!(df,f) for f in file_list]
-
-    CSV.write(joinpath(path,"lowres_oisst_$(variable).csv"),df)
+    CSV.write(joinpath(path,"lowres_oisst_$(variable)_$(dlon).csv"),df)
 end
 
 function lowres_append!(df,f)
@@ -261,11 +288,11 @@ end
 file_root(;path=SST_demo_path,variable="sst") = joinpath(path,"$(variable)_lowres_files","$(variable)_lowres_")
 
 """
-    lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst.csv")
+    lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst_10.0.csv")
 
 Read `sst_lowres.csv`
 """
-function lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst.csv")
+function lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst_10.0.csv")
     fil=joinpath(path,fil)
     df=CSV.read(fil,DataFrame)
     gdf=groupby(df, [:i, :j])
@@ -337,7 +364,8 @@ end
 
 ## 
 
-function coarse_grain(;datname="oisst",varname="sst",path=SST_demo_path,short_demo=false)
+function coarse_grain(;datname="oisst",varname="sst",dlon=10.0,
+       path=SST_demo_path,short_demo=false)
 
     ## setup
     list=SST_FILES.read_files_list(file="$(datname)_whole_file_list.csv",path=path,add_ymd=false)
@@ -355,7 +383,8 @@ function coarse_grain(;datname="oisst",varname="sst",path=SST_demo_path,short_de
     @sync @distributed for m in 1:nworkers()
         n0=n_per_workwer*(m-1)+1
         n1=min(n_per_workwer*m,length(list.fil))
-        nnl=SST_coarse_grain.nnl
+        dnl=Int(dlon/0.25)
+        nnl=Int(720/dnl)
         println("$(n0),$(n1)")
         for n in n0:n1
             r=list[n,:]
@@ -364,7 +393,7 @@ function coarse_grain(;datname="oisst",varname="sst",path=SST_demo_path,short_de
                 #calculate
                 ds=read_Dataset(fil)
                 tmp=ds[varname][:,:]
-                sst=[SST_coarse_grain.areamean(tmp,ii,jj) for ii in 1:nnl*2, jj in 1:nnl]
+                sst=[SST_coarse_grain.areamean(tmp,ii,jj,dnl) for ii in 1:nnl*2, jj in 1:nnl]
                 #save to csv
                 df=SST_FILES.DataFrame(i=ind.i,j=ind.j,sst=Float32.(sst[ind.k]))
                 tmp=split(basename(r.fil),".")[2]
@@ -374,7 +403,7 @@ function coarse_grain(;datname="oisst",varname="sst",path=SST_demo_path,short_de
     end
 
     ## write to final file
-    SST_coarse_grain.merge_files(variable=varname,path=path)
+    SST_coarse_grain.merge_files(variable=varname,path=path,dlon=dlon)
 end
 
 ##
