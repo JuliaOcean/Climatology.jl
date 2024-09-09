@@ -3,6 +3,8 @@
 
 abstract type AbstractClimateDiagnostic <: Any end
 
+##
+
 Base.@kwdef struct ECCOdiag <: AbstractClimateDiagnostic
     path :: String = "unknown"
     name :: String = "unknown"
@@ -28,4 +30,11 @@ end
 
 export load
 
+##
+
+Base.@kwdef struct SSTdiag <: AbstractClimateDiagnostic
+    path :: String = "unknown"
+    name :: String = "unknown"
+    options :: NamedTuple = NamedTuple()
+end
 
