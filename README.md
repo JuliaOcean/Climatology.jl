@@ -5,9 +5,7 @@
 [![Codecov](https://codecov.io/gh/JuliaOcean/Climatology.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/JuliaOcean/Climatology.jl)
 [![DOI](https://zenodo.org/badge/260376633.svg)](https://zenodo.org/badge/latestdoi/260376633)
 
-This package is currently focused on downloading, reading, displaying, and analyzing [ocean state estimates](http://dx.doi.org/10.5194/gmd-8-3071-2015). 
-
-_It is in early development stage; breaking changes remain likely._
+This package is currently focused on downloading, reading, visualizing, and analyzing gridded data sets and [ocean state estimates](http://dx.doi.org/10.5194/gmd-8-3071-2015). 
 
 ## Tutorial Notebooks
 
