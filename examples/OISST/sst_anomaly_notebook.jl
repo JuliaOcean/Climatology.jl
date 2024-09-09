@@ -194,57 +194,6 @@ begin
 	"""
 end
 
-# ╔═╡ 9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
-begin
-	#should be a read function that returns input to the plot function
-	#sst,anom,sst_clim,year,month,day -- or just returns one variable based on e.g. keyword?
-	
-	(year_sst,mon_sst,day_sst)=SST_FILES.ymd(fil_sst)
-	
-	isfile(fil_sst) ? fil_sst1=fil_sst : fil_sst1=fil_sst[1:end-3]*"_preliminary.nc"
-
-	ds= Dataset(fil_sst1,"r")
-	sst=ds["sst"][:,:,1,1]
-	anom = ds["anom"][:,:,1,1]
-	close(ds)
-
-	files_climatology=joinpath(path_OISST_stats,"OISST_mean_monthly_1992_2011.nc")
-	sst_clim = Dataset(files_climatology)["sst"][:,:,mon_sst]
-
-	(year_sst,mon_sst,day_sst)
-end
-
-# ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
-if do_ERSST_map
-	function ERSST_map(year_sst,mon_sst;path=Climatology.SST_demo_path)
-		ersst_fil=SST_FILES.@sprintf "ersst.v5.%i%02i.nc" year_sst mon_sst
-		(year_sst==2023&&mon_sst>7)||(year_sst>2023) ? ersst_fil="ersst.v5.202307.nc" : nothing
-	
-		ersst=Dataset(joinpath(path,ersst_fil))
-		ersst_ssta=fill(NaN,(180,89))
-		tmp1=ersst[:ssta][:,:]
-		[ersst_ssta[i]=Float64.(tmp1[i]) for i in findall((!ismissing).(tmp1))]
-	
-        fig=plot(SSTdiag(options=(plot_type=:map_base,)))
-        ax=current_axis()    
-		hm=heatmap!(ax,ersst[:lon][:],ersst[:lat][:],ersst_ssta,colormap=:curl,colorrange=4 .*(-1.0,1.0))
-		ax.title=ersst_fil
-		Colorbar(fig[1, 2],hm)
-
-		fig
-	end
-
-	fig=ERSST_map(year_sst,mon_sst;path=input_path_ersst)
-
-	save_fig(fig,doSave,file="sst_anomaly_map_ERSST.png")
-end
-
-# ╔═╡ d37e8f34-77e8-4283-b871-d8ce0497accf
-if do_future_projection
-	offset=SST_scenarios.calc_offset(year_sst,ny,scenario)
-	"SST offset = $(offset)"
-end
-
 # ╔═╡ 0468be31-8bff-4606-902a-474d4225d108
 ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
 
@@ -285,30 +234,68 @@ end
 # ╔═╡ c925f69f-6ecc-428e-aae1-0a2446baddb8
 G=SST_coarse_grain.grid(list.fil[end])
 
-# ╔═╡ 1bed0676-4984-4909-a6af-4d25d894aa69
-let
-	#should be a plot method. On a SSTdiag, from the corresponding read function,
-	#which should include the logic of ano_ncei, vs ano_sst, vs sst
-	
-    fig=plot(SSTdiag(options=(plot_type=:map_base,)))
-    ax=current_axis()
- 	if ano_ncei
-		hm=heatmap!(ax,G.lon,G.lat,anom,colormap=:curl,colorrange=4 .*(-1.0,1.0))
+# ╔═╡ 9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
+begin
+	file_climatology=joinpath(path_OISST_stats,"OISST_mean_monthly_1992_2011.nc")
+	(year_sst,mon_sst,day_sst)=SST_FILES.ymd(fil_sst)	
+
+	if ano_ncei
+		v_map="anom"
 		ttl="SST anomaly (NCEI) for time "*fil_sst[end-10:end-3]
+		cr_map=4 .*(-1.0,1.0)
+		cm_map=:curl
 	elseif ano_sst
-		hm=heatmap!(ax,G.lon,G.lat,sst-sst_clim,colormap=:curl,colorrange=4 .*(-1.0,1.0))
-		ttl="SST anomaly (GF) for $(year_sst) / $(mon_sst) / $(day_sst)"
+		v_map="anom_recompute"
+		ttl="SST anomaly (recomputed) for $(year_sst) / $(mon_sst) / $(day_sst)"
+		cr_map=4 .*(-1.0,1.0)
+		cm_map=:curl
 	else
-		hm=heatmap!(ax,G.lon,G.lat,sst,colormap=:thermal)
+		v_map="sst"
 		ttl="SST for time "*fil_sst[end-10:end-3]
+		cr_map=(-1.0,31.0)
+		cm_map=:thermal
 	end
-	showgrid ? lowres_scatter(ax) : nothing
-	scatter!(ax,lon1,lat1,marker=:circle,color=:blue,markersize=30)
-	scatter!(ax,lon1,lat1,marker=:x,color=:yellow,markersize=15)
-	Colorbar(fig[1, 2],hm)
-	ax.title=ttl
-	fig
-	save_fig(fig,doSave,file="sst_anomaly_map.png")
+
+	to_map=(field=SST_FILES.read_map(variable=v_map,file=fil_sst,file_climatology=file_climatology),
+			title=ttl,colorrange=cr_map,colormap=cm_map,
+			lon=G.lon,lat=G.lat,lon1=lon1,lat1=lat1,showgrid=false)
+end
+
+# ╔═╡ 1bed0676-4984-4909-a6af-4d25d894aa69
+begin
+    f7=plot(SSTdiag(options=(plot_type=:map,to_map=to_map)))
+	save_fig(f7,doSave,file="sst_anomaly_map.png")
+end
+
+# ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
+if do_ERSST_map
+	function ERSST_map(year_sst,mon_sst;path=Climatology.SST_demo_path)
+		ersst_fil=SST_FILES.@sprintf "ersst.v5.%i%02i.nc" year_sst mon_sst
+		(year_sst==2023&&mon_sst>7)||(year_sst>2023) ? ersst_fil="ersst.v5.202307.nc" : nothing
+	
+		ersst=Dataset(joinpath(path,ersst_fil))
+		ersst_ssta=fill(NaN,(180,89))
+		tmp1=ersst[:ssta][:,:]
+		[ersst_ssta[i]=Float64.(tmp1[i]) for i in findall((!ismissing).(tmp1))]
+	
+        fig=plot(SSTdiag(options=(plot_type=:map_base,)))
+        ax=current_axis()    
+		hm=heatmap!(ax,ersst[:lon][:],ersst[:lat][:],ersst_ssta,colormap=:curl,colorrange=4 .*(-1.0,1.0))
+		ax.title=ersst_fil
+		Colorbar(fig[1, 2],hm)
+
+		fig
+	end
+
+	fig=ERSST_map(year_sst,mon_sst;path=input_path_ersst)
+
+	save_fig(fig,doSave,file="sst_anomaly_map_ERSST.png")
+end
+
+# ╔═╡ d37e8f34-77e8-4283-b871-d8ce0497accf
+if do_future_projection
+	offset=SST_scenarios.calc_offset(year_sst,ny,scenario)
+	"SST offset = $(offset)"
 end
 
 # ╔═╡ 9f7d8596-1576-4d96-803f-21d9b5c53aa4
@@ -383,6 +370,8 @@ end
 
 # ╔═╡ 25cebf8f-c577-4bb8-be6e-cb2aa3388e07
 let
+	sst=SST_FILES.read_map(variable="sst",file=fil_sst,file_climatology=file_climatology)
+	
 	ii=findall((!isnan).(G.msk))
 	tmp0=sum(G.area[ii].*sst[ii])/sum(G.area[ii])
 	
@@ -2480,10 +2469,10 @@ version = "3.6.0+0"
 # ╟─714b333f-c35a-4035-9a57-8d3de33a87a2
 # ╟─2f945738-a4ba-46a7-be41-58261b939d17
 # ╟─ad758a95-5a23-4a84-afbf-2228f5938904
-# ╠═1bed0676-4984-4909-a6af-4d25d894aa69
+# ╟─1bed0676-4984-4909-a6af-4d25d894aa69
 # ╟─1632750d-0908-4b06-98dc-861101449fef
 # ╟─3b7f039f-5dcc-4f17-b1f2-2ea27e54a2eb
-# ╠═9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
+# ╟─9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
 # ╟─68d367ba-ea7f-4870-8317-f777edaefd4d
 # ╟─47f1f04b-d40e-4570-8112-1c38bca794a3
 # ╟─679faf60-95db-40bc-a07d-672f7510e8fb

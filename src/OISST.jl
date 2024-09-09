@@ -141,6 +141,34 @@ read_lon_lat(fil) = begin
     lon,lat
 end
 
+###
+
+"""
+    read_map(;variable="anom",file="",file_climatology="")
+
+variable can be "sst", "anom", or "anom_recompute"
+"""
+function read_map(;variable="anom",file="",file_climatology="")
+	(year_sst,mon_sst,day_sst)=ymd(file)	
+    isfile(file) ? fil_sst1=file : fil_sst1=file[1:end-3]*"_preliminary.nc"
+
+    ds= read_Dataset(fil_sst1)
+    sst=ds["sst"][:,:,1,1]
+    anom = ds["anom"][:,:,1,1]
+    close(ds)
+
+    x = if variable=="anom_recompute"
+    	sst_clim = read_Dataset(file_climatology)["sst"][:,:,mon_sst]
+        sst-sst_clim
+    elseif variable=="anom"
+        anom
+    else
+        sst
+    end
+
+	x
+end
+
 end 
 
 

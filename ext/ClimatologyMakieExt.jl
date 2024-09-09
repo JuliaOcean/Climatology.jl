@@ -226,6 +226,8 @@ module ClimatologyMakieExt
 				SST_plots.TimeLat(o.ts,o.zm,o.title)
 			elseif string(o.plot_type)=="MHW"
 				SST_plots.MHW(o.ts)
+			elseif string(o.plot_type)=="map"
+				SST_plots.plot_sst_map(o.to_map)
 			else
 				error("unknown plot_type")
 			end
@@ -237,7 +239,7 @@ module ClimatologyMakieExt
 	module SST_plots
 
 	using Makie
-	import Climatology: load, Statistics
+	import Climatology: load, Statistics, SSTdiag
 	import Statistics: median
 
 #	using CairoMakie, Statistics, FileIO, Colors, Downloads
@@ -356,8 +358,18 @@ module ClimatologyMakieExt
 		fig
 	end
 	
+	function plot_sst_map(to_map)
+		fig=plot(SSTdiag(options=(plot_type=:map_base,)))
+		ax=current_axis()
+		hm=heatmap!(ax,to_map.lon,to_map.lat,to_map.field,colormap=to_map.colormap,colorrange=to_map.colorrange)
+		to_map.showgrid ? lowres_scatter(ax) : nothing
+		scatter!(ax,to_map.lon1,to_map.lat1,marker=:circle,color=:blue,markersize=30)
+		scatter!(ax,to_map.lon1,to_map.lat1,marker=:x,color=:yellow,markersize=15)
+		Colorbar(fig[1, 2],hm)
+		ax.title=to_map.title
+		fig
+	end
+	
 end
 	
-##
-
 end
