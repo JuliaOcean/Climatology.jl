@@ -22,16 +22,15 @@ Climatology.ECCOdiags_add("release2")
 Climatology.ECCOdiags_add("OCCA2HR1")
 withenv(interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 
-#lst=("CBIOMES_climatogy_create.jl",)
-lst=("CBIOMES/CBIOMES_climatology_plot.jl","ECCO/ECCO_standard_plots.jl",
-     "OptimalTransport/OptimalTransport_demo.jl","NSLCT/NSLCT_notebook.jl",
-     "HadIOD/HadIOD_viz.jl")
+lst=("OISST/sst_anomaly_notebook.jl","CBIOMES/CBIOMES_climatology_plot.jl",
+     "ECCO/ECCO_standard_plots.jl","NSLCT/NSLCT_notebook.jl",
+     "OptimalTransport/OptimalTransport_demo.jl","HadIOD/HadIOD_viz.jl")
 
 pth_out=joinpath(@__DIR__,"build", "examples")
 !isdir(pth_out) ? mkdir(pth_out) : nothing
 
-if true #skip generating file automatically 
-    for i in lst
+#lst=[]
+for i in lst
     println("PlutoSliderServer($i) started")
     fil_in=joinpath(@__DIR__,"..", "examples",i)
     fil_out=joinpath(pth_out,basename(i)[1:end-2]*"html")
@@ -39,7 +38,6 @@ if true #skip generating file automatically
     mv(fil_in[1:end-2]*"html",fil_out)
     cp(fil_in,fil_out[1:end-4]*"jl")
     println("PlutoSliderServer($i) completed")
-end
 end
 
 deploydocs(;
