@@ -19,6 +19,30 @@ p=dirname(pathof(Climatology))
     #output_path=SST_processing.monthly_climatology(path=input_path)
     #mv(output_file,joinpath(input_path,basename(output_file)))
 
+    (fil1,fil2)=SST_FILES.file_lists(path=input_path)
+    list=SST_FILES.CSV.read(fil1,SST_FILES.DataFrame)
+    fil=readdir(dirname(list.fil[end]))[1]
+    fil=joinpath(dirname(list.fil[end]),fil)
+
+    lon,lat=SST_FILES.read_lon_lat(fil)
+    @test isa(lon,Vector)
+
+    gr=SST_coarse_grain.grid(fil)
+    @test isa(gr,NamedTuple)
+
+    list_pb=SST_FILES.test_files(list)
+    @test isa(list_pb,Vector)
+
+    (fil1,fil2)=SST_FILES.ersst_file_lists()
+    @test isfile(fil1)
+
+    (df,gdf,kdf)=SST_coarse_grain.lowres_read()
+	kdf0=kdf[SST_coarse_grain.lowres_index(205,25,kdf)]
+    (lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
+    #ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
+
+    @test isa(df,SST_FILES.DataFrame)
+
     ##
 
     γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
