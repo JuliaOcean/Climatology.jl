@@ -97,7 +97,7 @@ list_pb=sst_files.test_files(list)
 [Downloads.download(r.url,r.fil) for r in eachrow(list[list_pb,:])]
 ```
 """
-function test_files(list,ii=[])
+function test_files(list,ii=[]; print_fails=false)
     test=zeros(1,length(list.fil))
     isempty(ii) ? jj=collect(1:length(list.fil)) : jj=ii
     for f in jj
@@ -105,7 +105,7 @@ function test_files(list,ii=[])
         ds=read_Dataset(list.fil[f])
         close(ds)
        catch e
-        println(basename(list.fil[f]))
+        print_fails ? println(basename(list.fil[f])) : nothing
         test[f]=1
        end
     end
@@ -288,11 +288,11 @@ end
 file_root(;path=SST_demo_path,variable="sst") = joinpath(path,"$(variable)_lowres_files","$(variable)_lowres_")
 
 """
-    lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst.csv")
+    lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst_10.0.csv")
 
 Read `sst_lowres.csv`
 """
-function lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst.csv")
+function lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst_10.0.csv")
     fil=joinpath(path,fil)
     df=CSV.read(fil,DataFrame)
     gdf=groupby(df, [:i, :j])
