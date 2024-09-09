@@ -152,8 +152,8 @@ using Statistics, DataFrames, CSV, Glob
 import Climatology: read_Dataset, SST_demo_path
 
 nl=720
-#dnl=40 #for 10 degree squares
-dnl=8 #for 2 degree squares
+dnl=40 #for 10 degree squares
+#dnl=8 #for 2 degree squares
 nnl=Int(nl/dnl)
 
 @inline areamean(arr,ii,jj) = 
@@ -248,7 +248,8 @@ function merge_files(;path=SST_demo_path,variable="sst")
     df=DataFrame(i=Int[],j=Int[],t=Int[],sst=Float32[])
     [lowres_append!(df,f) for f in file_list]
 
-    CSV.write(joinpath(path,"lowres_oisst_$(variable).csv"),df)
+    dlon=dnl*0.25
+    CSV.write(joinpath(path,"lowres_oisst_$(variable)_$(dlon).csv"),df)
 end
 
 function lowres_append!(df,f)
