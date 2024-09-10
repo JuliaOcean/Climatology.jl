@@ -175,7 +175,9 @@ end
 
 # ╔═╡ 3178b826-8f9d-4cf6-955f-c40887e15476
 begin
+    (fil1,fil2)=SST_FILES.file_lists(path=input_path)
 	list=SST_FILES.read_files_list(path=input_path)[1:length(unique(df.t)),:]
+    SST_processing.download_files(path=input_path,short_demo=true)
 	show(list)
 end
 
