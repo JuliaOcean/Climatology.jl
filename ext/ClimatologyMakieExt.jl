@@ -239,7 +239,7 @@ module ClimatologyMakieExt
 	module SST_plots
 
 	using Makie
-	import Climatology: load, Statistics, SSTdiag
+	import Climatology: load, Statistics, SSTdiag, Downloads
 	import Statistics: median
 
 #	using CairoMakie, Statistics, FileIO, Colors, Downloads

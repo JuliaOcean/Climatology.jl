@@ -23,6 +23,7 @@ function read_mdsio_alias end
 ## packages that extensions import from Climatology
 
 import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf
+import Dataverse.downloads: Downloads
 
 ## main set of functions provided by this package
 
