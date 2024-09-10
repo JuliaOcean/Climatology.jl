@@ -17,7 +17,6 @@ function read(x::SeaLevelAnomaly)
     sla_file=joinpath(path,fil)
     !isdir(path) ? mkdir(path) : nothing
     !isfile(sla_file) ? Dataverse.file_download(lst,fil,path) : nothing
-    println(isfile(sla_file))
     Dataverse.file_download(lst,fil,path)
 
     ds=read_Dataset(sla_file)

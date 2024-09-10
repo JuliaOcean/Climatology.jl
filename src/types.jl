@@ -43,7 +43,7 @@ end
 ##
 
 Base.@kwdef struct SeaLevelAnomaly <: AbstractClimateDiagnostic
-    path :: String = "unknown"
+    path :: String = tempdir()
     name :: String = "unknown"
     options :: NamedTuple = NamedTuple()
     data :: AbstractArray = []
