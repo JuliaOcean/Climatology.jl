@@ -159,14 +159,14 @@ p=dirname(pathof(Climatology))
     @test isa(f3,Figure)
 
     file=joinpath(SLA.path,SLA.name*".nc")
-    gr=podaac_sla.get_grid(file=file)
-    data=podaac_sla.read_slice(file,gr)
-    sub=podaac_sla.subset(; read_from_file=file)
+    gr=SLA_PODAAC.get_grid(file=file)
+    data=SLA_PODAAC.read_slice(file,gr)
+    sub=SLA_PODAAC.subset(; read_from_file=file)
     @test isa(sub,Array)
 
     SLA=read(SeaLevelAnomaly(name="sla_cmems"))
     file=joinpath(SLA.path,SLA.name*".nc")
-    sub=cmems_sla.subset(; read_from_file=file)
+    sub=SLA_CMEMS.subset(; read_from_file=file)
     @test isa(sub,Array)
 
 end
