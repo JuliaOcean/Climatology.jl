@@ -10,9 +10,9 @@ makedocs(;
     format=Documenter.HTML(),
     pages=[
         "Home" => "index.md",
-        "Examples" => "examples.md",
-        "ECCO" => "ECCO.md",
-        "Files" => "API.md",
+        "Data Sets" => "examples.md",
+        "Data Files" => "API.md",
+        "Internals (ECCO)" => "ECCO.md",
     ],
     repo="https://github.com/JuliaOcean/Climatology.jl/blob/{commit}{path}#L{line}",
     sitename="Climatology.jl",
@@ -30,7 +30,8 @@ earth_jpg=joinpath(tempdir(),"Blue_Marble.jpg")
 url="https://upload.wikimedia.org/wikipedia/commons/5/56/Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg"
 !isfile(earth_jpg) ? Downloads.download(url,earth_jpg) : nothing
 
-lst=("OISST/sst_anomaly_notebook.jl","CBIOMES/CBIOMES_climatology_plot.jl",
+lst=("SSH/SatelliteAltimetry.jl",
+     "OISST/sst_anomaly_notebook.jl","CBIOMES/CBIOMES_climatology_plot.jl",
      "ECCO/ECCO_standard_plots.jl","NSLCT/NSLCT_notebook.jl",
      "OptimalTransport/OptimalTransport_demo.jl","HadIOD/HadIOD_viz.jl")
 
