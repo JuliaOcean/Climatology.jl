@@ -55,6 +55,9 @@ md"""## Data Set"""
 # ╔═╡ 9b3c3856-9fe1-43ba-97a2-abcd5b385c1d
 sla=read(SeaLevelAnomaly(name=fil[1:end-3],path=tempname()))
 
+# ╔═╡ a45bbdbd-3793-4e69-b042-39a4a1ac7ed7
+plot(sla) #,topo=topo)
+
 # ╔═╡ 1cf2cdb9-3c09-4b39-81cf-49318c16f531
 md"""## Apendix
 
@@ -103,9 +106,6 @@ topo = begin
 	(lon=lon,lat=lat,z=band[:,:])
 end	
 
-# ╔═╡ a45bbdbd-3793-4e69-b042-39a4a1ac7ed7
-plot(sla,dates=dates,topo=topo)
-
 # ╔═╡ 5fec1029-34a1-4d43-9183-7e6095194a3a
 md"""### Create Animation"""
 
@@ -137,7 +137,6 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 [compat]
 ArchGDAL = "~0.10.4"
 CairoMakie = "~0.12.9"
-Climatology = "~0.5.8"
 Dataverse = "~0.2.5"
 NCDatasets = "~0.14.5"
 PlutoUI = "~0.7.60"
@@ -149,7 +148,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "1efd09ea4c311337269b0f728f32ebf3f5e9cf2d"
+project_hash = "62f140118185b625594d8eb29cc75b6d8798d796"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -370,8 +369,8 @@ weakdeps = ["SparseArrays"]
     ChainRulesCoreSparseArraysExt = "SparseArrays"
 
 [[deps.Climatology]]
-deps = ["CSV", "DataDeps", "DataFrames", "DataStructures", "Dataverse", "Dates", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML", "URIs"]
-path = "/Users/gaelforget/work/code/julia_pkg/Climatology.jl"
+deps = ["CSV", "DataDeps", "DataFrames", "Dataverse", "Dates", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "TOML"]
+git-tree-sha1 = "7be17e70b225b87a35ff3d0df29c3d4ab1b3564b"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 version = "0.5.8"
 
