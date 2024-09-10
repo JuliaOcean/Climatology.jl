@@ -16,8 +16,8 @@ end
 
 # ╔═╡ a8e0b727-a416-4aad-b660-69e5470c7e9e
 begin
-	using Climatology, CairoMakie, Dataverse, ArchGDAL, PlutoUI
-	ClimatologyMakieExt=Base.get_extension(OceanRobots, :ClimatologyMakieExt)
+	using Climatology, NCDatasets, CairoMakie, Dataverse, ArchGDAL, PlutoUI
+	ClimatologyMakieExt=Base.get_extension(Climatology, :ClimatologyMakieExt)
 	"Done with Julia packages"
 end
 
@@ -53,7 +53,7 @@ dates=SLA_MAIN.sla_dates(fil)
 md"""## Data Set"""
 
 # ╔═╡ 9b3c3856-9fe1-43ba-97a2-abcd5b385c1d
-sla=read(SeaLevelAnomaly(options=(ID=Symbol(fil[1:end-3]),)))
+sla=read(SeaLevelAnomaly(name=fil[1:end-3],path=tempname()))
 
 # ╔═╡ 1cf2cdb9-3c09-4b39-81cf-49318c16f531
 md"""## Apendix
@@ -131,7 +131,16 @@ ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 Dataverse = "9c0b9be8-e31e-490f-90fe-77697562404d"
+NCDatasets = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+
+[compat]
+ArchGDAL = "~0.10.4"
+CairoMakie = "~0.12.9"
+Climatology = "~0.5.8"
+Dataverse = "~0.2.5"
+NCDatasets = "~0.14.5"
+PlutoUI = "~0.7.60"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -140,7 +149,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "601e0100bcabbefb40c816c15a68d4e91d6adab6"
+project_hash = "1efd09ea4c311337269b0f728f32ebf3f5e9cf2d"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -299,6 +308,12 @@ git-tree-sha1 = "389ad5c84de1ae7cf0e28e381131c98ea87d54fc"
 uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 version = "0.5.0"
 
+[[deps.CFTime]]
+deps = ["Dates", "Printf"]
+git-tree-sha1 = "5afb5c5ba2688ca43a9ad2e5a91cbb93921ccfa1"
+uuid = "179af706-886a-5703-950a-314cd64e0468"
+version = "0.1.3"
+
 [[deps.CPUSummary]]
 deps = ["CpuId", "IfElse", "PrecompileTools", "Static"]
 git-tree-sha1 = "5a97e67919535d6841172016c9530fd69494e5ec"
@@ -415,6 +430,12 @@ deps = ["ColorTypes", "FixedPointNumbers", "Reexport"]
 git-tree-sha1 = "362a287c3aa50601b0bc359053d5c2468f0e7ce0"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.11"
+
+[[deps.CommonDataModel]]
+deps = ["CFTime", "DataStructures", "Dates", "Preferences", "Printf", "Statistics"]
+git-tree-sha1 = "d6fb5bf939a2753c74984b11434ea25d6c397a58"
+uuid = "1fbeeb36-5f17-413c-809b-666fb144f157"
+version = "0.3.6"
 
 [[deps.CommonWorldInvalidations]]
 git-tree-sha1 = "ae52d1c52048455e85a387fbee9be553ec2b68d0"
@@ -1360,6 +1381,12 @@ version = "0.3.4"
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2023.1.10"
+
+[[deps.NCDatasets]]
+deps = ["CFTime", "CommonDataModel", "DataStructures", "Dates", "DiskArrays", "NetCDF_jll", "NetworkOptions", "Printf"]
+git-tree-sha1 = "77df6d3708ec0eb3441551e1f20f7503b37c2393"
+uuid = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
+version = "0.14.5"
 
 [[deps.NaNMath]]
 deps = ["OpenLibm_jll"]

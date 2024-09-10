@@ -154,19 +154,18 @@ p=dirname(pathof(Climatology))
 
     ## 3. SSH/SLA
 
-    sla=SeaLevelAnomaly(options=(ID=:sla_podaac,path=tempname()))
-    SLA=read(sla)
+    SLA=read(SeaLevelAnomaly(name="sla_podaac"))
     f3=plot(SLA)
     @test isa(f3,Figure)
 
-    file=joinpath(SLA.options.path,string(SLA.options.ID)*".nc")
+    file=joinpath(SLA.path,SLA.name*".nc")
     gr=podaac_sla.get_grid(file=file)
     data=podaac_sla.read_slice(file,gr)
     sub=podaac_sla.subset(; read_from_file=file)
     @test isa(sub,Array)
 
-    SLA=read(SeaLevelAnomaly(options=(ID=:sla_cmems,path=tempname())))
-    file=joinpath(SLA.options.path,string(SLA.options.ID)*".nc")
+    SLA=read(SeaLevelAnomaly(name="sla_cmems"))
+    file=joinpath(SLA.path,SLA.name*".nc")
     sub=cmems_sla.subset(; read_from_file=file)
     @test isa(sub,Array)
 

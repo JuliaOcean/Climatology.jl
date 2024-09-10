@@ -6,7 +6,7 @@ abstract type AbstractClimateDiagnostic <: Any end
 ##
 
 Base.@kwdef struct ECCOdiag <: AbstractClimateDiagnostic
-    path :: String = "unknown"
+    path :: String = tempdir()
     name :: String = "unknown"
     options :: NamedTuple = NamedTuple()
     data :: AbstractArray = []

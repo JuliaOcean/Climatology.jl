@@ -7,8 +7,8 @@ import Base: read
 
 #fil=["sla_podaac.nc","sla_cmems.nc"]
 function read(x::SeaLevelAnomaly)
-    ID=x.options.ID
-    path=x.options.path
+    ID=x.name
+    path=x.path
 
     DOI="doi:10.7910/DVN/OYBLGK"
     lst=Dataverse.file_list(DOI)
@@ -17,9 +17,12 @@ function read(x::SeaLevelAnomaly)
     sla_file=joinpath(path,fil)
     !isdir(path) ? mkdir(path) : nothing
     !isfile(sla_file) ? Dataverse.file_download(lst,fil,path) : nothing
+    println(isfile(sla_file))
+    Dataverse.file_download(lst,fil,path)
 
     ds=read_Dataset(sla_file)
-    SeaLevelAnomaly(options=x.options,data=[ds])
+    op=(dates=sla_dates(sla_file),)
+    SeaLevelAnomaly(name=x.name,path=path,data=[ds],options=op)
 end
 
 podaac_date(n)=Dates.Date("1992-10-05")+Dates.Day(5*n)

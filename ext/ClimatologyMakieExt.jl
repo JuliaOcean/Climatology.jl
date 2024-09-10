@@ -383,7 +383,7 @@ end
 module SLA_PLOTS
 
 using Makie
-import Climatology: SeaLevelAnomaly, sla_dates, Statistics
+import Climatology: SeaLevelAnomaly, SLA_MAIN, Statistics
 import Statistics: mean
 
 ## Satellite
@@ -397,9 +397,8 @@ sla=make_plot(SeaLevelAnomaly(),:sla_podaac)
 plot(sla)
 ```
 """
-default_plot(b::SeaLevelAnomaly; dates=[], kwargs...) = begin
-	ds=(isempty(dates) ? sla_dates(b.options.path*".nc") : dates)
-	fig,_,_=prep_movie(b.data[1]; dates=ds, kwargs...)
+default_plot(b::SeaLevelAnomaly) = begin
+	fig,_,_=prep_movie(b.data[1]; b.options...)
 	fig
 end
 
