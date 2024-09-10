@@ -383,18 +383,10 @@ end
 module SLA_PLOTS
 
 using Makie
-import Climatology: SeaLevelAnomaly, Dates, Statistics
+import Climatology: SeaLevelAnomaly, sla_dates, Statistics
 import Statistics: mean
 
 ## Satellite
-
-podaac_date(n)=Dates.Date("1992-10-05")+Dates.Day(5*n)
-podaac_sample_dates=podaac_date.(18:73:2190)
-cmems_date(n)=Dates.Date("1993-01-01")+Dates.Day(1*n)
-podaac_all_dates=podaac_date.(1:2190)
-cmems_all_dates=cmems_date.(1:10632)
-
-sla_dates(fil) = ( fil=="sla_podaac.nc" ? podaac_all_dates : cmems_all_dates)
 
 """
     default_plot(b::SeaLevelAnomaly; dates=[], kwargs...)

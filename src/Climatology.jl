@@ -64,7 +64,7 @@ export ECCO, ECCO_helpers, ECCO_io, ECCO_diagnostics, ECCO_procs
 export SST_FILES, SST_coarse_grain, SST_processing, SST_timeseries, SST_scenarios
 export ScratchSpaces, read_Dataset, plot_examples
 
-export podaac_sla, cmems_sla
+export SLA_PODAAC, SLA_PODAAC, SLA_MAIN
 
 ## initialize data deps
 
