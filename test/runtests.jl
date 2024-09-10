@@ -7,6 +7,8 @@ p=dirname(pathof(Climatology))
 
 @testset "Climatology.jl" begin
 
+    ## 1. SST
+
     input_path=Climatology.SST_demo_path
 
     SST_processing.download_files(path=input_path,short_demo=true)
@@ -43,7 +45,7 @@ p=dirname(pathof(Climatology))
 
     @test isa(df,SST_FILES.DataFrame)
 
-    ##
+    ## 2. ECCO
 
     γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
     Climatology.get_ecco_files(γ,"oceQnet")
@@ -149,5 +151,23 @@ p=dirname(pathof(Climatology))
     year0=year0,year1=year1,years_to_display=[year0 year1+1])))
 
     @test ispath(pth_out)
+
+    ## 3. SSH/SLA
+
+    sla=SeaLevelAnomaly(options=(ID=:sla_podaac,path=tempname()))
+    SLA=read(sla)
+    f3=plot(SLA)
+    @test isa(f3,Figure)
+
+    file=joinpath(SLA.options.path,string(SLA.options.ID)*".nc")
+    gr=podaac_sla.get_grid(file=file)
+    data=podaac_sla.read_slice(file,gr)
+    sub=podaac_sla.subset(; read_from_file=file)
+    @test isa(sub,Array)
+
+    SLA=read(SeaLevelAnomaly(options=(ID=:sla_cmems,path=tempname())))
+    file=joinpath(SLA.options.path,string(SLA.options.ID)*".nc")
+    sub=cmems_sla.subset(; read_from_file=file)
+    @test isa(sub,Array)
 
 end

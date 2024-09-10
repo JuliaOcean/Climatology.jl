@@ -22,7 +22,7 @@ function read_mdsio_alias end
 
 ## packages that extensions import from Climatology
 
-import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf
+import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf, Dates
 import Dataverse.downloads: Downloads
 
 ## main set of functions provided by this package
@@ -30,6 +30,7 @@ import Dataverse.downloads: Downloads
 include("types.jl")
 include("downloads.jl")
 include("OISST.jl")
+include("SSH.jl")
 include("ECCO.jl")
 
 import Climatology.downloads: get_ecco_files, get_ecco_variable_if_needed, get_ecco_velocity_if_needed
@@ -52,7 +53,7 @@ end
 
 ## export functionalities
 
-export ECCOdiag, SSTdiag
+export ECCOdiag, SSTdiag, SeaLevelAnomaly
 
 export @datadep_str, ECCOdiags_add
 export ECCOdiags_to_nc, write_SST_climatology
@@ -62,6 +63,8 @@ export get_occa_variable_if_needed, get_occa_velocity_if_needed
 export ECCO, ECCO_helpers, ECCO_io, ECCO_diagnostics, ECCO_procs
 export SST_FILES, SST_coarse_grain, SST_processing, SST_timeseries, SST_scenarios
 export ScratchSpaces, read_Dataset, plot_examples
+
+export podaac_sla, cmems_sla
 
 ## initialize data deps
 

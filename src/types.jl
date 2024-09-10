@@ -9,6 +9,7 @@ Base.@kwdef struct ECCOdiag <: AbstractClimateDiagnostic
     path :: String = "unknown"
     name :: String = "unknown"
     options :: NamedTuple = NamedTuple()
+    data :: AbstractArray = []
 end
 
 import JLD2: load
@@ -36,5 +37,14 @@ Base.@kwdef struct SSTdiag <: AbstractClimateDiagnostic
     path :: String = "unknown"
     name :: String = "unknown"
     options :: NamedTuple = NamedTuple()
+    data :: AbstractArray = []
 end
 
+##
+
+Base.@kwdef struct SeaLevelAnomaly <: AbstractClimateDiagnostic
+    path :: String = "unknown"
+    name :: String = "unknown"
+    options :: NamedTuple = NamedTuple()
+    data :: AbstractArray = []
+end
