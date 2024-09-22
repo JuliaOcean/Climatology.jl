@@ -22,6 +22,8 @@ function read_mdsio_alias end
 function file_IAP end
 function read_IAP end
 function write_H_to_T end
+function write_SLA_PODAAC end
+function write_SLA_CMEMS end
 
 ## packages that extensions import from Climatology
 

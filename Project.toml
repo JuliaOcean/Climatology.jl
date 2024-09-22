@@ -1,7 +1,7 @@
 name = "Climatology"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.5.9"
+version = "0.5.10"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
