@@ -215,16 +215,6 @@ function list_time_steps(pth_in)
     return list
 end
 
-function get_nr_nt(pth_in,nam)
-    nct_path=joinpath(pth_in,nam)
-    lst=readdir(nct_path)
-    lst=lst[findall(occursin.(Ref(".nc"),lst))]
-    fil1=joinpath(nct_path,lst[1])
-    ds=read_Dataset(fil1)
-    siz=size(ds[nam])
-    siz[end-1],siz[end]
-end
-
 nansum(x) = sum(filter(!isnan,x))
 nansum(x,y) = mapslices(nansum,x,dims=y)
 

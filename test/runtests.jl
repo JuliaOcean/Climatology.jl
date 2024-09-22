@@ -1,4 +1,4 @@
-using Test, Climatology, Statistics, MITgcm
+using Test, Climatology, Statistics, MITgcm, CairoMakie
 import NCDatasets, NetCDF, MeshArrays
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
@@ -52,6 +52,53 @@ end
     #ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
 
     @test isa(df,SST_FILES.DataFrame)
+
+    ###
+
+    path_OISST_stats=Climatology.downloads.OISST_stats_download()
+
+	dlon=10.0
+	dnl=Int(dlon/0.25)
+	(df,gdf,kdf)=SST_coarse_grain.lowres_read(fil="lowres_oisst_sst_$(dlon).csv",path=path_OISST_stats)
+
+	lon0=205; lat0=25
+	list=SST_FILES.read_files_list()[1:length(unique(df.t)),:]
+
+	kdf0=kdf[SST_coarse_grain.lowres_index(lon0,lat0,kdf)]
+	(lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
+    ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
+
+    plot(SSTdiag(options=(plot_type=:by_year,ts=ts)))
+    options=(plot_type=:by_time,ts=ts,show_anom=false,show_clim=false)
+    plot(SSTdiag(options=options))
+    plot(SSTdiag(options=(plot_type=:MHW,ts=ts)))
+
+	gdf1=SST_FILES.groupby(df, :t)
+	tmp1=gdf1[end]
+	area_tmp=[SST_coarse_grain.areaintegral(gr.msk,x.i,x.j,gr,dnl) for x in eachrow(tmp1)]
+	glmsst=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf1]
+    ts_global=SST_timeseries.calc(glmsst,list,title="Global Mean SST")
+
+    x=SSTdiag(options=(plot_type=:local_and_global,ts=ts,ts_global=ts_global,kdf0=kdf0))
+    f=plot(x)
+    @test isa(f,Figure)
+
+    ##
+
+    path_OISST_stats=Climatology.downloads.OISST_stats_download()
+    file_climatology=joinpath(path_OISST_stats,"OISST_mean_monthly_1992_2011.nc")
+	to_map=(field=SST_FILES.read_map(variable="anom",file=fil,file_climatology=file_climatology),
+			title="test",colorrange=4 .*(-1.0,1.0),colormap=:thermal,
+			lon=gr.lon,lat=gr.lat,lon1=lon1,lat1=lat1,showgrid=false)
+
+    f7=plot(SSTdiag(options=(plot_type=:map,to_map=to_map)))
+    @test isa(f7,Figure)
+
+    ##
+
+#    zm=SST_coarse_grain.calc_zm(gr,df)
+#    f5=plot(SSTdiag(options=(plot_type=:TimeLat,zm=zm,title="OISST anomaly")))
+#    @test isa(f5,Figure)
 
     ## 2. ECCO
 
