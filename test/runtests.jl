@@ -1,4 +1,4 @@
-using Test, Climatology, Statistics, MITgcm, CairoMakie
+using Test, Climatology, Statistics, MITgcm, CairoMakie, Suppressor
 import NCDatasets, NetCDF, MeshArrays
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
@@ -19,7 +19,7 @@ end
 
     input_path=Climatology.SST_demo_path
 
-    SST_processing.download_files(path=input_path,short_demo=true)
+    @suppress SST_processing.download_files(path=input_path,short_demo=true)
     @test ispath(input_path)
 
     output_path=SST_processing.coarse_grain(path=input_path,short_demo=true)

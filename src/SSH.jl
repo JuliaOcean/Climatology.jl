@@ -2,7 +2,7 @@
 module SLA_MAIN
 
 using Dataverse
-import Climatology: SeaLevelAnomaly, read_Dataset, Dates
+import Climatology: SeaLevelAnomaly, read_Dataset, Dates, write_SLA_PODAAC, write_SLA_CMEMS
 import Base: read
 
 #fil=["sla_podaac.nc","sla_cmems.nc"]
@@ -127,28 +127,8 @@ function subset(;
         end
     end
 
-    show(gr)
-
-
-    if save_to_file
-        ## need to move to extension
-        #fil=joinpath(tempdir(),"sla_$(i0)_$(i1).nc")
-        fil=joinpath(tempdir(),"podaac_sla_dev.nc")
-        Dataset(fil,"c",attrib = OrderedDict("title" => "Azores Regional Subset")) do ds
-            defVar(ds,"SLA",data,("lon","lat","time"), attrib = OrderedDict(
-                "units" => "m", "long_name" => "Sea Level Anomaly",
-                "comments" => "source is https://sealevel.nasa.gov/data/dataset/?identifier=SLCP_SEA_SURFACE_HEIGHT_ALT_GRIDS_L4_2SATS_5DAY_6THDEG_V_JPL2205_2205")),
-            defVar(ds,"lon",gr.lon[gr.ii],("lon",), attrib = OrderedDict(
-                "units" => "degree", "long_name" => "Longitude"))
-            defVar(ds,"lat",gr.lat[gr.jj],("lat",), attrib = OrderedDict(
-                "units" => "degree", "long_name" => "Latitude"))
-            end
-        println("File name :")
-        fil
-    else
-        data
-    end
-
+    #show(gr)
+    save_to_file ? Climatology.write_SLA_PODAAC(gr,data) : data
 end
 
 end #module SLA_PODAAC
@@ -197,24 +177,8 @@ function subset(;
     jj=findall( (lat.>range_lat[1]) .& (lat.<range_lat[2]) )
     data = SSH[ii,jj,:]
 
-    if save_to_file
-        ## need to move to extension
-        fil=joinpath(tempdir(),"cmems_sla_dev.nc")
-        read_Dataset(fil,"c",attrib = OrderedDict("title" => "Azores Regional Subset")) do ds
-            defVar(ds,"SLA",data,("lon","lat","time"), attrib = OrderedDict(
-                "units" => "m", "long_name" => "Sea Level Anomaly",
-                "comments" => "source is https://my.cmems-du.eu")),
-            defVar(ds,"lon",lon[ii],("lon",), attrib = OrderedDict(
-                "units" => "degree", "long_name" => "Longitude"))
-            defVar(ds,"lat",lat[jj],("lat",), attrib = OrderedDict(
-                "units" => "degree", "long_name" => "Latitude"))
-            end
-        println("File name :")
-        fil
-    else
-        data
-    end
-
+    #show(gr)
+    save_to_file ? Climatology.write_SLA_CMEMS(gr,data) : data
 end
 
 end #module SLA_CMEMS
