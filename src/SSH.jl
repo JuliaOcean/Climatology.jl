@@ -39,7 +39,7 @@ end
 module SLA_PODAAC
 
 using Dates, DataStructures
-import Climatology: Downloads, read_Dataset
+import Climatology: Downloads, read_Dataset, write_SLA_PODAAC
 
 #note : this need up-to-date credentials in ~/.netrc and ~/.ncrc
 url0="https://opendap.earthdata.nasa.gov/collections/C2270392799-POCLOUD/granules/"
@@ -128,7 +128,7 @@ function subset(;
     end
 
     #show(gr)
-    save_to_file ? Climatology.write_SLA_PODAAC(gr,data) : data
+    save_to_file ? write_SLA_PODAAC(gr,data) : data
 end
 
 end #module SLA_PODAAC
@@ -136,7 +136,7 @@ end #module SLA_PODAAC
 module SLA_CMEMS
 
 using URIs, DataStructures
-import Climatology: Downloads, read_Dataset
+import Climatology: Downloads, read_Dataset, write_SLA_CMEMS
 
 """
     SLA_CMEMS.subset()
@@ -178,7 +178,7 @@ function subset(;
     data = SSH[ii,jj,:]
 
     #show(gr)
-    save_to_file ? Climatology.write_SLA_CMEMS(gr,data) : data
+    save_to_file ? write_SLA_CMEMS(lon[ii],lat[jj],data) : data
 end
 
 end #module SLA_CMEMS

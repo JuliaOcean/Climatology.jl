@@ -327,15 +327,15 @@ function write_SLA_PODAAC(gr,data)
     fil
 end
 
-function write_SLA_CMEMS(gr,data)
+function write_SLA_CMEMS(lon,lat,data)
     fil=joinpath(tempdir(),"cmems_sla_dev.nc")
     read_Dataset(fil,"c",attrib = OrderedDict("title" => "Azores Regional Subset")) do ds
         defVar(ds,"SLA",data,("lon","lat","time"), attrib = OrderedDict(
             "units" => "m", "long_name" => "Sea Level Anomaly",
             "comments" => "source is https://my.cmems-du.eu")),
-        defVar(ds,"lon",lon[ii],("lon",), attrib = OrderedDict(
+        defVar(ds,"lon",lon,("lon",), attrib = OrderedDict(
             "units" => "degree", "long_name" => "Longitude"))
-        defVar(ds,"lat",lat[jj],("lat",), attrib = OrderedDict(
+        defVar(ds,"lat",lat,("lat",), attrib = OrderedDict(
             "units" => "degree", "long_name" => "Latitude"))
         end
     println("File name :")
