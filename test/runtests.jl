@@ -5,6 +5,14 @@ ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
 p=dirname(pathof(Climatology))
 
+@testset "NCDatasetsExt" begin
+    G=MeshArrays.Grids_simple.GridLoad_lonlatdep(collect(1000:1000:5000),ones(360,180,5))
+    M=MeshArrays.Integration.define_sums(grid=G,regions=(10,5))
+    H=ones(length(M.names),length(M.depths),3)
+    V=MeshArrays.Integration.volumes(M,G)
+    Climatology.write_H_to_T(tempname()*".nc",M,G,H,V)
+end
+
 @testset "Climatology.jl" begin
 
     ## 1. SST

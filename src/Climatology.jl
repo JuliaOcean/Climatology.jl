@@ -19,10 +19,13 @@ function to_monthly_file end
 function plot_examples end
 function read_nctiles_alias end
 function read_mdsio_alias end
+function file_IAP end
+function read_IAP end
+function write_H_to_T end
 
 ## packages that extensions import from Climatology
 
-import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf, Dates
+import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf, Dates, DataStructures
 import Dataverse.downloads: Downloads
 
 ## main set of functions provided by this package
