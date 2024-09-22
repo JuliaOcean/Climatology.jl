@@ -190,7 +190,7 @@ function parameters(pth0::String,sol0::String,params)
         pth_out=joinpath(pth_out,calc)
     end    
 
-    γ,Γ,LC=GridLoad_Main()
+    γ,Γ,LC=GridLoad_Plus()
 
     P=(pth_in=pth_in,pth_out=pth_out,list_steps=list_steps,nt=nt,
     calc=calc,nam=nam,kk=kk,sol=sol,γ=γ,Γ=Γ,LC=LC)
@@ -228,38 +228,24 @@ end
 nansum(x) = sum(filter(!isnan,x))
 nansum(x,y) = mapslices(nansum,x,dims=y)
 
-function GridLoad_Main()
+function GridLoad_Plus()
+    G=GridLoad(ID=:LLC90,option=:light)
+    γ=G.XC.grid
+    nr=length(G.RC)
 
-    γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
-    nr=50
-    XC=GridLoadVar("XC",γ)
-    YC=GridLoadVar("YC",γ)
-    RAC=GridLoadVar("RAC",γ)
     hFacC=GridLoadVar("hFacC",γ)
     hFacW=GridLoadVar("hFacW",γ)
     hFacS=GridLoadVar("hFacS",γ)
-    DRF=GridLoadVar("DRF",γ)
-    DXC=GridLoadVar("DXC",γ)
-    DYC=GridLoadVar("DYC",γ)
-    DXG=GridLoadVar("DXG",γ)
-    DYG=GridLoadVar("DYG",γ)
-
     mskC=hFacC./hFacC
 
-    tmp=hFacC./hFacC
-    tmp=[nansum(tmp[i,j].*RAC[i]) for j in 1:nr, i in eachindex(RAC)]
+    tmp=[nansum(mskC[i,j].*G.RAC[i]) for j in 1:nr, i in eachindex(G.RAC)]
     tot_RAC=nansum(tmp,2)
-
-    tmp=[nansum(hFacC[i,j].*RAC[i].*DRF[j]) for j in 1:nr, i in eachindex(RAC)]
+    tmp=[nansum(hFacC[i,j].*G.RAC[i].*G.DRF[j]) for j in 1:nr, i in eachindex(G.RAC)]
     tot_VOL=nansum(tmp,2)
 
-    Γ=(XC=XC,YC=YC,RAC=RAC,DXG=DXG,DYG=DYG,DXC=DXC,DYC=DYC,DRF=DRF,
-        hFacC=hFacC,hFacW=hFacW,hFacS=hFacS,
-        mskC=mskC,tot_RAC=tot_RAC,tot_VOL=tot_VOL)
-
-	LC=LatitudeCircles(-89.0:89.0,Γ)
-
-    return γ,Γ,LC
+    G=merge(G,(hFacC=hFacC,hFacW=hFacW,hFacS=hFacS,mskC=mskC,tot_RAC=tot_RAC,tot_VOL=tot_VOL))
+	LC=LatitudeCircles(-89.0:89.0,G)
+    return γ,G,LC
 end
 
 import Base:push!
@@ -349,7 +335,7 @@ function transport_lines(Γ,pth_trsp)
         lons=Float64.(lonPairs[ii])
         lats=Float64.(latPairs[ii])
         name=namPairs[ii]
-        Trsct=Transect(name,lons,lats,Γ)
+        Trsct=Transect(name,lons,lats,Γ,format=:NamedTuple)
         jldsave(joinpath(pth_trsp,"$(Trsct.name).jld2"),
             tabC=Trsct.tabC,tabW=Trsct.tabW,tabS=Trsct.tabS); 
     end
