@@ -219,11 +219,11 @@ end
     gr=SLA_PODAAC.get_grid(file=file)
     data=SLA_PODAAC.read_slice(file,gr)
     sub=SLA_PODAAC.subset(; read_from_file=file,save_to_file=true)
-    @test isa(sub,Array)
+    @test isa(sub,String)
 
     SLA=read(SeaLevelAnomaly(name="sla_cmems"))
     file=joinpath(SLA.path,SLA.name*".nc")
     sub=SLA_CMEMS.subset(; read_from_file=file,save_to_file=true)
-    @test isa(sub,Array)
+    @test isa(sub,String)
 
 end
