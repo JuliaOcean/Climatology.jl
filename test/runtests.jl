@@ -159,6 +159,8 @@ end
 
     ##
 
+    [ECCO_procs.years_min_max(sol) for sol in ("ECCOv4r3","ECCOv4r4","ECCOv4r5","OCCA2HR1","OCCA2HR2")]
+
     sol="ECCO4R2"
     year0,year1=ECCO_procs.years_min_max(sol)
     pth_out=Climatology.downloads.ECCOdiags_add(sol)
@@ -216,12 +218,12 @@ end
     file=joinpath(SLA.path,SLA.name*".nc")
     gr=SLA_PODAAC.get_grid(file=file)
     data=SLA_PODAAC.read_slice(file,gr)
-    sub=SLA_PODAAC.subset(; read_from_file=file)
+    sub=SLA_PODAAC.subset(; read_from_file=file,save_to_file=true)
     @test isa(sub,Array)
 
     SLA=read(SeaLevelAnomaly(name="sla_cmems"))
     file=joinpath(SLA.path,SLA.name*".nc")
-    sub=SLA_CMEMS.subset(; read_from_file=file)
+    sub=SLA_CMEMS.subset(; read_from_file=file,save_to_file=true)
     @test isa(sub,Array)
 
 end
