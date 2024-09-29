@@ -9,15 +9,15 @@ import Base: read
 function read(x::SeaLevelAnomaly)
     ID=x.name
     path=x.path
-
-    DOI="doi:10.7910/DVN/OYBLGK"
-    lst=Dataverse.file_list(DOI)
     
     fil=string(ID)*".nc"
     sla_file=joinpath(path,fil)
     !isdir(path) ? mkdir(path) : nothing
-    !isfile(sla_file) ? Dataverse.file_download(lst,fil,path) : nothing
-    Dataverse.file_download(lst,fil,path)
+    if !isfile(sla_file)
+        DOI="doi:10.7910/DVN/OYBLGK"
+        lst=Dataverse.file_list(DOI)
+        Dataverse.file_download(lst,fil,path)
+    end
 
     ds=read_Dataset(sla_file)
     op=(dates=sla_dates(sla_file),)

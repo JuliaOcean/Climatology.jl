@@ -1,7 +1,7 @@
 using Documenter, Climatology
 import MITgcm, MeshArrays, NCDatasets, Pkg
 import PlutoSliderServer, CairoMakie
-import Climatology: Downloads
+import Climatology: Downloads, DataDeps
 
 Pkg.precompile()
 
@@ -25,10 +25,8 @@ Climatology.ECCOdiags_add("release2")
 Climatology.ECCOdiags_add("OCCA2HR1")
 withenv(MeshArrays.interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 
-#temporary fix, which should no longer be needed after 0.5.9 is released
-earth_jpg=joinpath(tempdir(),"Blue_Marble.jpg")
-url="https://upload.wikimedia.org/wikipedia/commons/5/56/Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg"
-!isfile(earth_jpg) ? Downloads.download(url,earth_jpg) : nothing
+earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
+       "Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg")
 
 lst=("SSH/SatelliteAltimetry.jl",
      "OISST/sst_anomaly_notebook.jl","CBIOMES/CBIOMES_climatology_plot.jl",

@@ -241,10 +241,9 @@ module ClimatologyMakieExt
 	module SST_plots
 
 	using Makie
-	import Climatology: load, Statistics, SSTdiag, Downloads
+	import Climatology: load, Statistics, SSTdiag
+	import Climatology: MeshArrays, DataDeps
 	import Statistics: median
-
-#	using CairoMakie, Statistics, FileIO, Colors, Downloads
 	
 	#
 	
@@ -328,10 +327,9 @@ module ClimatologyMakieExt
 	end
 	
 	function map_base()
-		earth_jpg=joinpath(tempdir(),"Blue_Marble.jpg")
-		url="https://upload.wikimedia.org/wikipedia/commons/5/56/Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg"
-		!isfile(earth_jpg) ? Downloads.download(url,earth_jpg) : nothing
-	
+		earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
+		"Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg") 
+		
 		earth_img=load(earth_jpg)
 		earth_img=reverse(permutedims(earth_img),dims=2)
 		earth_img=circshift(earth_img,(1800,0))
