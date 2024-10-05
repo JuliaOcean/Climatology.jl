@@ -39,7 +39,7 @@ end
     gr=SST_coarse_grain.grid(fil)
     @test isa(gr,NamedTuple)
 
-    list_pb=SST_FILES.test_files(list)
+    list_pb=SST_FILES.test_files(whole_list)
     @test isa(list_pb,Vector)
 
     (fil1,fil2)=SST_FILES.ersst_file_lists()
@@ -48,7 +48,7 @@ end
     (df,gdf,kdf)=SST_coarse_grain.lowres_read()
 	kdf0=kdf[SST_coarse_grain.lowres_index(205,25,kdf)]
     (lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
-    #ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
+    #ts=SST_timeseries.calc(kdf0,whole_list,gdf=gdf)
 
     @test isa(df,SST_FILES.DataFrame)
 
