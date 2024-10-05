@@ -27,7 +27,7 @@ function write_SLA_CMEMS end
 
 ## packages that extensions import from Climatology
 
-import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf, Dates, DataStructures
+import Glob, RollingFunctions, JLD2, Statistics, MeshArrays, Printf, Dates, DataStructures, STAC
 import Dataverse.downloads: Downloads
 
 ## main set of functions provided by this package
