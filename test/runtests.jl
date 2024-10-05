@@ -61,7 +61,7 @@ end
 	(df,gdf,kdf)=SST_coarse_grain.lowres_read(fil="lowres_oisst_sst_$(dlon).csv",path=path_OISST_stats)
 
 	lon0=205; lat0=25
-	list=SST_FILES.read_files_list()[1:length(unique(df.t)),:]
+	list=SST_FILES.read_files_list(path=input_path)[1:length(unique(df.t)),:]
 
 	kdf0=kdf[SST_coarse_grain.lowres_index(lon0,lat0,kdf)]
 	(lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
