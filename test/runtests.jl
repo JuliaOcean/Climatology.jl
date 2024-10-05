@@ -17,9 +17,9 @@ end
 
     ## 1. SST
 
-    input_path=Climatology.SST_demo_path
+    input_path=tempname()
 
-    @suppress SST_processing.download_files(path=input_path,short_demo=true)
+    list_downloaded=SST_processing.download_files(path=input_path,short_demo=true)
     @test ispath(input_path)
 
     output_path=SST_processing.coarse_grain(path=input_path,short_demo=true)
@@ -30,9 +30,8 @@ end
     #mv(output_file,joinpath(input_path,basename(output_file)))
 
     (fil1,fil2)=SST_FILES.file_lists(path=input_path)
-    list=SST_FILES.CSV.read(fil1,SST_FILES.DataFrame)
-    fil=readdir(dirname(list.fil[end]))[1]
-    fil=joinpath(dirname(list.fil[end]),fil)
+    whole_list=SST_FILES.CSV.read(fil1,SST_FILES.DataFrame)
+    fil=list_downloaded[end]
 
     lon,lat=SST_FILES.read_lon_lat(fil)
     @test isa(lon,Vector)
@@ -40,16 +39,16 @@ end
     gr=SST_coarse_grain.grid(fil)
     @test isa(gr,NamedTuple)
 
-    list_pb=SST_FILES.test_files(list)
+    list_pb=SST_FILES.test_files(whole_list)
     @test isa(list_pb,Vector)
 
-    (fil1,fil2)=SST_FILES.ersst_file_lists()
+    (fil1,fil2)=SST_FILES.ersst_file_lists(path=input_path)
     @test isfile(fil1)
 
-    (df,gdf,kdf)=SST_coarse_grain.lowres_read()
+    (df,gdf,kdf)=SST_coarse_grain.lowres_read(path=input_path)
 	kdf0=kdf[SST_coarse_grain.lowres_index(205,25,kdf)]
     (lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
-    #ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
+    #ts=SST_timeseries.calc(kdf0,whole_list,gdf=gdf)
 
     @test isa(df,SST_FILES.DataFrame)
 
@@ -62,7 +61,7 @@ end
 	(df,gdf,kdf)=SST_coarse_grain.lowres_read(fil="lowres_oisst_sst_$(dlon).csv",path=path_OISST_stats)
 
 	lon0=205; lat0=25
-	list=SST_FILES.read_files_list()[1:length(unique(df.t)),:]
+	list=SST_FILES.read_files_list(path=input_path)[1:length(unique(df.t)),:]
 
 	kdf0=kdf[SST_coarse_grain.lowres_index(lon0,lat0,kdf)]
 	(lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)

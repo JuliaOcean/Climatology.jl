@@ -1,7 +1,7 @@
 name = "Climatology"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 authors = ["gaelforget <gforget@mit.edu>"]
-version = "0.5.10"
+version = "0.5.11"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -17,6 +17,7 @@ MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 RollingFunctions = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
+STAC = "08e62803-e111-4f53-be9b-274ff296e9da"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 SharedArrays = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
