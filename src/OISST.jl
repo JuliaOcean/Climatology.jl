@@ -38,7 +38,8 @@ url="https://www.ncei.noaa.gov/thredds/fileServer/OisstBase/NetCDF/V2.1/AVHRR/19
 ```
 """
 function file_lists(;path=tempname())
-    url0="https://www.ncei.noaa.gov/thredds/fileServer/OisstBase/NetCDF/V2.1/AVHRR/"
+    #url0="https://www.ncei.noaa.gov/thredds/fileServer/OisstBase/NetCDF/V2.1/AVHRR/"
+    url0="https://noaa-cdr-sea-surface-temp-optimum-interpolation-pds.s3.amazonaws.com/data/v2.1/avhrr/"
 
     !ispath(path) ? mkdir(path) : nothing
     
@@ -346,9 +347,9 @@ function download_files(;path=SST_demo_path,short_demo=false)
                 Downloads.download(r.url,r.fil)
             catch
                 try
-                Downloads.download(r.url[1:end-3]*"_preliminary.nc",r.fil[1:end-3]*"_preliminary.nc")
+                    Downloads.download(r.url[1:end-3]*"_preliminary.nc",r.fil[1:end-3]*"_preliminary.nc")
                 catch
-                println("file not found online : "*r.fil[1:end-3])
+                    println("file not found online : "*r.fil[1:end-3])
                 end
             end
             end
@@ -360,6 +361,21 @@ function download_files(;path=SST_demo_path,short_demo=false)
     println("no more files to process")
 
     end
+
+    nl=length(list.fil)
+    tst=fill("",nl)
+    for ll in 1:nl
+        if isfile(list.fil[ll])
+            tst[ll]=list.fil[ll]
+        elseif isfile(list.fil[ll][1:end-3]*"_preliminary.nc")
+            list.fil[ll][1:end-3]*"_preliminary.nc"
+            tst[ll]=list.fil[ll][1:end-3]*"_preliminary.nc"
+        else
+            tst[ll]=""
+        end
+    end
+    tst[findall((!isempty).(tst))]
+
 end
 
 ## 
@@ -450,15 +466,16 @@ function calc(input,list; title="", gdf=nothing)
 	else
 		sst1=input[:]
 	end
-	sst2=repeatclim(sst1,list)
-	sst3=anom(sst1,list)
+    nt=size(sst1,1)
+    sst2=repeatclim(sst1,list[1:nt,:])
+	sst3=anom(sst1,list[1:nt,:])
 
 	ttl="SST time series"
 	#isa(input,DataFrames.GroupKey) ? ttl=ttl*"for i="*string(input.i)*", j="*string(input.j) : nothing 
 	!isempty(title) ?  ttl=title : nothing
 
     ts=(sst=sst1,clim=sst2,anom=sst3,title=ttl,
-    year=list.year,month=list.month,day=list.day)
+    year=list.year[1:nt],month=list.month[1:nt],day=list.day[1:nt])
 
     tmp1=calc_quantile(ts)
 
