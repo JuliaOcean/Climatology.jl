@@ -326,11 +326,11 @@ import Dataverse.downloads: Downloads
 import Climatology: SST_FILES, SST_coarse_grain, read_Dataset
 import Climatology: SST_demo_path, to_monthly_file, write_SST_climatology
 
-function download_files(;path=SST_demo_path,short_demo=false)
+function download_files(;path=SST_demo_path,short_demo=false,verbose=false)
     !ispath(path) ? mkdir(path) : nothing
     fil,_=SST_FILES.file_lists(path=path)
     list=SST_FILES.read_files_list(path=path)
-    list=(short_demo ? list[end-9:end,:] : list)
+    list=(short_demo ? list[end-29:end,:] : list)
     n_per_workwer=Int(ceil(length(list.fil)/nworkers()))
 
     if !isempty(list.fil)
@@ -338,18 +338,18 @@ function download_files(;path=SST_demo_path,short_demo=false)
     @sync @distributed for m in 1:nworkers()
         n0=n_per_workwer*(m-1)+1
         n1=min(n_per_workwer*m,length(list.fil))
-        println("$(n0),$(n1)")
+        verbose ? println("$(n0),$(n1)") : nothing
         for r in eachrow(list[n0:n1,:])
             !isdir(dirname(r.fil)) ? mkdir(dirname(r.fil)) : nothing
             if !isfile(r.fil)
-            println(r.fil)
+            verbose ? println(r.fil) : nothing
             try
                 Downloads.download(r.url,r.fil)
             catch
                 try
                     Downloads.download(r.url[1:end-3]*"_preliminary.nc",r.fil[1:end-3]*"_preliminary.nc")
                 catch
-                    println("file not found online : "*r.fil[1:end-3])
+                    verbose ? println("file not found online : "*r.fil[1:end-3]) : nothing
                 end
             end
             end
@@ -358,7 +358,7 @@ function download_files(;path=SST_demo_path,short_demo=false)
 
     else
 
-    println("no more files to process")
+        verbose ? println("no more files to process") : nothing
 
     end
 
@@ -374,6 +374,7 @@ function download_files(;path=SST_demo_path,short_demo=false)
             tst[ll]=""
         end
     end
+
     tst[findall((!isempty).(tst))]
 
 end

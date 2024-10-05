@@ -178,7 +178,7 @@ begin
     (fil1,fil2)=SST_FILES.file_lists(path=input_path)
 	list=SST_FILES.read_files_list(path=input_path)
     files_list=SST_processing.download_files(path=input_path,short_demo=true)
-	show(files_list)
+	display([input_path;basename.(files_list)])
 end
 
 # ╔═╡ 1632750d-0908-4b06-98dc-861101449fef
@@ -410,7 +410,6 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
 NCDatasets = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
@@ -430,7 +429,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "a5c624738f50b68dc75176dd2f88787db19ec324"
+project_hash = "543b842e4768414775b89564096416528d2d0e7d"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2511,8 +2510,8 @@ version = "3.6.0+0"
 # ╟─882b8a60-ea87-11ed-3518-8db7b95f5a9f
 # ╟─044069e5-0d35-440e-9e62-561e11de6d18
 # ╟─2dcbb093-48f8-44cc-a756-c0c46f6d0844
-# ╠═c925f69f-6ecc-428e-aae1-0a2446baddb8
-# ╠═b548be7e-a0d6-4051-b3bd-2834cdd01ce4
-# ╠═3178b826-8f9d-4cf6-955f-c40887e15476
+# ╟─c925f69f-6ecc-428e-aae1-0a2446baddb8
+# ╟─b548be7e-a0d6-4051-b3bd-2834cdd01ce4
+# ╟─3178b826-8f9d-4cf6-955f-c40887e15476
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
