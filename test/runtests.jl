@@ -17,9 +17,9 @@ end
 
     ## 1. SST
 
-    input_path=Climatology.SST_demo_path
+    input_path=tempname()
 
-    @suppress SST_processing.download_files(path=input_path,short_demo=true)
+    list_downloaded=SST_processing.download_files(path=input_path,short_demo=true)
     @test ispath(input_path)
 
     output_path=SST_processing.coarse_grain(path=input_path,short_demo=true)
@@ -30,9 +30,8 @@ end
     #mv(output_file,joinpath(input_path,basename(output_file)))
 
     (fil1,fil2)=SST_FILES.file_lists(path=input_path)
-    list=SST_FILES.CSV.read(fil1,SST_FILES.DataFrame)
-    fil=readdir(dirname(list.fil[end]))[1]
-    fil=joinpath(dirname(list.fil[end]),fil)
+    whole_list=SST_FILES.CSV.read(fil1,SST_FILES.DataFrame)
+    fil=list_downloaded[end]
 
     lon,lat=SST_FILES.read_lon_lat(fil)
     @test isa(lon,Vector)
