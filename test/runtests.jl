@@ -42,10 +42,10 @@ end
     list_pb=SST_FILES.test_files(whole_list)
     @test isa(list_pb,Vector)
 
-    (fil1,fil2)=SST_FILES.ersst_file_lists()
+    (fil1,fil2)=SST_FILES.ersst_file_lists(path=input_path)
     @test isfile(fil1)
 
-    (df,gdf,kdf)=SST_coarse_grain.lowres_read()
+    (df,gdf,kdf)=SST_coarse_grain.lowres_read(path=input_path)
 	kdf0=kdf[SST_coarse_grain.lowres_index(205,25,kdf)]
     (lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
     #ts=SST_timeseries.calc(kdf0,whole_list,gdf=gdf)
