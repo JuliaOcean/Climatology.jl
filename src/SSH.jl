@@ -85,6 +85,7 @@ function file_name(n)
 end
 
 function read_slice(url,gr)
+    #println("url="*url)
     #fil=Downloads.download(url)
     #ds=read_Dataset(fil)
     ds=read_Dataset(url)
