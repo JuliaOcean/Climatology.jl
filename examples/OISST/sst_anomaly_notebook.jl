@@ -35,7 +35,15 @@ begin
 		fig
 	end
 
-	using Pkg; Pkg.update()
+	using Pkg; Pkg.status()
+end
+
+# ╔═╡ 0ab8fb77-df61-4ea2-a3cb-eadb1a202f5b
+begin
+	using Proj
+	import Climatology.MeshArrays as MeshArrays
+	proj_lon0=-160
+	proj=Proj.Transformation(MA_preset=2,lon0=proj_lon0)
 end
 
 # ╔═╡ 714b333f-c35a-4035-9a57-8d3de33a87a2
@@ -127,6 +135,11 @@ _Periods above 90 percentile threshold defined by season._
 
 1. local SST
 1. global SST
+
+Notes : 
+
+- time series analysis code is in Makie extension (`plot_type=:MHW`)
+- it is rudimentary (just 90 prctile) and will need to be fined tuned based on literature
 """
 
 # ╔═╡ 475e8bcc-191a-4331-901c-d4519b6ac3cd
@@ -135,19 +148,78 @@ md"""### Detection From Map
 Using `GeometryOps.polygonize` we derive the polygon countours for values in a chosen range, as typically done to delineate MHWs from SST maps.
 """
 
-# ╔═╡ 7fdc1196-6ade-40b1-bc4c-241963708db9
+# ╔═╡ eb458ba0-0494-47ca-ad31-aeab5b85a171
+md"""#### Testing Polygon Ops
 
+Current development goal : 
 
-# ╔═╡ 6260d56a-f93e-40ed-895a-d884f002c884
-let
-	#[GO.area(pol0) GO.area(pol1)]
-	#GO.intersection(pol0, pol1)
-	#typeof(pol1)
-	line1 = GI.Line([(124.584961,-12.768946), (126.738281,-17.224758)])
-	line2 = GI.Line([(123.354492,-15.961329), (127.22168,-14.008696)])
-	inter_points = GO.intersection(line1, line2; target = GI.PointTrait())
-	GI.coordinates.(inter_points)
+- derive sets of polygons at day 1 and day 2
+- find those that overlap (day 1 vs day 2)
+- compute `area of overlap`/`mean(area)` where area is calculated on the sphere
+
+As a first step : for one time frame, with pol0 included inside pol1
+
+- compute area in cylindrical projection space (i.e., lon-lat)
+- split up `pol0` and `pol1` into arrays of polygons, and focus on each's largest (p0,p1)
+- check that p1 is inside p0 (by chance?)
+- compute the area between `p1` and `p0`
+
+Notes : 
+
+- p0 happens to have only an exterior `LineRing`
+- for now I compute the area by just adding p0 as in interior `LineRing` to p1
+- this is done in `calc_areas_diff`
+
+Questions : 
+
+- if p0 has interior `LineRing`s, does this still work?
+- if p0 and p1 only partially overlap, does this still work?
+- how to pair up p1 and p0 more generally?
+- just do a loop over all polyons in pol0 and pol1, and retur 0 area when no overlap?
+
+Functions : 
+
+- `get_largest_polygons`
+- `calc_areas_diff`
+
+"""
+
+# ╔═╡ 1f326cea-59ef-41e9-aad6-d574c117b948
+function calc_areas_diff(p0,p1)
+	g0=GI.getgeom.(p0)[1]
+	g1=GI.getgeom.(p1)[1]
+
+	println([length(g1) length(g0)])
+	println([GO.area(GI.Polygon(g1)) GO.area(GI.Polygon(g0))])
+	println([GO.area(p1) GO.area(p1)-GO.area(p0)])
+	println([GO.area(p1) GO.area(GI.Polygon([g1... g0[1]]))])
+
+	cols=rand([:white :blue :red :green :yellow :orange :cyan :violet],length(g1))
+	f=Figure()
+	Axis(f[1,1],title="p1"); plot!(p1,color=:black); [lines!(GI.Polygon(g)) for g in g1]
+	Axis(f[1,2],title="p0"); plot!(p0,color=:black); [lines!(GI.Polygon(g)) for g in g0]
+	f
 end
+
+# ╔═╡ 1e01a9c9-76e1-426f-b048-161847b00009
+function get_largest_polygons(pol0,pol1)
+	pol0_arr=GI.getgeom(pol0)
+	pol1_arr=GI.getgeom(pol1)
+	area0=GO.area.(pol0_arr)
+	area1=GO.area.(pol1_arr)
+	println([length(pol0_arr) length(pol1_arr)])
+	
+	i0=findall(area0.==maximum(area0))
+	i1=findall(area1.==maximum(area1))
+	println([i0 i1])
+	println([area0[i0] area0[i1]])
+	println([GO.area(pol0) GO.area(pol1)])
+
+	pol0_arr[i0],pol1_arr[i1]
+end
+
+# ╔═╡ 7775fcdb-5a93-4c7d-bc56-60eafde19668
+md"""#### Testing Projections"""
 
 # ╔═╡ 4c2e8d98-d373-495d-9e1b-710d24a03312
 md"""## ERSST Anomaly Map
@@ -185,6 +257,40 @@ md"""## Appendix"""
 
 # ╔═╡ 044069e5-0d35-440e-9e62-561e11de6d18
 doSave=true
+
+# ╔═╡ 6a3af267-db88-4458-86fb-c3c5fa7ef8c2
+
+
+# ╔═╡ 6a338d6c-ef5c-4c2f-8ddb-c4989ddfe94f
+begin
+	fil=Climatology.MeshArrays.demo.download_polygons("countries.geojson")
+	pol=Climatology.MeshArrays.read_polygons(fil)
+	"Done With Reading Country Polygons"
+end
+
+# ╔═╡ efa9b275-dc9b-4e18-9992-eff7651d70c7
+fig0=let
+	f = Figure()
+    ax = f[1, 1] = Axis(f, aspect = DataAspect(), title = "Ocean Depth (m)")
+	pr_ax=MeshArrays.ProjAxis(ax; proj=proj,lon0=proj_lon0)
+	lines!(pr_ax; polygons=pol,color=:black,linewidth=0.5)
+	MeshArrays.grid_lines!(pr_ax;color=:lightgreen,linewidth=0.5)
+
+#The following returns an error	`type PrAxis has no field scene`
+#	plot!(pr_ax,pol1,color=:green)
+
+#The following still has lines crossing to lon=180	
+#	mp=deepcopy(to_map.field); mp[ismissing.(mp)].=NaN
+#	heatmap!(pr_ax,to_map.lon,to_map.lat,Float64.(mp))
+
+#The following returns a warning `untested input type`	
+#	lines!(pr_ax; polygons=pol1,color=:red,linewidth=1.0)
+
+	f
+end;
+
+# ╔═╡ a59ebd29-d5f8-4ba2-b142-456b4bd75cd6
+
 
 # ╔═╡ b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 begin
@@ -296,29 +402,63 @@ begin
 	save_fig(f7,doSave,file="sst_anomaly_map.png")
 end
 
+# ╔═╡ 67458de3-15d2-473d-baae-2fd4c8033af2
+to_map
+
+# ╔═╡ 121038cc-1621-4996-9760-f60eb93bf570
+function plot_polygons_global(pol0,pol1)
+	f_aa=Figure(); Axis(f_aa[1,1],title="pol0 and pol1") #,aspect = DataAspect())
+	poly!(pol0); heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
+#	lines!(a,pol,color=:black,linewidth=1.0)
+	plot!(pol1,color=:yellow)
+	lines!(pol0,color=:red,linewidth=1.0)
+#	lines!(a,pol1,color=:green,linewidth=1.0)
+	f_aa
+end
+
 # ╔═╡ d65ca9d4-43fc-43d0-bd09-2013d41cb3c4
 begin
 	var0=deepcopy(to_map.field); var0[ismissing.(var0)].=NaN
 	
-	min0=2.0; max0=Inf
+	min0=2.0; max0=Inf; min1=1.0
 	pol0=GO.polygonize(0.125:0.25:359.875,-89.875:0.25:89.875, min0 .< var0 .< max0)
-	min1=1; max1=3
-	pol1=GO.polygonize(0.125:0.25:359.875,-89.875:0.25:89.875, min1 .< var0 .< max1)
-	
-	f, a, p = poly(pol0; axis = (; aspect = DataAspect()))
-	lines!(a,pol0,color=:red,linewidth=1.0)
-	lines!(a,pol1,color=:green,linewidth=1.0)
-	f
+	pol1=GO.polygonize(0.125:0.25:359.875,-89.875:0.25:89.875, min1 .< var0 .< max0)
+
+	plot_polygons_global(pol0,pol1)	
 end
 
-# ╔═╡ f4501f94-e19f-441e-864a-7c88e43b03bb
+# ╔═╡ 5dad95dd-0927-4f88-8048-b67190887428
+begin
+	(p0,p1)=get_largest_polygons(pol0,pol1)
+	f_a=Figure(); Axis(f_a[1,1],title="p0 and p1")
+	plot!(p1); plot!(p0); f_a
+end
+
+# ╔═╡ d2097461-de31-4031-bab4-69d024d726fe
+calc_areas_diff(p0,p1)
+
+# ╔═╡ 4cb35bfc-ad16-4874-951c-eb0766f5c396
 let
-	#GeoInterface.Wrappers.LineString{false, false, Vector{GeoInterface.Wrappers.Point{false, false, Tuple{Float64, Float64}, Nothing}}, Nothing, Nothing}
+	GI.isgeometry(p0)
+	p0_geom=GI.getgeom.(p0)
+end
 
-	#GeoInterface.Wrappers.MultiPolygon{false, false, Vector{GeoInterface.Wrappers.Polygon{false, false, Vector{GeoInterface.Wrappers.LinearRing{false, false, Vector{Tuple{Float64, Float64}}, Extents.Extent{(:X, :Y), Tuple{Tuple{Float64, Float64}, Tuple{Float64, Float64}}}, Nothing}}, Extents.Extent{(:X, :Y), Tuple{Tuple{Float64, Float64}, Tuple{Float64, Float64}}}, Nothing}}, Extents.Extent{(:X, :Y), Tuple{Tuple{Float64, Float64}, Tuple{Float64, Float64}}}, Nothing}
+# ╔═╡ f865cd80-6ce2-4edd-ba19-74865051f2d4
+let
+	GI.isgeometry(p1)
+	p1_geom=GI.getgeom.(p1)
+end
 
-	GO.area(pol1)
-	#first(GI.getpoint(pol1))
+# ╔═╡ 593a1c29-b419-462e-8583-5f4f7afc51b3
+let
+	GI.isgeometry(pol0)
+	pol0_geom=GI.getgeom(pol0)
+end
+
+# ╔═╡ 9e5f1727-9601-44c4-a8f8-7ae58a18e39c
+let
+	GI.isgeometry(pol1)
+	pol1_geom=GI.getgeom(pol1)
 end
 
 # ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
@@ -471,6 +611,7 @@ NCDatasets = "85f8d34a-cbdd-5861-8df4-14fed0d494ab"
 OceanRobots = "0b51df41-3294-4961-8d23-db645e32016d"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Proj = "c94c279d-25a6-4763-9509-64d165bea63e"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
@@ -483,6 +624,7 @@ Glob = "~1.3.1"
 NCDatasets = "~0.14.6"
 OceanRobots = "~0.2.8"
 PlutoUI = "~0.7.52"
+Proj = "~1.8.0"
 Statistics = "~1.11.1"
 """
 
@@ -492,7 +634,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.1"
 manifest_format = "2.0"
-project_hash = "dec63c77e54d559cc2059805773f488d716486d9"
+project_hash = "6ad790a910b17b7357fbe0bc01d8ffac03cafc55"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1045,9 +1187,9 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 version = "1.11.0"
 
 [[deps.GeoFormatTypes]]
-git-tree-sha1 = "59107c179a586f0fe667024c5eb7033e81333271"
+git-tree-sha1 = "ce573eab15760315756de2c82df7406c870c7187"
 uuid = "68eda718-8dee-11e9-39e7-89f7f65f511f"
-version = "0.4.2"
+version = "0.4.3"
 
 [[deps.GeoInterface]]
 deps = ["DataAPI", "Extents", "GeoFormatTypes"]
@@ -2591,7 +2733,8 @@ version = "3.6.0+0"
 # ╟─714b333f-c35a-4035-9a57-8d3de33a87a2
 # ╟─2f945738-a4ba-46a7-be41-58261b939d17
 # ╟─ad758a95-5a23-4a84-afbf-2228f5938904
-# ╟─1bed0676-4984-4909-a6af-4d25d894aa69
+# ╠═1bed0676-4984-4909-a6af-4d25d894aa69
+# ╠═67458de3-15d2-473d-baae-2fd4c8033af2
 # ╟─1632750d-0908-4b06-98dc-861101449fef
 # ╟─3b7f039f-5dcc-4f17-b1f2-2ea27e54a2eb
 # ╟─9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
@@ -2622,10 +2765,20 @@ version = "3.6.0+0"
 # ╟─e87d0817-827d-4b44-a8b6-f566b61391c2
 # ╟─5c73d087-c0bb-40ff-85f9-2d5ddd0690f1
 # ╟─475e8bcc-191a-4331-901c-d4519b6ac3cd
-# ╠═d65ca9d4-43fc-43d0-bd09-2013d41cb3c4
-# ╠═f4501f94-e19f-441e-864a-7c88e43b03bb
-# ╠═7fdc1196-6ade-40b1-bc4c-241963708db9
-# ╠═6260d56a-f93e-40ed-895a-d884f002c884
+# ╟─d65ca9d4-43fc-43d0-bd09-2013d41cb3c4
+# ╟─121038cc-1621-4996-9760-f60eb93bf570
+# ╟─eb458ba0-0494-47ca-ad31-aeab5b85a171
+# ╟─5dad95dd-0927-4f88-8048-b67190887428
+# ╟─d2097461-de31-4031-bab4-69d024d726fe
+# ╟─1f326cea-59ef-41e9-aad6-d574c117b948
+# ╟─1e01a9c9-76e1-426f-b048-161847b00009
+# ╠═593a1c29-b419-462e-8583-5f4f7afc51b3
+# ╠═9e5f1727-9601-44c4-a8f8-7ae58a18e39c
+# ╠═4cb35bfc-ad16-4874-951c-eb0766f5c396
+# ╠═f865cd80-6ce2-4edd-ba19-74865051f2d4
+# ╟─7775fcdb-5a93-4c7d-bc56-60eafde19668
+# ╠═efa9b275-dc9b-4e18-9992-eff7651d70c7
+# ╠═0ab8fb77-df61-4ea2-a3cb-eadb1a202f5b
 # ╟─4c2e8d98-d373-495d-9e1b-710d24a03312
 # ╟─f7d8e391-53e7-438f-a237-cf65e57af950
 # ╟─beb0a305-8261-475e-bf8d-be84d8386f68
@@ -2635,8 +2788,11 @@ version = "3.6.0+0"
 # ╟─d5a92490-636a-4d61-b843-64a6eda9d83b
 # ╠═882b8a60-ea87-11ed-3518-8db7b95f5a9f
 # ╟─044069e5-0d35-440e-9e62-561e11de6d18
+# ╠═6a3af267-db88-4458-86fb-c3c5fa7ef8c2
 # ╟─2dcbb093-48f8-44cc-a756-c0c46f6d0844
+# ╠═6a338d6c-ef5c-4c2f-8ddb-c4989ddfe94f
 # ╟─c925f69f-6ecc-428e-aae1-0a2446baddb8
+# ╠═a59ebd29-d5f8-4ba2-b142-456b4bd75cd6
 # ╟─b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 # ╟─3178b826-8f9d-4cf6-955f-c40887e15476
 # ╟─00000000-0000-0000-0000-000000000001
