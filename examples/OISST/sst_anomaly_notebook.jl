@@ -184,6 +184,16 @@ Functions :
 
 """
 
+# ╔═╡ c195baaf-2d14-4ba5-a2be-df7cd45a251b
+md"""
+```
+[ 	GO.area(GI.Polygon(p1_geom)) 
+	GO.area(GI.Polygon(p0_geom)) 
+	GO.area(GI.Polygon(p1_geom))-GI.Polygon(GO.area(p0_geom))
+	GO.area(GI.Polygon([p1_geom... p0_geom...]))]
+```
+"""
+
 # ╔═╡ 1f326cea-59ef-41e9-aad6-d574c117b948
 function calc_areas_diff(p0,p1)
 	g0=GI.getgeom.(p0)[1]
@@ -437,16 +447,28 @@ end
 # ╔═╡ d2097461-de31-4031-bab4-69d024d726fe
 calc_areas_diff(p0,p1)
 
+# ╔═╡ 25c65e66-d557-4740-8aa1-f877915615eb
+begin
+	pp0=GI.getgeom.(p0)[1]
+	pp1=GI.getgeom.(p1)[1]
+end
+
+# ╔═╡ 4b8a051b-755e-45b5-8f04-5bec95896c5b
+#GI.Polygon.(pp0)
+#plot(GI.Polygon([pp1[1]... pp0[1][1]]))
+#plot(GI.Polygon([pp1[1]... pp0[1]...]))
+[GO.area(p1) GO.area(p0) GO.area(p1)-GO.area(p0) GO.area(GI.Polygon([pp1... pp0...]))]
+
 # ╔═╡ 4cb35bfc-ad16-4874-951c-eb0766f5c396
-let
+begin
 	GI.isgeometry(p0)
-	p0_geom=GI.getgeom.(p0)
+	p0_geom=GI.getgeom.(p0)[1]
 end
 
 # ╔═╡ f865cd80-6ce2-4edd-ba19-74865051f2d4
-let
+begin
 	GI.isgeometry(p1)
-	p1_geom=GI.getgeom.(p1)
+	p1_geom=GI.getgeom.(p1)[1]
 end
 
 # ╔═╡ 593a1c29-b419-462e-8583-5f4f7afc51b3
@@ -2768,8 +2790,11 @@ version = "3.6.0+0"
 # ╟─d65ca9d4-43fc-43d0-bd09-2013d41cb3c4
 # ╟─121038cc-1621-4996-9760-f60eb93bf570
 # ╟─eb458ba0-0494-47ca-ad31-aeab5b85a171
-# ╟─5dad95dd-0927-4f88-8048-b67190887428
+# ╠═5dad95dd-0927-4f88-8048-b67190887428
 # ╟─d2097461-de31-4031-bab4-69d024d726fe
+# ╠═4b8a051b-755e-45b5-8f04-5bec95896c5b
+# ╠═25c65e66-d557-4740-8aa1-f877915615eb
+# ╟─c195baaf-2d14-4ba5-a2be-df7cd45a251b
 # ╟─1f326cea-59ef-41e9-aad6-d574c117b948
 # ╟─1e01a9c9-76e1-426f-b048-161847b00009
 # ╠═593a1c29-b419-462e-8583-5f4f7afc51b3
