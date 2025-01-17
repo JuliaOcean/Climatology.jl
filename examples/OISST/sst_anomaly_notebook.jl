@@ -184,16 +184,6 @@ Functions :
 
 """
 
-# ╔═╡ c195baaf-2d14-4ba5-a2be-df7cd45a251b
-md"""
-```
-[ 	GO.area(GI.Polygon(p1_geom)) 
-	GO.area(GI.Polygon(p0_geom)) 
-	GO.area(GI.Polygon(p1_geom))-GI.Polygon(GO.area(p0_geom))
-	GO.area(GI.Polygon([p1_geom... p0_geom...]))]
-```
-"""
-
 # ╔═╡ 1f326cea-59ef-41e9-aad6-d574c117b948
 function calc_areas_diff(p0,p1)
 	g0=GI.getgeom.(p0)[1]
@@ -437,27 +427,11 @@ begin
 	plot_polygons_global(pol0,pol1)	
 end
 
-# ╔═╡ 5dad95dd-0927-4f88-8048-b67190887428
-begin
-	(p0,p1)=get_largest_polygons(pol0,pol1)
-	f_a=Figure(); Axis(f_a[1,1],title="p0 and p1")
-	plot!(p1); plot!(p0); f_a
-end
+# ╔═╡ 1740f922-af2e-49f0-8b88-339eaa2d5d47
+(p0,p1)=get_largest_polygons(pol0,pol1)
 
 # ╔═╡ d2097461-de31-4031-bab4-69d024d726fe
 calc_areas_diff(p0,p1)
-
-# ╔═╡ 25c65e66-d557-4740-8aa1-f877915615eb
-begin
-	pp0=GI.getgeom.(p0)[1]
-	pp1=GI.getgeom.(p1)[1]
-end
-
-# ╔═╡ 4b8a051b-755e-45b5-8f04-5bec95896c5b
-#GI.Polygon.(pp0)
-#plot(GI.Polygon([pp1[1]... pp0[1][1]]))
-#plot(GI.Polygon([pp1[1]... pp0[1]...]))
-[GO.area(p1) GO.area(p0) GO.area(p1)-GO.area(p0) GO.area(GI.Polygon([pp1... pp0...]))]
 
 # ╔═╡ 4cb35bfc-ad16-4874-951c-eb0766f5c396
 begin
@@ -471,6 +445,15 @@ begin
 	p1_geom=GI.getgeom.(p1)[1]
 end
 
+# ╔═╡ 4b8a051b-755e-45b5-8f04-5bec95896c5b
+begin
+	q1=GI.Polygon(p1_geom)
+	q0=GI.Polygon(p0_geom)
+	q10=GI.Polygon([p1_geom... p0_geom...])
+	[GO.area(q1) GO.area(p0) GO.area(q1)-GO.area(q0) GO.area(q10)]
+	#[GO.area(p1) GO.area(p0) GO.area(p1)-GO.area(p0) GO.area(GI.Polygon([p1_geom... p0_geom...]))]
+end
+
 # ╔═╡ 593a1c29-b419-462e-8583-5f4f7afc51b3
 let
 	GI.isgeometry(pol0)
@@ -481,6 +464,23 @@ end
 let
 	GI.isgeometry(pol1)
 	pol1_geom=GI.getgeom(pol1)
+end
+
+# ╔═╡ 5dad95dd-0927-4f88-8048-b67190887428
+let
+	f_cc=Figure(); Axis(f_cc[1,1],title="p0 and p1") #,aspect = DataAspect())
+	heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
+	plot!(p1); plot!(p0); f_cc
+end
+
+# ╔═╡ 62b92343-faca-40b9-b385-83104d1aa76e
+let
+	f_bb=Figure(); Axis(f_bb[1,1],title="pol0 and pol1") #,aspect = DataAspect())
+	heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
+	plot!(q10)
+	lines!(q1,color=:black,linewidth=1)
+	lines!(q0,color=:red,linewidth=1)
+	f_bb
 end
 
 # ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
@@ -2788,13 +2788,13 @@ version = "3.6.0+0"
 # ╟─5c73d087-c0bb-40ff-85f9-2d5ddd0690f1
 # ╟─475e8bcc-191a-4331-901c-d4519b6ac3cd
 # ╟─d65ca9d4-43fc-43d0-bd09-2013d41cb3c4
-# ╟─121038cc-1621-4996-9760-f60eb93bf570
+# ╠═121038cc-1621-4996-9760-f60eb93bf570
 # ╟─eb458ba0-0494-47ca-ad31-aeab5b85a171
-# ╠═5dad95dd-0927-4f88-8048-b67190887428
+# ╠═1740f922-af2e-49f0-8b88-339eaa2d5d47
+# ╟─5dad95dd-0927-4f88-8048-b67190887428
 # ╟─d2097461-de31-4031-bab4-69d024d726fe
-# ╠═4b8a051b-755e-45b5-8f04-5bec95896c5b
-# ╠═25c65e66-d557-4740-8aa1-f877915615eb
-# ╟─c195baaf-2d14-4ba5-a2be-df7cd45a251b
+# ╟─4b8a051b-755e-45b5-8f04-5bec95896c5b
+# ╟─62b92343-faca-40b9-b385-83104d1aa76e
 # ╟─1f326cea-59ef-41e9-aad6-d574c117b948
 # ╟─1e01a9c9-76e1-426f-b048-161847b00009
 # ╠═593a1c29-b419-462e-8583-5f4f7afc51b3
