@@ -23,18 +23,6 @@ begin
 	import GeoInterface as GI
 	using GeoMakie
 	
-#    input_path=Climatology.SST_demo_path
-    input_path=tempname(); mkdir(input_path)
-    input_path_ersst="files_ersst"
-	path_OISST_stats=Climatology.downloads.OISST_stats_download()
-
-    function save_fig(fig,trigger=true; file="")
-		isempty(file) ? fil=tempname()*".png" : fil=joinpath(tempdir(),file)
-		save(fil,fig)
-		println(fil)
-		fig
-	end
-
 	using Pkg; Pkg.status()
 end
 
@@ -151,31 +139,27 @@ Using `GeometryOps.polygonize` we derive the polygon countours for values in a c
 # ╔═╡ eb458ba0-0494-47ca-ad31-aeab5b85a171
 md"""#### Testing Polygon Ops
 
-Current development goal : 
+Development goal : 
 
 - derive sets of polygons at day 1 and day 2
 - find those that overlap (day 1 vs day 2)
 - compute `area of overlap`/`mean(area)` where area is calculated on the sphere
 
-As a first step : for one time frame, with pol0 included inside pol1
+As a first step : 
+
+for one time frame, with `pol0` included inside `pol1`
 
 - compute area in cylindrical projection space (i.e., lon-lat)
 - split up `pol0` and `pol1` into arrays of polygons, and focus on each's largest (p0,p1)
 - check that p1 is inside p0 (by chance?)
-- compute the area between `p1` and `p0`
-
-Notes : 
-
-- p0 happens to have only an exterior `LineRing`
-- for now I compute the area by just adding p0 as in interior `LineRing` to p1
-- this is done in `calc_areas_diff`
+- compute the area in `p1` but no in `p0` via polygons combination
 
 Questions : 
 
-- if p0 has interior `LineRing`s, does this still work?
 - if p0 and p1 only partially overlap, does this still work?
+- should this be done by adding only p0's interior `LineRing` to p1
 - how to pair up p1 and p0 more generally?
-- just do a loop over all polyons in pol0 and pol1, and retur 0 area when no overlap?
+- just do a loop over all polyons in pol0 and pol1, and return 0 area when no overlap?
 
 Functions : 
 
@@ -190,9 +174,8 @@ function calc_areas_diff(p0,p1)
 	g1=GI.getgeom.(p1)[1]
 
 	println([length(g1) length(g0)])
-	println([GO.area(GI.Polygon(g1)) GO.area(GI.Polygon(g0))])
-	println([GO.area(p1) GO.area(p1)-GO.area(p0)])
-	println([GO.area(p1) GO.area(GI.Polygon([g1... g0[1]]))])
+	println([GO.area(GI.Polygon(g1)) GO.area(GI.Polygon(g0)) 
+		GO.area(p1)-GO.area(p0) GO.area(GI.Polygon([g1... g0...]))])
 
 	cols=rand([:white :blue :red :green :yellow :orange :cyan :violet],length(g1))
 	f=Figure()
@@ -255,11 +238,16 @@ end
 # ╔═╡ d5a92490-636a-4d61-b843-64a6eda9d83b
 md"""## Appendix"""
 
+# ╔═╡ 02e972f5-5fe4-4b9d-8645-224f002b5a5a
+function save_fig(fig,trigger=true; file="")
+	isempty(file) ? fil=tempname()*".png" : fil=joinpath(tempdir(),file)
+	save(fil,fig)
+	println(fil)
+	fig
+end
+
 # ╔═╡ 044069e5-0d35-440e-9e62-561e11de6d18
 doSave=true
-
-# ╔═╡ 6a3af267-db88-4458-86fb-c3c5fa7ef8c2
-
 
 # ╔═╡ 6a338d6c-ef5c-4c2f-8ddb-c4989ddfe94f
 begin
@@ -289,8 +277,13 @@ fig0=let
 	f
 end;
 
-# ╔═╡ a59ebd29-d5f8-4ba2-b142-456b4bd75cd6
-
+# ╔═╡ 180471c5-528e-4afb-b26c-89ca7501d78e
+begin
+	#    input_path=Climatology.SST_demo_path
+    input_path=tempname(); mkdir(input_path)
+    input_path_ersst="files_ersst"
+	path_OISST_stats=Climatology.downloads.OISST_stats_download()
+end
 
 # ╔═╡ b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 begin
@@ -402,12 +395,19 @@ begin
 	save_fig(f7,doSave,file="sst_anomaly_map.png")
 end
 
-# ╔═╡ 67458de3-15d2-473d-baae-2fd4c8033af2
-to_map
+# ╔═╡ 62b92343-faca-40b9-b385-83104d1aa76e
+function plot_polygons_setdiff(q0,q1,q10)
+	f_bb=Figure(); Axis(f_bb[1,1],title="subset diff (q10, yellow), q0 (red) and q1 (black)") #,aspect = DataAspect())
+	heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
+	plot!(q10,color=:yellow)
+	lines!(q1,color=:black,linewidth=1)
+	lines!(q0,color=:red,linewidth=1)
+	f_bb
+end
 
 # ╔═╡ 121038cc-1621-4996-9760-f60eb93bf570
 function plot_polygons_global(pol0,pol1)
-	f_aa=Figure(); Axis(f_aa[1,1],title="pol0 and pol1") #,aspect = DataAspect())
+	f_aa=Figure(); Axis(f_aa[1,1],title="two polygon sets (pol0 and pol1)")
 	poly!(pol0); heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
 #	lines!(a,pol,color=:black,linewidth=1.0)
 	plot!(pol1,color=:yellow)
@@ -433,15 +433,10 @@ end
 # ╔═╡ d2097461-de31-4031-bab4-69d024d726fe
 calc_areas_diff(p0,p1)
 
-# ╔═╡ 4cb35bfc-ad16-4874-951c-eb0766f5c396
-begin
-	GI.isgeometry(p0)
-	p0_geom=GI.getgeom.(p0)[1]
-end
-
 # ╔═╡ f865cd80-6ce2-4edd-ba19-74865051f2d4
 begin
 	GI.isgeometry(p1)
+	p0_geom=GI.getgeom.(p0)[1]
 	p1_geom=GI.getgeom.(p1)[1]
 end
 
@@ -454,15 +449,13 @@ begin
 	#[GO.area(p1) GO.area(p0) GO.area(p1)-GO.area(p0) GO.area(GI.Polygon([p1_geom... p0_geom...]))]
 end
 
+# ╔═╡ 9a41c1fb-83d7-4898-ba64-b28c6b2b2da6
+plot_polygons_setdiff(q0,q1,q10)
+
 # ╔═╡ 593a1c29-b419-462e-8583-5f4f7afc51b3
 let
 	GI.isgeometry(pol0)
 	pol0_geom=GI.getgeom(pol0)
-end
-
-# ╔═╡ 9e5f1727-9601-44c4-a8f8-7ae58a18e39c
-let
-	GI.isgeometry(pol1)
 	pol1_geom=GI.getgeom(pol1)
 end
 
@@ -471,16 +464,6 @@ let
 	f_cc=Figure(); Axis(f_cc[1,1],title="p0 and p1") #,aspect = DataAspect())
 	heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
 	plot!(p1); plot!(p0); f_cc
-end
-
-# ╔═╡ 62b92343-faca-40b9-b385-83104d1aa76e
-let
-	f_bb=Figure(); Axis(f_bb[1,1],title="pol0 and pol1") #,aspect = DataAspect())
-	heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
-	plot!(q10)
-	lines!(q1,color=:black,linewidth=1)
-	lines!(q0,color=:red,linewidth=1)
-	f_bb
 end
 
 # ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
@@ -2755,8 +2738,7 @@ version = "3.6.0+0"
 # ╟─714b333f-c35a-4035-9a57-8d3de33a87a2
 # ╟─2f945738-a4ba-46a7-be41-58261b939d17
 # ╟─ad758a95-5a23-4a84-afbf-2228f5938904
-# ╠═1bed0676-4984-4909-a6af-4d25d894aa69
-# ╠═67458de3-15d2-473d-baae-2fd4c8033af2
+# ╟─1bed0676-4984-4909-a6af-4d25d894aa69
 # ╟─1632750d-0908-4b06-98dc-861101449fef
 # ╟─3b7f039f-5dcc-4f17-b1f2-2ea27e54a2eb
 # ╟─9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
@@ -2777,7 +2759,7 @@ version = "3.6.0+0"
 # ╟─9f7d8596-1576-4d96-803f-21d9b5c53aa4
 # ╟─9516cb99-ba91-4c5e-b5a4-db0b2f702934
 # ╟─ce4ae175-8d7d-4da7-b01b-833ee38b115a
-# ╠═9aaa7fd5-3103-48f9-9cfb-ce6d775c05f8
+# ╟─9aaa7fd5-3103-48f9-9cfb-ce6d775c05f8
 # ╟─f5d4c0db-5b68-4ce8-badb-11ac0c9d85de
 # ╟─3c0da51f-109a-4b3d-bfe2-82103a1d7270
 # ╟─227000e4-e4c4-4619-8f9b-0f999863658d
@@ -2788,22 +2770,21 @@ version = "3.6.0+0"
 # ╟─5c73d087-c0bb-40ff-85f9-2d5ddd0690f1
 # ╟─475e8bcc-191a-4331-901c-d4519b6ac3cd
 # ╟─d65ca9d4-43fc-43d0-bd09-2013d41cb3c4
-# ╠═121038cc-1621-4996-9760-f60eb93bf570
+# ╟─9a41c1fb-83d7-4898-ba64-b28c6b2b2da6
+# ╟─62b92343-faca-40b9-b385-83104d1aa76e
+# ╟─121038cc-1621-4996-9760-f60eb93bf570
 # ╟─eb458ba0-0494-47ca-ad31-aeab5b85a171
-# ╠═1740f922-af2e-49f0-8b88-339eaa2d5d47
+# ╟─1e01a9c9-76e1-426f-b048-161847b00009
+# ╟─1740f922-af2e-49f0-8b88-339eaa2d5d47
 # ╟─5dad95dd-0927-4f88-8048-b67190887428
+# ╟─1f326cea-59ef-41e9-aad6-d574c117b948
 # ╟─d2097461-de31-4031-bab4-69d024d726fe
 # ╟─4b8a051b-755e-45b5-8f04-5bec95896c5b
-# ╟─62b92343-faca-40b9-b385-83104d1aa76e
-# ╟─1f326cea-59ef-41e9-aad6-d574c117b948
-# ╟─1e01a9c9-76e1-426f-b048-161847b00009
-# ╠═593a1c29-b419-462e-8583-5f4f7afc51b3
-# ╠═9e5f1727-9601-44c4-a8f8-7ae58a18e39c
-# ╠═4cb35bfc-ad16-4874-951c-eb0766f5c396
-# ╠═f865cd80-6ce2-4edd-ba19-74865051f2d4
+# ╟─f865cd80-6ce2-4edd-ba19-74865051f2d4
+# ╟─593a1c29-b419-462e-8583-5f4f7afc51b3
 # ╟─7775fcdb-5a93-4c7d-bc56-60eafde19668
-# ╠═efa9b275-dc9b-4e18-9992-eff7651d70c7
-# ╠═0ab8fb77-df61-4ea2-a3cb-eadb1a202f5b
+# ╟─efa9b275-dc9b-4e18-9992-eff7651d70c7
+# ╟─0ab8fb77-df61-4ea2-a3cb-eadb1a202f5b
 # ╟─4c2e8d98-d373-495d-9e1b-710d24a03312
 # ╟─f7d8e391-53e7-438f-a237-cf65e57af950
 # ╟─beb0a305-8261-475e-bf8d-be84d8386f68
@@ -2811,13 +2792,13 @@ version = "3.6.0+0"
 # ╟─fb9334f7-c57f-4c1e-8430-e0f81a15a17e
 # ╟─d37e8f34-77e8-4283-b871-d8ce0497accf
 # ╟─d5a92490-636a-4d61-b843-64a6eda9d83b
-# ╠═882b8a60-ea87-11ed-3518-8db7b95f5a9f
+# ╟─882b8a60-ea87-11ed-3518-8db7b95f5a9f
+# ╟─02e972f5-5fe4-4b9d-8645-224f002b5a5a
 # ╟─044069e5-0d35-440e-9e62-561e11de6d18
-# ╠═6a3af267-db88-4458-86fb-c3c5fa7ef8c2
 # ╟─2dcbb093-48f8-44cc-a756-c0c46f6d0844
-# ╠═6a338d6c-ef5c-4c2f-8ddb-c4989ddfe94f
+# ╟─6a338d6c-ef5c-4c2f-8ddb-c4989ddfe94f
 # ╟─c925f69f-6ecc-428e-aae1-0a2446baddb8
-# ╠═a59ebd29-d5f8-4ba2-b142-456b4bd75cd6
+# ╟─180471c5-528e-4afb-b26c-89ca7501d78e
 # ╟─b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 # ╟─3178b826-8f9d-4cf6-955f-c40887e15476
 # ╟─00000000-0000-0000-0000-000000000001
