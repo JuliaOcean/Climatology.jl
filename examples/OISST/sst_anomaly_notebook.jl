@@ -150,55 +150,46 @@ As a first step :
 for one time frame, with `pol0` included inside `pol1`
 
 - compute area in cylindrical projection space (i.e., lon-lat)
-- split up `pol0` and `pol1` into arrays of polygons, and focus on each's largest (p0,p1)
-- check that p1 is inside p0 (by chance?)
-- compute the area in `p1` but no in `p0` via polygons combination
+- split up `pol0` and `pol1` into arrays of polygons
+- pair up `p1` ,`p0` from `pol0`,`pol1` using `GO.difference`
+- compute the areas in `p1`, `p0`, and their `GO.difference`
 
 Questions : 
 
 - if p0 and p1 only partially overlap, does this still work?
-- should this be done by adding only p0's interior `LineRing` to p1
-- how to pair up p1 and p0 more generally?
-- just do a loop over all polyons in pol0 and pol1, and return 0 area when no overlap?
 
 Functions : 
 
+- `get_matching_polygons`
 - `get_largest_polygons`
-- `calc_areas_diff`
-
 """
 
-# ╔═╡ 1f326cea-59ef-41e9-aad6-d574c117b948
-function calc_areas_diff(p0,p1)
-	g0=GI.getgeom.(p0)[1]
-	g1=GI.getgeom.(p1)[1]
+# ╔═╡ 86e1bc06-a62f-4c8e-bec5-4521a7b02cf5
+begin
+	import GeoFormatTypes as GFT
+	source_crs1 = GFT.EPSG(4326)
+end
 
-	println([length(g1) length(g0)])
-	println([GO.area(GI.Polygon(g1)) GO.area(GI.Polygon(g0)) 
-		GO.area(p1)-GO.area(p0) GO.area(GI.Polygon([g1... g0...]))])
+# ╔═╡ 8dca7dc0-be21-446b-ba6f-5caaa064cb12
+md"""#### matching polygons"""
+
+# ╔═╡ d0bf25b1-7798-4ea2-8203-ca41c2d489ca
+md"""#### largest polygons"""
+
+# ╔═╡ 1f326cea-59ef-41e9-aad6-d574c117b948
+function plot_geoms(p0,p1;verbose=true)
+	g0=GI.getgeom(p0)
+	g1=GI.getgeom(p1)
+
+	if verbose
+		println("- length of geometries for p0 : $(length(g1)); for p1 : $(length(g0))")
+	end
 
 	cols=rand([:white :blue :red :green :yellow :orange :cyan :violet],length(g1))
 	f=Figure()
 	Axis(f[1,1],title="p1"); plot!(p1,color=:black); [lines!(GI.Polygon(g)) for g in g1]
 	Axis(f[1,2],title="p0"); plot!(p0,color=:black); [lines!(GI.Polygon(g)) for g in g0]
 	f
-end
-
-# ╔═╡ 1e01a9c9-76e1-426f-b048-161847b00009
-function get_largest_polygons(pol0,pol1)
-	pol0_arr=GI.getgeom(pol0)
-	pol1_arr=GI.getgeom(pol1)
-	area0=GO.area.(pol0_arr)
-	area1=GO.area.(pol1_arr)
-	println([length(pol0_arr) length(pol1_arr)])
-	
-	i0=findall(area0.==maximum(area0))
-	i1=findall(area1.==maximum(area1))
-	println([i0 i1])
-	println([area0[i0] area0[i1]])
-	println([GO.area(pol0) GO.area(pol1)])
-
-	pol0_arr[i0],pol1_arr[i1]
 end
 
 # ╔═╡ 7775fcdb-5a93-4c7d-bc56-60eafde19668
@@ -395,16 +386,6 @@ begin
 	save_fig(f7,doSave,file="sst_anomaly_map.png")
 end
 
-# ╔═╡ 62b92343-faca-40b9-b385-83104d1aa76e
-function plot_polygons_setdiff(q0,q1,q10)
-	f_bb=Figure(); Axis(f_bb[1,1],title="subset diff (q10, yellow), q0 (red) and q1 (black)") #,aspect = DataAspect())
-	heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
-	plot!(q10,color=:yellow)
-	lines!(q1,color=:black,linewidth=1)
-	lines!(q0,color=:red,linewidth=1)
-	f_bb
-end
-
 # ╔═╡ 121038cc-1621-4996-9760-f60eb93bf570
 function plot_polygons_global(pol0,pol1)
 	f_aa=Figure(); Axis(f_aa[1,1],title="two polygon sets (pol0 and pol1)")
@@ -427,31 +408,6 @@ begin
 	plot_polygons_global(pol0,pol1)	
 end
 
-# ╔═╡ 1740f922-af2e-49f0-8b88-339eaa2d5d47
-(p0,p1)=get_largest_polygons(pol0,pol1)
-
-# ╔═╡ d2097461-de31-4031-bab4-69d024d726fe
-calc_areas_diff(p0,p1)
-
-# ╔═╡ f865cd80-6ce2-4edd-ba19-74865051f2d4
-begin
-	GI.isgeometry(p1)
-	p0_geom=GI.getgeom.(p0)[1]
-	p1_geom=GI.getgeom.(p1)[1]
-end
-
-# ╔═╡ 4b8a051b-755e-45b5-8f04-5bec95896c5b
-begin
-	q1=GI.Polygon(p1_geom)
-	q0=GI.Polygon(p0_geom)
-	q10=GI.Polygon([p1_geom... p0_geom...])
-	[GO.area(q1) GO.area(p0) GO.area(q1)-GO.area(q0) GO.area(q10)]
-	#[GO.area(p1) GO.area(p0) GO.area(p1)-GO.area(p0) GO.area(GI.Polygon([p1_geom... p0_geom...]))]
-end
-
-# ╔═╡ 9a41c1fb-83d7-4898-ba64-b28c6b2b2da6
-plot_polygons_setdiff(q0,q1,q10)
-
 # ╔═╡ 593a1c29-b419-462e-8583-5f4f7afc51b3
 let
 	GI.isgeometry(pol0)
@@ -459,11 +415,101 @@ let
 	pol1_geom=GI.getgeom(pol1)
 end
 
-# ╔═╡ 5dad95dd-0927-4f88-8048-b67190887428
-let
-	f_cc=Figure(); Axis(f_cc[1,1],title="p0 and p1") #,aspect = DataAspect())
+# ╔═╡ 1e01a9c9-76e1-426f-b048-161847b00009
+function get_largest_polygons(pol0,pol1;verbose=false)
+	pol0_arr=GI.getgeom(pol0)
+	pol1_arr=GI.getgeom(pol1)
+	area0=GO.area.(pol0_arr)
+	area1=GO.area.(pol1_arr)
+	
+	i0=findall(area0.==maximum(area0))[1]
+	i1=findall(area1.==maximum(area1))[1]
+
+	if verbose
+		println([length(pol0_arr) length(pol1_arr)]) 
+		println([i0 i1])
+		println([area0[i0] area0[i1]])
+		println([GO.area(pol0) GO.area(pol1)])
+	end
+
+	fi=Figure(); Axis(fi[1,1],title="pol_largest.p0 and pol_largest.p1") #,aspect = DataAspect())
 	heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
-	plot!(p1); plot!(p0); f_cc
+	plot!(pol1_arr[i1],color=:yellow); plot!(pol0_arr[i0],color=:red)
+
+	(p0=pol0_arr[i0],p1=pol1_arr[i1],i0=i0,i1=i1,plot=fi)
+end
+
+# ╔═╡ 1740f922-af2e-49f0-8b88-339eaa2d5d47
+pol_largest=get_largest_polygons(pol0,pol1,verbose=false)
+
+# ╔═╡ 79c67f26-711f-4d8c-9621-d888b10aca11
+begin
+	ui_i0 = @bind i0 Select(1:length(GI.getgeom(pol0)),default=pol_largest.i0)
+	md"""Select `i0`=$(ui_i0)"""
+end
+
+# ╔═╡ 4e2becd3-a3fc-403d-982f-705327069075
+md"""Select i0=$(ui_i0)"""
+
+# ╔═╡ 5dad95dd-0927-4f88-8048-b67190887428
+pol_largest.plot
+
+# ╔═╡ d2097461-de31-4031-bab4-69d024d726fe
+plot_geoms(pol_largest.p0,pol_largest.p1)
+
+# ╔═╡ 64b8c7fa-0518-4053-943b-cbd0d9aac7dc
+let #check on area differences; is this just for the outer polygons though?
+	p0_geom=pol_largest.p0
+	p1_geom=pol_largest.p1
+	diff_poly = GO.difference(p1_geom, p0_geom; target = GI.PolygonTrait())
+	[GO.area(p1_geom)-GO.area(p0_geom) GO.area(diff_poly)]
+end
+
+# ╔═╡ 4de4e6ca-1e4b-4747-bd21-b98afa54cca8
+function get_matching_polygons(pol1,pol0,i0; verbose=false)
+	p0_geom=GI.getgeom(pol0)[i0]
+	n=length(GI.getgeom(pol1))
+	areas=zeros(n,3)
+	for i in 1:n
+		p1_geom=GI.getgeom(pol1)[i]
+		diff_poly = GO.difference(p1_geom, p0_geom; target = GI.PolygonTrait())
+		areas[i,:] = [GO.area(p0_geom) GO.area(p1_geom) GO.area(diff_poly)]
+	end
+
+	dst=areas[:,2]-areas[:,3]
+	mx=maximum(dst)
+	j=findall(dst.==mx)[1]
+	p1_geom=GI.getgeom(pol1)[j]
+	diff_poly = GO.difference(p1_geom, p0_geom; target = GI.PolygonTrait())
+	result=(p1=GI.getgeom(pol1)[j],p0=GI.getgeom(pol0)[i0],p1_m_p0=diff_poly,
+		i0=i0,j=j,areas=[dst[j] areas[j,:]...])
+	
+	if verbose 
+		println("- areas for [dst[j] p0 p1 diff_poly(p0,p1)] :")
+		println(result.areas)
+		fi=Figure(); Axis(fi[1,1],title="matched polygons, and GO.difference") #,aspect = DataAspect())
+		heatmap!(to_map.lon,to_map.lat,to_map.field,colormap=:grays)
+		plot!(result.p1,color=:yellow); plot!(result.p0,color=:black)
+		lines!(result.p1_m_p0,color=:red,linewidth=1)
+		(result...,plot=fi)
+	else
+		result
+	end
+end
+
+# ╔═╡ c69ca2cb-48d5-48f9-8c75-4f172f7bb7a0
+pol_match=get_matching_polygons(pol1,pol0,i0,verbose=true)
+
+# ╔═╡ 737bb437-75d9-44f8-8861-9d41747f617b
+pol_match.plot
+
+# ╔═╡ cf5d5c48-8825-4598-9829-16025c4c2c51
+let
+	p0_geom=pol_match.p0
+	p1_geom=pol_match.p1
+	diff_poly = GO.difference(p1_geom, p0_geom; target = GI.PolygonTrait())
+	println("- area(p1)-area(p0) area(diff_poly(p1,p0)) :")
+	println([GO.area(p1_geom)-GO.area(p0_geom) GO.area(diff_poly)])
 end
 
 # ╔═╡ beb0a305-8261-475e-bf8d-be84d8386f68
@@ -602,12 +648,21 @@ end
 # ╔═╡ fb9334f7-c57f-4c1e-8430-e0f81a15a17e
 do_future_projection ? projection_map(fil_sst1,mon_sst,offset) : "climate projection turned off"
 
+# ╔═╡ 87d3e265-8f2a-4cb7-8beb-b4c13adcf7ae
+let#demo of polygon intersection
+	poly1 = GI.Polygon([[[0.0, 0.0], [5.0, 5.0], [10.0, 0.0], [5.0, -5.0], [0.0, 0.0]]])
+	poly2 = GI.Polygon([[[3.0, 0.0], [8.0, 5.0], [13.0, 0.0], [8.0, -5.0], [3.0, 0.0]]])
+	diff_poly = GO.difference(poly1, poly2; target = GI.PolygonTrait())
+	lines(poly1); lines!(poly2,color=:red); plot!(diff_poly,color=:green); current_figure()
+end;
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+GeoFormatTypes = "68eda718-8dee-11e9-39e7-89f7f65f511f"
 GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
 GeoMakie = "db073c08-6b98-4ee5-b6a4-5efafb3259c6"
 GeometryOps = "3251bfac-6a57-4b6d-aa61-ac1fef2975ab"
@@ -622,6 +677,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 [compat]
 CairoMakie = "~0.12.16"
 Climatology = "~0.5.12"
+GeoFormatTypes = "~0.4.3"
 GeoInterface = "~1.4.0"
 GeoMakie = "~0.7.9"
 GeometryOps = "~0.1.13"
@@ -639,7 +695,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.1"
 manifest_format = "2.0"
-project_hash = "6ad790a910b17b7357fbe0bc01d8ffac03cafc55"
+project_hash = "1fe95e6cec1b1463a594a18b25c00f6f857d6e71"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -2770,18 +2826,24 @@ version = "3.6.0+0"
 # ╟─5c73d087-c0bb-40ff-85f9-2d5ddd0690f1
 # ╟─475e8bcc-191a-4331-901c-d4519b6ac3cd
 # ╟─d65ca9d4-43fc-43d0-bd09-2013d41cb3c4
-# ╟─9a41c1fb-83d7-4898-ba64-b28c6b2b2da6
-# ╟─62b92343-faca-40b9-b385-83104d1aa76e
 # ╟─121038cc-1621-4996-9760-f60eb93bf570
+# ╟─4e2becd3-a3fc-403d-982f-705327069075
+# ╟─737bb437-75d9-44f8-8861-9d41747f617b
 # ╟─eb458ba0-0494-47ca-ad31-aeab5b85a171
 # ╟─1e01a9c9-76e1-426f-b048-161847b00009
-# ╟─1740f922-af2e-49f0-8b88-339eaa2d5d47
+# ╟─4de4e6ca-1e4b-4747-bd21-b98afa54cca8
+# ╟─86e1bc06-a62f-4c8e-bec5-4521a7b02cf5
+# ╟─8dca7dc0-be21-446b-ba6f-5caaa064cb12
+# ╟─79c67f26-711f-4d8c-9621-d888b10aca11
+# ╟─c69ca2cb-48d5-48f9-8c75-4f172f7bb7a0
+# ╟─cf5d5c48-8825-4598-9829-16025c4c2c51
+# ╟─d0bf25b1-7798-4ea2-8203-ca41c2d489ca
 # ╟─5dad95dd-0927-4f88-8048-b67190887428
+# ╟─1740f922-af2e-49f0-8b88-339eaa2d5d47
+# ╠═d2097461-de31-4031-bab4-69d024d726fe
 # ╟─1f326cea-59ef-41e9-aad6-d574c117b948
-# ╟─d2097461-de31-4031-bab4-69d024d726fe
-# ╟─4b8a051b-755e-45b5-8f04-5bec95896c5b
-# ╟─f865cd80-6ce2-4edd-ba19-74865051f2d4
-# ╟─593a1c29-b419-462e-8583-5f4f7afc51b3
+# ╠═64b8c7fa-0518-4053-943b-cbd0d9aac7dc
+# ╠═593a1c29-b419-462e-8583-5f4f7afc51b3
 # ╟─7775fcdb-5a93-4c7d-bc56-60eafde19668
 # ╟─efa9b275-dc9b-4e18-9992-eff7651d70c7
 # ╟─0ab8fb77-df61-4ea2-a3cb-eadb1a202f5b
@@ -2801,5 +2863,6 @@ version = "3.6.0+0"
 # ╟─180471c5-528e-4afb-b26c-89ca7501d78e
 # ╟─b548be7e-a0d6-4051-b3bd-2834cdd01ce4
 # ╟─3178b826-8f9d-4cf6-955f-c40887e15476
+# ╠═87d3e265-8f2a-4cb7-8beb-b4c13adcf7ae
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
