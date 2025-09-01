@@ -252,6 +252,7 @@ fig0=let
 	f = Figure()
     ax = f[1, 1] = Axis(f, aspect = DataAspect(), title = "Ocean Depth (m)")
 	pr_ax=MeshArrays.ProjAxis(ax; proj=proj,lon0=proj_lon0)
+	#lines(pol)
 	lines!(pr_ax; polygons=pol,color=:black,linewidth=0.5)
 	MeshArrays.grid_lines!(pr_ax;color=:lightgreen,linewidth=0.5)
 
@@ -266,7 +267,7 @@ fig0=let
 #	lines!(pr_ax; polygons=pol1,color=:red,linewidth=1.0)
 
 	f
-end;
+end
 
 # ╔═╡ 180471c5-528e-4afb-b26c-89ca7501d78e
 begin
@@ -472,13 +473,18 @@ function get_matching_polygons(pol1,pol0,i0; verbose=false)
 	areas=zeros(n,3)
 	for i in 1:n
 		p1_geom=GI.getgeom(pol1)[i]
-		diff_poly = GO.difference(p1_geom, p0_geom; target = GI.PolygonTrait())
-		areas[i,:] = [GO.area(p0_geom) GO.area(p1_geom) GO.area(diff_poly)]
+		try
+			diff_poly = GO.difference(p1_geom, p0_geom; target = GI.PolygonTrait())
+			areas[i,:] = [GO.area(p0_geom) GO.area(p1_geom) GO.area(diff_poly)]
+		catch
+			@warn "difference could not be computed ($i)"
+		end
 	end
 
-	dst=areas[:,2]-areas[:,3]
+	dst=areas[:,2]-areas[:,3] #this should not be all zeros ... 
 	mx=maximum(dst)
 	j=findall(dst.==mx)[1]
+	#println(mx)
 	p1_geom=GI.getgeom(pol1)[j]
 	diff_poly = GO.difference(p1_geom, p0_geom; target = GI.PolygonTrait())
 	result=(p1=GI.getgeom(pol1)[j],p0=GI.getgeom(pol0)[i0],p1_m_p0=diff_poly,
@@ -673,20 +679,6 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Proj = "c94c279d-25a6-4763-9509-64d165bea63e"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-
-[compat]
-CairoMakie = "~0.12.16"
-Climatology = "~0.5.12"
-GeoFormatTypes = "~0.4.3"
-GeoInterface = "~1.4.0"
-GeoMakie = "~0.7.9"
-GeometryOps = "~0.1.13"
-Glob = "~1.3.1"
-NCDatasets = "~0.14.6"
-OceanRobots = "~0.2.8"
-PlutoUI = "~0.7.52"
-Proj = "~1.8.0"
-Statistics = "~1.11.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -695,7 +687,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.6"
 manifest_format = "2.0"
-project_hash = "1fe95e6cec1b1463a594a18b25c00f6f857d6e71"
+project_hash = "0cd5bf81a7262536f12e0b49c5cbce56dec586a4"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -782,9 +774,9 @@ version = "1.1.2"
 
 [[deps.ArgoData]]
 deps = ["Bootstrap", "CSV", "DataDeps", "DataFrames", "Dataverse", "Dates", "Downloads", "FTPClient", "Glob", "Interpolations", "IntervalSets", "JLD2", "MeshArrays", "NCDatasets", "NetworkOptions", "OrderedCollections", "Parquet2", "Pkg", "Printf", "Statistics", "TableOperations", "Tables", "YAML"]
-git-tree-sha1 = "57b8018900521a5d0a75348c3ef756bca6b9cc5c"
+git-tree-sha1 = "074035d2fbe58a087ecdca3d73f14d8576c6ab2a"
 uuid = "9eb831cf-c491-48dc-bed4-6aca718df73c"
-version = "0.2.2"
+version = "0.2.3"
 
     [deps.ArgoData.extensions]
     ArgoDataClimatologyExt = ["Climatology"]
@@ -940,9 +932,9 @@ version = "1.1.1"
 
 [[deps.CairoMakie]]
 deps = ["CRC32c", "Cairo", "Cairo_jll", "Colors", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "PrecompileTools"]
-git-tree-sha1 = "0afa2b4ac444b9412130d68493941e1af462e26a"
+git-tree-sha1 = "f8caabc5a1c1fb88bcbf9bc4078e5656a477afd0"
 uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-version = "0.12.18"
+version = "0.15.6"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "LZO_jll", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -973,39 +965,39 @@ weakdeps = ["SparseArrays"]
     ChainRulesCoreSparseArraysExt = "SparseArrays"
 
 [[deps.ChunkCodecCore]]
-git-tree-sha1 = "6c4c3782be841630e96f7b58effb753e3e7562c9"
+git-tree-sha1 = "51f4c10ee01bda57371e977931de39ee0f0cdb3e"
 uuid = "0b6fb165-00bc-4d37-ab8b-79f91016dbe1"
-version = "0.6.0"
+version = "1.0.0"
 
 [[deps.ChunkCodecLibBrotli]]
 deps = ["ChunkCodecCore", "brotli_jll"]
-git-tree-sha1 = "1e6dd0179aa6409abbff671f12eb70bde8fcdcf8"
+git-tree-sha1 = "45709ad3ba09bdff5e6481d2c1727b1499989997"
 uuid = "653b0ff7-85b5-4442-93c1-dcc330d3ec7d"
-version = "0.3.0"
+version = "1.0.0"
 
 [[deps.ChunkCodecLibLz4]]
 deps = ["ChunkCodecCore", "Lz4_jll"]
-git-tree-sha1 = "4923043221657e44d4fdf5f4bab0b10f244a4193"
+git-tree-sha1 = "0a4d7695ef98ab714efe5aef26fc35c3b0b4c1ee"
 uuid = "7e9cc85e-5614-42a3-ad86-b78f920b38a5"
-version = "0.3.0"
+version = "1.0.0"
 
 [[deps.ChunkCodecLibSnappy]]
 deps = ["ChunkCodecCore", "snappy_jll"]
-git-tree-sha1 = "780e4fb30779e8073798948625be37c0b2eb4cbf"
+git-tree-sha1 = "a9e98b8cc7ccdcfcb406773a6c58987daa6eda05"
 uuid = "eac87354-86d5-4a5b-ab5f-a6ee56b239b3"
-version = "0.3.0"
+version = "1.0.0"
 
 [[deps.ChunkCodecLibZlib]]
 deps = ["ChunkCodecCore", "Zlib_jll"]
-git-tree-sha1 = "0bbf7e85fea6f65967dee9df56bb032875798a14"
+git-tree-sha1 = "cee8104904c53d39eb94fd06cbe60cb5acde7177"
 uuid = "4c0bbee4-addc-4d73-81a0-b6caacae83c8"
-version = "0.3.0"
+version = "1.0.0"
 
 [[deps.ChunkCodecLibZstd]]
 deps = ["ChunkCodecCore", "Zstd_jll"]
-git-tree-sha1 = "a833b791b21b0bc78fa8cb38d39c99f4fa376158"
+git-tree-sha1 = "34d9873079e4cb3d0c62926a225136824677073f"
 uuid = "55437552-ac27-4d47-9aa3-63184e8fd398"
-version = "0.3.0"
+version = "1.0.0"
 
 [[deps.Climatology]]
 deps = ["CSV", "DataDeps", "DataFrames", "DataStructures", "Dataverse", "Dates", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "STAC", "Scratch", "SharedArrays", "Statistics", "TOML", "URIs"]
@@ -1043,15 +1035,19 @@ version = "3.30.0"
 
 [[deps.ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
-git-tree-sha1 = "b10d0b65641d57b8b4d5e234446582de5047050d"
+git-tree-sha1 = "67e11ee83a43eb71ddc950302c53bf33f0690dfe"
 uuid = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
-version = "0.11.5"
+version = "0.12.1"
+weakdeps = ["StyledStrings"]
+
+    [deps.ColorTypes.extensions]
+    StyledStringsExt = "StyledStrings"
 
 [[deps.ColorVectorSpace]]
 deps = ["ColorTypes", "FixedPointNumbers", "LinearAlgebra", "Requires", "Statistics", "TensorCore"]
-git-tree-sha1 = "a1f44953f2382ebb937d60dafbe2deea4bd23249"
+git-tree-sha1 = "8b3b6f87ce8f65a2b4f857528fd8d70086cd72b1"
 uuid = "c3611d14-8923-5661-9e6a-0046d554d3a4"
-version = "0.10.0"
+version = "0.11.0"
 weakdeps = ["SpecialFunctions"]
 
     [deps.ColorVectorSpace.extensions]
@@ -1092,6 +1088,12 @@ weakdeps = ["InverseFunctions"]
 
     [deps.CompositionsBase.extensions]
     CompositionsBaseInverseFunctionsExt = "InverseFunctions"
+
+[[deps.ComputePipeline]]
+deps = ["Observables", "Preferences"]
+git-tree-sha1 = "cb1299fee09da21e65ec88c1ff3a259f8d0b5802"
+uuid = "95dc2771-c249-4cd0-9c9f-1f3b4330693c"
+version = "0.1.4"
 
 [[deps.ConcurrentUtilities]]
 deps = ["Serialization", "Sockets"]
@@ -1403,37 +1405,38 @@ version = "0.4.4"
 
 [[deps.GeoInterface]]
 deps = ["DataAPI", "Extents", "GeoFormatTypes"]
-git-tree-sha1 = "294e99f19869d0b0cb71aef92f19d03649d028d5"
+git-tree-sha1 = "0f265264b9287a19715dc5d491dbe3aff00c1e71"
 uuid = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
-version = "1.4.1"
+version = "1.5.0"
 
-[[deps.GeoInterfaceMakie]]
-deps = ["GeoInterface", "GeometryBasics", "MakieCore"]
-git-tree-sha1 = "378afe561ba990392146e1a7abd472c7db7f1479"
-uuid = "0edc0954-3250-4c18-859d-ec71c1660c08"
-version = "0.1.9"
+    [deps.GeoInterface.extensions]
+    GeoInterfaceMakieExt = ["Makie", "GeometryBasics"]
+    GeoInterfaceRecipesBaseExt = "RecipesBase"
 
-[[deps.GeoInterfaceRecipes]]
-deps = ["GeoInterface", "RecipesBase"]
-git-tree-sha1 = "fb1156076f24f1dfee45b3feadb31d05730a49ac"
-uuid = "0329782f-3d07-4b52-b9f6-d3137cf03c7a"
-version = "1.0.2"
+    [deps.GeoInterface.weakdeps]
+    GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
+    Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+    RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [[deps.GeoJSON]]
-deps = ["Extents", "GeoFormatTypes", "GeoInterface", "GeoInterfaceMakie", "GeoInterfaceRecipes", "JSON3", "StructTypes", "Tables"]
-git-tree-sha1 = "c803640368acf4ae02bb5a69a986cecc4a5cb984"
+deps = ["Extents", "GeoFormatTypes", "GeoInterface", "JSON3", "StructTypes", "Tables"]
+git-tree-sha1 = "ce64817b826c36b30493b31be2ce53c55a277835"
 uuid = "61d90e0f-e114-555e-ac52-39dfb47a3ef9"
-version = "0.8.3"
-weakdeps = ["Makie"]
+version = "0.8.4"
 
     [deps.GeoJSON.extensions]
     GeoJSONMakieExt = "Makie"
+    GeoJSONRecipesBaseExt = "RecipesBase"
+
+    [deps.GeoJSON.weakdeps]
+    Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+    RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [[deps.GeoMakie]]
-deps = ["Colors", "CoordinateTransformations", "Downloads", "GeoFormatTypes", "GeoInterface", "GeoInterfaceMakie", "GeoJSON", "Geodesy", "GeometryBasics", "GeometryOps", "ImageIO", "LinearAlgebra", "Makie", "NaturalEarth", "Proj", "Reexport", "Statistics", "StructArrays"]
-git-tree-sha1 = "8ef9756e37ca5bc892e920551f9aa683d5b8fab3"
+deps = ["Colors", "CoordinateTransformations", "Downloads", "GeoFormatTypes", "GeoInterface", "GeoJSON", "Geodesy", "GeometryBasics", "GeometryOps", "ImageIO", "LinearAlgebra", "Makie", "NaturalEarth", "Proj", "Reexport", "Statistics", "StructArrays"]
+git-tree-sha1 = "2e6592eab6de69f34806771bdafd769261ae22bc"
 uuid = "db073c08-6b98-4ee5-b6a4-5efafb3259c6"
-version = "0.7.13"
+version = "0.7.15"
 
 [[deps.Geodesy]]
 deps = ["CoordinateTransformations", "Dates", "LinearAlgebra", "StaticArrays"]
@@ -1442,10 +1445,14 @@ uuid = "0ef565a4-170c-5f04-8de2-149903a85f3d"
 version = "1.1.0"
 
 [[deps.GeometryBasics]]
-deps = ["EarCut_jll", "Extents", "GeoInterface", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
-git-tree-sha1 = "b62f2b2d76cee0d61a2ef2b3118cd2a3215d3134"
+deps = ["EarCut_jll", "Extents", "IterTools", "LinearAlgebra", "PrecompileTools", "Random", "StaticArrays"]
+git-tree-sha1 = "1f5a80f4ed9f5a4aada88fc2db456e637676414b"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.4.11"
+version = "0.5.10"
+weakdeps = ["GeoInterface"]
+
+    [deps.GeometryBasics.extensions]
+    GeometryBasicsGeoInterfaceExt = "GeoInterface"
 
 [[deps.GeometryOps]]
 deps = ["AbstractTrees", "AdaptivePredicates", "CoordinateTransformations", "DataAPI", "DelaunayTriangulation", "ExactPredicates", "Extents", "GeoFormatTypes", "GeoInterface", "GeometryOpsCore", "LinearAlgebra", "SortTileRecursiveTree", "StaticArrays", "Statistics", "Tables"]
@@ -1660,14 +1667,18 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
 [[deps.Interpolations]]
-deps = ["Adapt", "AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "Requires", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
-git-tree-sha1 = "88a101217d7cb38a7b481ccd50d21876e1d1b0e0"
+deps = ["Adapt", "AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
+git-tree-sha1 = "65d505fa4c0d7072990d659ef3fc086eb6da8208"
 uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
-version = "0.15.1"
-weakdeps = ["Unitful"]
+version = "0.16.2"
 
     [deps.Interpolations.extensions]
+    InterpolationsForwardDiffExt = "ForwardDiff"
     InterpolationsUnitfulExt = "Unitful"
+
+    [deps.Interpolations.weakdeps]
+    ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
+    Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [[deps.IntervalArithmetic]]
 deps = ["CRlibm", "MacroTools", "OpenBLASConsistentFPCSR_jll", "Random", "RoundingEmulator"]
@@ -1697,12 +1708,16 @@ version = "0.22.36"
 git-tree-sha1 = "5fbb102dcb8b1a858111ae81d56682376130517d"
 uuid = "8197267c-284f-5f27-9208-e0e47529a953"
 version = "0.7.11"
-weakdeps = ["Random", "RecipesBase", "Statistics"]
 
     [deps.IntervalSets.extensions]
     IntervalSetsRandomExt = "Random"
     IntervalSetsRecipesBaseExt = "RecipesBase"
     IntervalSetsStatisticsExt = "Statistics"
+
+    [deps.IntervalSets.weakdeps]
+    Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+    RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
+    Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[deps.InverseFunctions]]
 git-tree-sha1 = "a779299d77cd080bf77b97535acecd73e1c5e5cb"
@@ -2014,16 +2029,10 @@ uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 version = "0.5.16"
 
 [[deps.Makie]]
-deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "Contour", "Dates", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Format", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageBase", "ImageIO", "InteractiveUtils", "Interpolations", "IntervalSets", "InverseFunctions", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "MakieCore", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "Packing", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "Showoff", "SignedDistanceFields", "SparseArrays", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun", "Unitful"]
-git-tree-sha1 = "be3051d08b78206fb5e688e8d70c9e84d0264117"
+deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "ComputePipeline", "Contour", "Dates", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Format", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageBase", "ImageIO", "InteractiveUtils", "Interpolations", "IntervalSets", "InverseFunctions", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "PNGFiles", "Packing", "Pkg", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "Showoff", "SignedDistanceFields", "SparseArrays", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun", "Unitful"]
+git-tree-sha1 = "368542cde25d381e44d84c3c4209764f05f4ef19"
 uuid = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-version = "0.21.18"
-
-[[deps.MakieCore]]
-deps = ["ColorTypes", "GeometryBasics", "IntervalSets", "Observables"]
-git-tree-sha1 = "9019b391d7d086e841cbeadc13511224bd029ab3"
-uuid = "20f20a25-4f0e-4fdf-b5d1-57303727442b"
-version = "0.8.12"
+version = "0.24.6"
 
 [[deps.MappedArrays]]
 git-tree-sha1 = "2dab0221fe2b0f2cb6754eaa743cc266339f527e"
@@ -2153,9 +2162,9 @@ version = "0.5.5"
 
 [[deps.OceanRobots]]
 deps = ["ArgoData", "CFTime", "CSV", "CodecZlib", "DataFrames", "Dataverse", "Dates", "Downloads", "FTPClient", "Glob", "HTTP", "Interpolations", "JSON3", "LightXML", "NCDatasets", "Printf", "Statistics", "TableScraper", "URIs"]
-git-tree-sha1 = "e295e589df402746b0d058d3b7cb1d91d4214fc8"
+git-tree-sha1 = "d23e1293383925d7d9c079ef51183f4c1cdc2904"
 uuid = "0b51df41-3294-4961-8d23-db645e32016d"
-version = "0.2.17"
+version = "0.2.19"
 weakdeps = ["Makie"]
 
     [deps.OceanRobots.extensions]
@@ -2282,9 +2291,9 @@ version = "1.56.3+0"
 
 [[deps.Parquet2]]
 deps = ["AbstractTrees", "BitIntegers", "ChunkCodecCore", "ChunkCodecLibBrotli", "ChunkCodecLibLz4", "ChunkCodecLibSnappy", "ChunkCodecLibZlib", "ChunkCodecLibZstd", "DataAPI", "Dates", "DecFP", "FilePathsBase", "FillArrays", "JSON3", "LazyArrays", "LightBSON", "Mmap", "OrderedCollections", "PooledArrays", "PrecompileTools", "SentinelArrays", "StaticArrays", "TableOperations", "Tables", "Thrift2", "Transducers", "UUIDs", "WeakRefStrings"]
-git-tree-sha1 = "91ca9bc1824523bce51fb424ae0f29987e2d6006"
+git-tree-sha1 = "b807642c695d78b1f2d6cc829ea505a7fc6fe81d"
 uuid = "98572fba-bba0-415d-956f-fa77e587d26d"
-version = "0.2.32"
+version = "0.2.33"
 
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]
@@ -2367,9 +2376,9 @@ version = "1.11.0"
 
 [[deps.Proj]]
 deps = ["CEnum", "CoordinateTransformations", "GeoFormatTypes", "GeoInterface", "NetworkOptions", "PROJ_jll"]
-git-tree-sha1 = "7fbdd2a507a06cf577ee465c4a6ec8d951b4bcee"
+git-tree-sha1 = "61188669db4f5b400173e4ec60da8bcb72d6e749"
 uuid = "c94c279d-25a6-4763-9509-64d165bea63e"
-version = "1.8.1"
+version = "1.9.0"
 
 [[deps.PtrArrays]]
 git-tree-sha1 = "1d36ef11a9aaf1e8b74dacc6a731dd1de8fd493d"
@@ -2418,12 +2427,6 @@ weakdeps = ["FixedPointNumbers"]
 
     [deps.Ratios.extensions]
     RatiosFixedPointNumbersExt = "FixedPointNumbers"
-
-[[deps.RecipesBase]]
-deps = ["PrecompileTools"]
-git-tree-sha1 = "5c3d09cc4f31f5fc6af001c250bf1278733100ff"
-uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-version = "1.3.4"
 
 [[deps.Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
@@ -2516,10 +2519,10 @@ uuid = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 version = "1.1.2"
 
 [[deps.ShaderAbstractions]]
-deps = ["ColorTypes", "FixedPointNumbers", "GeometryBasics", "LinearAlgebra", "Observables", "StaticArrays", "StructArrays", "Tables"]
-git-tree-sha1 = "79123bc60c5507f035e6d1d9e563bb2971954ec8"
+deps = ["ColorTypes", "FixedPointNumbers", "GeometryBasics", "LinearAlgebra", "Observables", "StaticArrays"]
+git-tree-sha1 = "818554664a2e01fc3784becb2eb3a82326a604b6"
 uuid = "65257c39-d410-5151-9873-9b3e5be5013e"
-version = "0.4.1"
+version = "0.5.0"
 
 [[deps.SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
@@ -2683,9 +2686,9 @@ version = "0.4.1"
 
 [[deps.StructArrays]]
 deps = ["ConstructionBase", "DataAPI", "Tables"]
-git-tree-sha1 = "9537ef82c42cdd8c5d443cbc359110cbb36bae10"
+git-tree-sha1 = "8ad2e38cbb812e29348719cc63580ec1dfeb9de4"
 uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
-version = "0.6.21"
+version = "0.7.1"
 
     [deps.StructArrays.extensions]
     StructArraysAdaptExt = "Adapt"
@@ -3117,7 +3120,7 @@ version = "4.1.0+0"
 # ╟─737bb437-75d9-44f8-8861-9d41747f617b
 # ╟─eb458ba0-0494-47ca-ad31-aeab5b85a171
 # ╟─1e01a9c9-76e1-426f-b048-161847b00009
-# ╟─4de4e6ca-1e4b-4747-bd21-b98afa54cca8
+# ╠═4de4e6ca-1e4b-4747-bd21-b98afa54cca8
 # ╟─86e1bc06-a62f-4c8e-bec5-4521a7b02cf5
 # ╟─8dca7dc0-be21-446b-ba6f-5caaa064cb12
 # ╟─79c67f26-711f-4d8c-9621-d888b10aca11
@@ -3128,10 +3131,10 @@ version = "4.1.0+0"
 # ╟─1740f922-af2e-49f0-8b88-339eaa2d5d47
 # ╠═d2097461-de31-4031-bab4-69d024d726fe
 # ╟─1f326cea-59ef-41e9-aad6-d574c117b948
-# ╠═64b8c7fa-0518-4053-943b-cbd0d9aac7dc
+# ╟─64b8c7fa-0518-4053-943b-cbd0d9aac7dc
 # ╠═593a1c29-b419-462e-8583-5f4f7afc51b3
 # ╟─7775fcdb-5a93-4c7d-bc56-60eafde19668
-# ╟─efa9b275-dc9b-4e18-9992-eff7651d70c7
+# ╠═efa9b275-dc9b-4e18-9992-eff7651d70c7
 # ╟─0ab8fb77-df61-4ea2-a3cb-eadb1a202f5b
 # ╟─4c2e8d98-d373-495d-9e1b-710d24a03312
 # ╟─f7d8e391-53e7-438f-a237-cf65e57af950

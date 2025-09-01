@@ -625,18 +625,28 @@ uuid = "55437552-ac27-4d47-9aa3-63184e8fd398"
 version = "0.2.1"
 
 [[deps.ClimateModels]]
-deps = ["CSV", "DataFrames", "Dates", "Downloads", "Git", "OrderedCollections", "Pkg", "Statistics", "Suppressor", "TOML", "Test", "UUIDs"]
-git-tree-sha1 = "334084668770f528f541caa37589808b7903a0bc"
+deps = ["CFTime", "CSV", "DataDeps", "DataFrames", "Dataverse", "Dates", "Downloads", "Git", "Glob", "JLD2", "OffsetArrays", "OrderedCollections", "Pkg", "Printf", "Random", "Statistics", "Suppressor", "TOML", "Test", "UUIDs"]
+git-tree-sha1 = "538a034bdb57a2ca5e82f63ae066be7e44775867"
 uuid = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
-version = "0.3.3"
+version = "0.3.9"
 
     [deps.ClimateModels.extensions]
     ClimateModelsCondaExt = ["Conda"]
+    ClimateModelsIniFileExt = ["IniFile"]
+    ClimateModelsMakieExt = ["Makie"]
+    ClimateModelsNetCDFExt = ["NetCDF"]
+    ClimateModelsOceananigansExt = ["Oceananigans"]
     ClimateModelsPyCallExt = ["PyCall"]
+    ClimateModelsZarrExt = ["Zarr"]
 
     [deps.ClimateModels.weakdeps]
     Conda = "8f4d0f93-b110-5947-807f-2305c1781a2d"
+    IniFile = "83e8ac13-25f8-5344-8a64-a9f2b223428f"
+    Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+    NetCDF = "30363a11-5582-574a-97bb-aa9a979735b9"
+    Oceananigans = "9e8cae18-63c1-5223-a75c-80ca9d6e9a09"
     PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+    Zarr = "0a941bbe-ad1d-11e8-39d9-ab76183a1d99"
 
 [[deps.Climatology]]
 deps = ["CSV", "DataDeps", "DataFrames", "DataStructures", "Dataverse", "Dates", "Distributed", "Glob", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "STAC", "Scratch", "SharedArrays", "Statistics", "TOML", "URIs"]
