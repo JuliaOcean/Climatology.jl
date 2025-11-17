@@ -38,8 +38,8 @@ md"""# Air-Sea Fluxes
 !!! note 
     This example computes the surface flux balance using the bulk-formulae approach. It uses the ERA5 reanalysis for the atmospheric state and the OISST data product for sea surface temperature.
 
-- The SST data file was created using `sst_anomaly_notebook.jl`
-- The ERA5 was created on engaging using `Climatology.jl` (see Appendix)
+- The OISST data file was created using `sst_anomaly_notebook.jl` (see [Climatology.jl](https://github.com/JuliaOcean/Climatology.jl))
+- The ERA5 data file was created using `SurfaceFluxes_modules.jl` (see [Climatology.jl](https://github.com/JuliaOcean/Climatology.jl))
 
 Save plots?
 """
@@ -49,7 +49,12 @@ Save plots?
 
 # ╔═╡ bf6abe41-ce2d-4850-8ddd-1a729f658724
 begin
-	path_to_data="data"
+	path_to_data=try 
+		Climatology.downloads.ERA5_OISST_download()
+	catch e
+		"data"
+	end
+	
 	fil_ERA5="ERA5_lon205_lat45_year2023.csv"
 	fil_OISST="OISST_lon205_lat45_year2023.csv"
 	
@@ -65,14 +70,18 @@ end
 # ╔═╡ c1cabc58-9a48-49a5-a6f5-784f52b8312c
 begin
 	fig=plot_surface_balance(df,tim,sst)
-	doSave ? save("bulk_formulae_example.png",fig) : nothing
+	file=joinpath(tempdir(),"air_sea_heat_fluxes.png")
+	doSave ? CairoMakie.save(file,fig) : nothing
+	doSave ? println(file) : nothing
 	fig
 end
 
 # ╔═╡ 02cf9eda-9e7f-4fd0-9753-50b94ad37742
 begin
 	fig_Qnet_cumsum=plot_Qnet_cumsum(df,tim,sst)
-	doSave ? save("bulk_formulae_Qnet_cumsum.png",fig_Qnet_cumsum) : nothing
+	file_Qnet_cumsum=joinpath(tempdir(),"bulk_formulae_Qnet_cumsum.png")
+	doSave ? CairoMakie.save(file_Qnet_cumsum,fig_Qnet_cumsum) : nothing
+	doSave ? println(file_Qnet_cumsum) : nothing
 	fig_Qnet_cumsum
 end
 
@@ -1979,7 +1988,7 @@ version = "4.1.0+0"
 # ╟─5d8ad6ff-908c-4c03-8ed7-e8f240dcfe6f
 # ╟─9cea378c-c24b-11f0-aae7-1579b1b9972b
 # ╟─f5aafd27-3439-4a0c-ae6c-9381d64364cb
-# ╠═49b7cc51-cb72-417c-8d4a-ffc6ad3da3b5
+# ╟─49b7cc51-cb72-417c-8d4a-ffc6ad3da3b5
 # ╟─162f656b-e824-4ef6-b00b-06883c14db8d
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002

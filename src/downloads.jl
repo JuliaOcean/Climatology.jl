@@ -172,6 +172,10 @@ function __init__standard_diags()
         post_fetch_method=unpackDV))        
     register(DataDep("OISST-stats1","SST climatology and time series",
         ["https://zenodo.org/records/13736355/files/OISST_stats.tar.gz"],
+        post_fetch_method=unpackDV))
+    register(DataDep("ERA5-OISST","Atmosphere and Ocean state time series",
+        ["https://zenodo.org/records/17632724/files/AirSeaHeatFlux.tar.gz"],
+        hash = "5f97f7db4ad7735c69633539d5db22c53a4f0b52863eebcb800f98fc0aacf853",
         post_fetch_method=unpackDV))        
 end
 
@@ -244,6 +248,16 @@ Download lazy artifact to scratch space.
 """   
 OISST_stats_download() = withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
     datadep"OISST-stats1"
+end
+
+
+"""
+    ERA5_OISST_download()
+
+Download lazy artifact to scratch space.
+"""   
+ERA5_OISST_download() = withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
+    datadep"ERA5-OISST"
 end
 
 end
