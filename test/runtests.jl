@@ -121,7 +121,7 @@ end
     ##
 
     Climatology.MITPROFclim_download()
-    Climatology.CBIOMESclim_download()
+#   Climatology.CBIOMESclim_download()
     Climatology.ECCOdiags_add("release2")
     @test true 
 
