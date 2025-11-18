@@ -2,6 +2,7 @@
 ## Physical Oceanography
 
 - [Sea Surface Temperature](sst_anomaly_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/OISST/sst_anomaly_notebook.jl)) : plot global mean and regional sea surface temperature (NOAA's OISST).
+- [Air Sea Fluxes](AirSeaHeatFlux.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/SurfaceFluxes/AirSeaHeatFlux.jl)) : estimate surface heat flux balance from Atmospheric and Oceanic state.
 - [Sea Level Anomalies](SatelliteAltimetry.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/SSH/SatelliteAltimetry.jl)) : gridded satellite altimetry data
 - [Sea Level Time Series](NSLCT_notebook.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/NSLCT/NSLCT_notebook.jl)) : plot global mean and regional sea level data from NASA (NASA's NSLCT and ECCO).
 - [Ocean State Estimates](ECCO_standard_plots.html) (➭ [code link](https://raw.githubusercontent.com/JuliaOcean/Climatology.jl/master/examples/ECCO/ECCO_standard_plots.jl)) : explore ocean transports, climate indices, siub-surface temperature, and many more variables from full ocean state estimates (ECCO, OCCA).

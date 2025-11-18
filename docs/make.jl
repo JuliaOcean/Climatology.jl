@@ -29,6 +29,7 @@ earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
        "Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg")
 
 lst=("SSH/SatelliteAltimetry.jl",
+     "SurfaceFluxes/AirSeaHeatFlux.jl",
      "OISST/sst_anomaly_notebook.jl","CBIOMES/CBIOMES_climatology_plot.jl",
      "ECCO/ECCO_standard_plots.jl","NSLCT/NSLCT_notebook.jl",
      "OptimalTransport/OptimalTransport_demo.jl","HadIOD/HadIOD_viz.jl")
