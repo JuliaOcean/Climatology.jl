@@ -44,7 +44,7 @@ using Dataverse, DataDeps, Glob
 
 ```
 using MeshArrays, Climatology, MITgcm
-γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+γ=GridSpec(ID=:LLC90)
 Climatology.get_ecco_variable_if_needed("oceQnet")
 tmp=read_nctiles(joinpath(ScratchSpaces.ECCO,"oceQnet/oceQnet"),"oceQnet",γ,I=(:,:,1))
 ```

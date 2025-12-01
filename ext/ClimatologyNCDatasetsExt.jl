@@ -4,7 +4,7 @@ module ClimatologyNCDatasetsExt
     import Climatology: write_SST_climatology, SST_demo_path, to_monthly_file
     import Climatology: write_SLA_PODAAC, write_SLA_CMEMS
     import MeshArrays, Printf 
-    import MeshArrays: GridSpec, Tiles, GridLoadVar, GRID_LLC90    
+    import MeshArrays: GridSpec, Tiles, GridLoadVar    
     import NCDatasets: Dataset, defDim, defVar
 
     read_Dataset(args...;kwargs...)=Dataset.(args...;kwargs...)
@@ -67,7 +67,7 @@ module ClimatologyNCDatasetsExt
 
         ## MeshArrays data
 
-        γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+        γ=GridSpec(ID=:LLC90)
         τ=Tiles(γ,30,30)
 
         list_dims=("x","y","tile")

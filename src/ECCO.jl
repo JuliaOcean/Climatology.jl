@@ -966,8 +966,7 @@ end
 
 function parameters()
 
-	pth=MeshArrays.GRID_LLC90
-	γ=GridSpec("LatLonCap",pth)
+	γ=GridSpec(ID=:LLC90)
 	Γ=GridLoad(γ;option="full")
 	#LC=LatitudeCircles(-89.0:89.0,Γ)
 
