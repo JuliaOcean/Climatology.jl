@@ -101,7 +101,7 @@ end
 
     ## 2. ECCO
 
-    γ=MeshArrays.GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+    γ=MeshArrays.GridSpec(ID=:LLC90)
     Climatology.get_ecco_files(γ,"oceQnet")
     tmp=read_nctiles(joinpath(ScratchSpaces.ECCO,"oceQnet/oceQnet"),"oceQnet",γ,I=(:,:,1))
     
@@ -137,7 +137,6 @@ end
         get_ecco_variable_if_needed("MXLDEPTH") 
     end
 
-    MeshArrays.GRID_LLC90_download()
     pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
     list0=ECCO_helpers.standard_list_toml("")
     P0=ECCO_helpers.parameters(pth,"r2",list0[4])
