@@ -14,7 +14,7 @@ get_ecco_variable_if_needed("ETAN")
 
 using MeshArrays, MITgcm, NetCDF
 path=joinpath(ScratchSpaces.ECCO,"ETAN/ETAN")
-γ=GridSpec("LatLonCap",MeshArrays.GRID_LLC90)
+γ=GridSpec(ID=:LLC90)
 tmp=read_nctiles(path,"ETAN",γ,I=(:,:,1))
 ```
 
