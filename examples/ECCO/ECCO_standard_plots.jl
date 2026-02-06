@@ -119,6 +119,8 @@ function plot_time_series(tt,zz,zz_predict,zz_season,zz_season_trend)
 	lines!(tt[ttt],a(zz_season_trend[ttt]),color=:green); 
 	lines!(tt[ttt],zz_season[ttt],color=:blue); 
 	lines!(tt[ttt],zz_season[ttt]+a(zz_season_trend[ttt]),color=:black); 
+	ax=Axis(fig[3,1])
+	lines!(tt[ttt],a(zz_season_trend[ttt]),color=:green); 
 	current_figure()
 end
 
