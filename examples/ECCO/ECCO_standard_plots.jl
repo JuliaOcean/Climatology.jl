@@ -79,54 +79,6 @@ end
 # ╔═╡ 31e97c10-69a6-4074-8b51-89d845620548
 md"""## Zonal Mean vs Time (anomalies)"""
 
-# ╔═╡ 7216f0a0-ba05-43ef-8d60-2d745849746c
-md"""### Begin Experimentation"""
-
-# ╔═╡ af54d900-a8ca-4208-bed1-8310cbaa5a73
-function time_processing_v1(tt,zz)
-	t=collect(tt)	
-	data = DataFrame(property=zz, time=t);
-	mdl = lm(@formula(property ~ time + time^2), data)	
-#	mdl = lm(@formula(property ~ time + time^2), data; method=:qr)
-	zz_predict=predict(mdl,DataFrame("time"=>t))
-end
-
-# ╔═╡ c9b1600c-e4ab-41ab-a986-0aa917217902
-function time_processing_v2(tt,zz)
-	nt=length(tt)
-	z=zz[:]
-	for m in 1:12
-		zmean=vec(mean(z[m:12:240,:],dims=1))
-#		[z[t,:]=z[t,:]-zmean for t in m:12:nt]
-		[z[t,:]=zmean for t in m:12:nt]
-	end
-	z
-end
-
-# ╔═╡ 6238a9c2-d82d-4d26-ae84-d177c9fe52eb
-a(x)=x.-mean(x)
-
-# ╔═╡ 08f156cd-55d8-43c6-958e-f859085af11c
-function plot_time_series(tt,zz,zz_predict,zz_season,zz_season_trend)
-	fig=Figure(size=(600,300)); 
-	ax=Axis(fig[1,1])
-	lines!(tt,a(zz_predict),linewidth=4); 
-	lines!(tt,a(zz),color=:red); 
-	lines!(tt,zz-zz_predict,color=:black); 
-	lines!(tt,zz-zz_predict-zz_season,color=:blue); 
-	ax=Axis(fig[2,1])
-	ttt=1:36
-	lines!(tt[ttt],a(zz_season_trend[ttt]),color=:green); 
-	lines!(tt[ttt],zz_season[ttt],color=:blue); 
-	lines!(tt[ttt],zz_season[ttt]+a(zz_season_trend[ttt]),color=:black); 
-	ax=Axis(fig[3,1])
-	lines!(tt[ttt],a(zz_season_trend[ttt]),color=:green); 
-	current_figure()
-end
-
-# ╔═╡ e4f5d8cf-8a0d-43e7-b93d-6f202b810cda
-md"""### End Experimentation"""
-
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
 	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"],default="THETA")
@@ -149,6 +101,91 @@ md"""Select a quantity and plot it's anomaly as a function of time and latitude.
 	Choosing a `level` only has an effect if the selected variable, $(namzmanom2d), is three-dimensional.
 """
 end
+
+# ╔═╡ 7216f0a0-ba05-43ef-8d60-2d745849746c
+md"""### Begin Experimentation"""
+
+# ╔═╡ 63ae66d6-192b-4298-939a-544faac03ce5
+begin
+	select_ord = @bind ord Select(0:3)
+	select_lat = @bind i_lat Select(5:10:85, default=25)
+	md"""- variable or depth level (see previous section)
+	- order of the fitted Fourier series (0 for just trend) $(select_ord)
+	- latitude index (between 1 and 90) $(select_lat)
+	"""
+end
+
+# ╔═╡ af54d900-a8ca-4208-bed1-8310cbaa5a73
+function time_processing_v00(tt,zz)
+	t=collect(tt)	
+	data = DataFrame(property=zz, time=t);
+	mdl = lm(@formula(property ~ time + time^2), data)	
+#	mdl = lm(@formula(property ~ time + time^2), data; method=:qr)
+	zz_predict=predict(mdl,DataFrame("time"=>t))
+end
+
+# ╔═╡ f8ffaf67-4f22-49f6-a7c7-f94c278ea73d
+function time_processing_v01(tt,zz; order=0)
+	t=collect(tt)
+	nt=length(t)
+	tt0=(collect(1:nt).-0.5)./12
+	c1=cos.(2pi.*tt0)
+	c2=cos.(2*2pi.*tt0)
+	c3=cos.(3*2pi.*tt0)
+	s1=sin.(2pi.*tt0)
+	s2=sin.(2*2pi.*tt0)
+	s3=sin.(3*2pi.*tt0)
+	data = DataFrame(property=zz,time=t,
+		 c1=c1,c2=c2,c3=c3,s1=s1,s2=s2,s3=s3);
+	if order==0
+		mdl = lm(@formula(property ~ time), data)	
+	elseif order==1
+		mdl = lm(@formula(property ~ time + c1 + s1), data)	
+	elseif order==2
+		mdl = lm(@formula(property ~ time + c1 + s1 + c2 + s2), data)	
+	elseif order==3
+		mdl = lm(@formula(property ~ time + c1 + s1 + c2 + s2 + c3 + s3), data)	
+	end
+	zz_predict=predict(mdl,DataFrame(time=t,c1=c1,s1=s1,c2=c2,s2=s2,c3=c3,s3=s3))
+end
+
+# ╔═╡ c9b1600c-e4ab-41ab-a986-0aa917217902
+function time_processing_v2(tt,zz)
+	nt=length(tt)
+	z=zz[:]
+	for m in 1:12
+		zmean=vec(mean(z[m:12:240,:],dims=1))
+#		[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+		[z[t,:]=zmean for t in m:12:nt]
+	end
+	z
+end
+
+# ╔═╡ 6238a9c2-d82d-4d26-ae84-d177c9fe52eb
+a(x)=x.-mean(x)
+
+# ╔═╡ 08f156cd-55d8-43c6-958e-f859085af11c
+function plot_time_series(tt,zz,zz_predict,zz_season,zz_predict_season)
+	fig=Figure(size=(600,900)); 
+	ax=Axis(fig[1,1],title="v=$(namzmanom2d), j=$(i_lat), k=$(k_zm2d)")
+	lines!(tt,a(zz_predict),linewidth=4,color=:gray60,label="predicted"); 
+	lines!(tt,a(zz),color=:red,label="data"); 
+	lines!(tt,zz-zz_predict,color=:black,label="data-pred."); 
+	lines!(tt,zz-zz_predict-zz_season,color=:blue,label="data-pred.-seas."); 
+	axislegend(orientation=:horizontal)
+	ax=Axis(fig[2,1])
+	ttt=1:36
+	lines!(tt[ttt],zz_season[ttt],color=:blue,label="seasonal"); 
+	lines!(tt[ttt],a(zz_predict_season[ttt]),color=:green,label="seasonal(predict)"); 
+	axislegend()
+	ax=Axis(fig[3,1])
+	lines!(tt[ttt],a(zz_predict_season[ttt]),color=:green,label="seasonal(predict)"); 
+	axislegend()
+	current_figure()
+end
+
+# ╔═╡ e4f5d8cf-8a0d-43e7-b93d-6f202b810cda
+md"""### End Experimentation"""
 
 # ╔═╡ 7dbbb44c-22db-4c30-b71c-58fbab3f78b6
 md"""## Depth vs Time (Anomalies)"""
@@ -307,30 +344,38 @@ end
 
 # ╔═╡ 26452f6f-6593-461d-a8fb-3ca27e716b0f
 function get_zm_data()
-	if false
-		x=ECCOdiag(path=pth_out,name=namzmanom2d*"_clim",options=(plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm2d,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1]))
-		nam=split(x.name,"_")[1]
-		o=x.options
-		ECCO_procs.TimeLatAnom(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.l0,o.l1,o.P)
-	else
+	if true #normal case
 		x=ECCOdiag(path=pth_out,name=namzmanom2d*"_clim",options=(plot_type=:ECCO_TimeLat,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm2d,P=P,years_to_display=[year0 year1+1]))
 		nam=split(x.name,"_")[1]
 		o=x.options
 		ECCO_procs.TimeLat(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.P)
+	else #start from anomalies to seasonal cycle
+		x=ECCOdiag(path=pth_out,name=namzmanom2d*"_clim",options=(plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm2d,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1]))
+		nam=split(x.name,"_")[1]
+		o=x.options
+		ECCO_procs.TimeLatAnom(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.l0,o.l1,o.P)
 	end
 end
 
+# ╔═╡ c7183750-1a84-4c47-98c8-6e749c9f55ba
+zm_data=get_zm_data()
+
 # ╔═╡ 0eccc84d-552c-4aa1-a9fb-8285f3982692
 let
-	ll=80
-	y=get_zm_data()
-	tt=y.x
-	zz=y.z[:,ll]
-	zz_predict=time_processing_v1(tt,zz)
-	zz_season_trend=time_processing_v2(tt,zz_predict)
+	tt=zm_data.x
+	zz=zm_data.z[:,i_lat]
+	zz_predict=time_processing_v01(tt,zz;order=ord)
 	zz_season=time_processing_v2(tt,zz-zz_predict)
+	zz_predict_season=time_processing_v2(tt,zz_predict)
+	fig_exp=plot_time_series(tt,zz,zz_predict,zz_season,zz_predict_season)
 
-	plot_time_series(tt,zz,zz_predict,zz_season,zz_season_trend)
+	if true
+		fig_exp
+	else
+		fil=tempname()*".png"
+		save(fil,fig_exp)
+		fil
+	end
 end
 
 # ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
@@ -2533,17 +2578,20 @@ version = "4.1.0+0"
 # ╟─0477e49b-d8b2-4308-b692-cadcdfe28892
 # ╟─31e97c10-69a6-4074-8b51-89d845620548
 # ╟─2d819d3e-f62e-4a73-b51c-0e1204da2369
+# ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
 # ╟─7216f0a0-ba05-43ef-8d60-2d745849746c
-# ╠═0eccc84d-552c-4aa1-a9fb-8285f3982692
+# ╟─63ae66d6-192b-4298-939a-544faac03ce5
+# ╟─0eccc84d-552c-4aa1-a9fb-8285f3982692
+# ╟─c7183750-1a84-4c47-98c8-6e749c9f55ba
 # ╟─26452f6f-6593-461d-a8fb-3ca27e716b0f
 # ╟─af54d900-a8ca-4208-bed1-8310cbaa5a73
+# ╟─f8ffaf67-4f22-49f6-a7c7-f94c278ea73d
 # ╟─c9b1600c-e4ab-41ab-a986-0aa917217902
+# ╟─08f156cd-55d8-43c6-958e-f859085af11c
 # ╠═6238a9c2-d82d-4d26-ae84-d177c9fe52eb
-# ╠═08f156cd-55d8-43c6-958e-f859085af11c
 # ╠═dc537071-9991-4e8b-b944-00c1821c5985
 # ╟─e4f5d8cf-8a0d-43e7-b93d-6f202b810cda
 # ╟─c1c4e3c1-d581-4103-8f46-e555c64df86a
-# ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
 # ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
 # ╟─7dbbb44c-22db-4c30-b71c-58fbab3f78b6
 # ╟─3f73757b-bab9-4d72-9fff-8884e96e76cd
