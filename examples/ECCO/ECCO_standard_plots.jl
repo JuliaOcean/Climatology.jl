@@ -16,6 +16,9 @@ macro bind(def, element)
     #! format: on
 end
 
+# ╔═╡ dc537071-9991-4e8b-b944-00c1821c5985
+using GLM, DataFrames, Statistics
+
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin	
 	using ClimateModels, Climatology, PlutoUI, CairoMakie
@@ -75,6 +78,52 @@ end
 
 # ╔═╡ 31e97c10-69a6-4074-8b51-89d845620548
 md"""## Zonal Mean vs Time (anomalies)"""
+
+# ╔═╡ 7216f0a0-ba05-43ef-8d60-2d745849746c
+md"""### Begin Experimentation"""
+
+# ╔═╡ af54d900-a8ca-4208-bed1-8310cbaa5a73
+function time_processing_v1(tt,zz)
+	t=collect(tt)	
+	data = DataFrame(property=zz, time=t);
+	mdl = lm(@formula(property ~ time + time^2), data)	
+#	mdl = lm(@formula(property ~ time + time^2), data; method=:qr)
+	zz_predict=predict(mdl,DataFrame("time"=>t))
+end
+
+# ╔═╡ c9b1600c-e4ab-41ab-a986-0aa917217902
+function time_processing_v2(tt,zz)
+	nt=length(tt)
+	z=zz[:]
+	for m in 1:12
+		zmean=vec(mean(z[m:12:240,:],dims=1))
+#		[z[t,:]=z[t,:]-zmean for t in m:12:nt]
+		[z[t,:]=zmean for t in m:12:nt]
+	end
+	z
+end
+
+# ╔═╡ 6238a9c2-d82d-4d26-ae84-d177c9fe52eb
+a(x)=x.-mean(x)
+
+# ╔═╡ 08f156cd-55d8-43c6-958e-f859085af11c
+function plot_time_series(tt,zz,zz_predict,zz_season,zz_season_trend)
+	fig=Figure(size=(600,300)); 
+	ax=Axis(fig[1,1])
+	lines!(tt,a(zz_predict),linewidth=4); 
+	lines!(tt,a(zz),color=:red); 
+	lines!(tt,zz-zz_predict,color=:black); 
+	lines!(tt,zz-zz_predict-zz_season,color=:blue); 
+	ax=Axis(fig[2,1])
+	ttt=1:36
+	lines!(tt[ttt],a(zz_season_trend[ttt]),color=:green); 
+	lines!(tt[ttt],zz_season[ttt],color=:blue); 
+	lines!(tt[ttt],zz_season[ttt]+a(zz_season_trend[ttt]),color=:black); 
+	current_figure()
+end
+
+# ╔═╡ e4f5d8cf-8a0d-43e7-b93d-6f202b810cda
+md"""### End Experimentation"""
 
 # ╔═╡ 5b21c86e-1d75-4510-b474-97ac33fcb271
 begin
@@ -252,6 +301,34 @@ Here we read and display results from previous computation that derived transpor
 	
 Folder name : $(pth_out)
 	"""
+end
+
+# ╔═╡ 26452f6f-6593-461d-a8fb-3ca27e716b0f
+function get_zm_data()
+	if false
+		x=ECCOdiag(path=pth_out,name=namzmanom2d*"_clim",options=(plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm2d,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1]))
+		nam=split(x.name,"_")[1]
+		o=x.options
+		ECCO_procs.TimeLatAnom(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.l0,o.l1,o.P)
+	else
+		x=ECCOdiag(path=pth_out,name=namzmanom2d*"_clim",options=(plot_type=:ECCO_TimeLat,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm2d,P=P,years_to_display=[year0 year1+1]))
+		nam=split(x.name,"_")[1]
+		o=x.options
+		ECCO_procs.TimeLat(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.P)
+	end
+end
+
+# ╔═╡ 0eccc84d-552c-4aa1-a9fb-8285f3982692
+let
+	ll=80
+	y=get_zm_data()
+	tt=y.x
+	zz=y.z[:,ll]
+	zz_predict=time_processing_v1(tt,zz)
+	zz_season_trend=time_processing_v2(tt,zz_predict)
+	zz_season=time_processing_v2(tt,zz-zz_predict)
+
+	plot_time_series(tt,zz,zz_predict,zz_season,zz_season_trend)
 end
 
 # ╔═╡ 8563e63d-0096-49f0-8368-e32c4457f5a3
@@ -434,7 +511,18 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ClimateModels = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+CairoMakie = "~0.15.8"
+ClimateModels = "~0.3.15"
+Climatology = "~0.5.18"
+DataFrames = "~1.8.1"
+GLM = "~1.9.2"
+PlutoUI = "~0.7.78"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -443,7 +531,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.1"
 manifest_format = "2.0"
-project_hash = "61c698a56ac13f781abfcc47bc94f37e4b0c9c34"
+project_hash = "56d40e5b4d21a6a7e9a912103070f99b089dc040"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1003,6 +1091,12 @@ version = "1.0.17+0"
 deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 version = "1.11.0"
+
+[[deps.GLM]]
+deps = ["Distributions", "LinearAlgebra", "Printf", "Reexport", "SparseArrays", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns", "StatsModels"]
+git-tree-sha1 = "c5432ee4f7817ec542fa7cda3d96745880903606"
+uuid = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
+version = "1.9.2"
 
 [[deps.GeoFormatTypes]]
 git-tree-sha1 = "7528a7956248c723d01a0a9b0447bf254bf4da52"
@@ -1979,6 +2073,11 @@ deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 version = "1.11.0"
 
+[[deps.ShiftedArrays]]
+git-tree-sha1 = "503688b59397b3307443af35cd953a13e8005c16"
+uuid = "1277b4bf-5013-50f5-be3d-901d8477a67a"
+version = "2.0.0"
+
 [[deps.Showoff]]
 deps = ["Dates", "Grisu"]
 git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
@@ -2093,6 +2192,12 @@ weakdeps = ["ChainRulesCore", "InverseFunctions"]
     [deps.StatsFuns.extensions]
     StatsFunsChainRulesCoreExt = "ChainRulesCore"
     StatsFunsInverseFunctionsExt = "InverseFunctions"
+
+[[deps.StatsModels]]
+deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "ShiftedArrays", "SparseArrays", "StatsAPI", "StatsBase", "StatsFuns", "Tables"]
+git-tree-sha1 = "b12d37d25a2378f01abba02591cfd39a6cc4936f"
+uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
+version = "0.7.8"
 
 [[deps.StringManipulation]]
 deps = ["PrecompileTools"]
@@ -2426,6 +2531,15 @@ version = "4.1.0+0"
 # ╟─0477e49b-d8b2-4308-b692-cadcdfe28892
 # ╟─31e97c10-69a6-4074-8b51-89d845620548
 # ╟─2d819d3e-f62e-4a73-b51c-0e1204da2369
+# ╟─7216f0a0-ba05-43ef-8d60-2d745849746c
+# ╠═0eccc84d-552c-4aa1-a9fb-8285f3982692
+# ╟─26452f6f-6593-461d-a8fb-3ca27e716b0f
+# ╟─af54d900-a8ca-4208-bed1-8310cbaa5a73
+# ╟─c9b1600c-e4ab-41ab-a986-0aa917217902
+# ╠═6238a9c2-d82d-4d26-ae84-d177c9fe52eb
+# ╠═08f156cd-55d8-43c6-958e-f859085af11c
+# ╠═dc537071-9991-4e8b-b944-00c1821c5985
+# ╟─e4f5d8cf-8a0d-43e7-b93d-6f202b810cda
 # ╟─c1c4e3c1-d581-4103-8f46-e555c64df86a
 # ╟─5b21c86e-1d75-4510-b474-97ac33fcb271
 # ╟─22faa18e-cdf9-411f-8ddb-5b779e44db01
