@@ -72,6 +72,8 @@ export ScratchSpaces, read_Dataset, plot_examples
 
 export SLA_PODAAC, SLA_CMEMS, SLA_MAIN
 
+export fit_time_series, simple_monthly_climatology
+
 ## initialize data deps
 
 __init__() = begin

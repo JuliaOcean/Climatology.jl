@@ -1,5 +1,5 @@
 
-using GLM
+using GLM, Dates
 import Statistics: mean
 import DataFrames: DataFrame
 
@@ -17,19 +17,26 @@ function basis_functions(tt::Vector,zz::Vector)
 end
 
 """
-    fit_monthly_time_series(tt::Vector,zz::Vector; order=0)
+    fit_time_series(tt::Vector, zz::Vector; order=0)
 
-
-Fit a linear trend + seasonal harmonics to specified order (up to 3).
+General time series fitting that handles both numeric and DateTime vectors.
+Dispatches to appropriate method based on input type.
 
 ```
-zz_fit=Climatology.fit_monthly_time_series(tt,zz; order=0)
+dates = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)));
+nt=length(dates); data = randn(nt) .+ sin.(2π .* (1:nt) ./ 12)
+zz_fit = fit_time_series(dates, data; order=1)
 ```    
 """
-function fit_monthly_time_series(tt::Vector,zz::Vector; order=0)
-    t,c,s=basis_functions(tt,zz)
-	data = DataFrame(property=zz,time=t,
-		 c1=c[1],c2=c[2],c3=c[3],s1=s[1],s2=s[2],s3=s[3]);
+function fit_time_series(tt::Vector{DateTime}, zz::Vector; order=0)
+	t_years = datetime_to_years(tt)
+	fit_time_series(t_years, zz; order=order)
+end
+
+function fit_time_series(tt::Vector, zz::Vector; order=0)
+    t, c, s = basis_functions(tt, zz)
+	data = DataFrame(property=zz, time=t,
+		 c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3])
 	if order==0
 		mdl = lm(@formula(property ~ time), data)	
 	elseif order==1
@@ -41,22 +48,28 @@ function fit_monthly_time_series(tt::Vector,zz::Vector; order=0)
     else
         error("order must be between 0 and 3")
 	end
-    predict(mdl,DataFrame(time=t,c1=c[1],c2=c[2],c3=c[3],s1=s[1],s2=s[2],s3=s[3]))
+    predict(mdl, DataFrame(time=t, c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3]))
 end
 
-
 """
-    simple_monthly_climatology(tt::Vector,zz::Vector)
+    simple_monthly_climatology(tt::Vector, zz::Vector)
 
+Estimate seasonal component by averaging all Januaries, all Februaries, etc separately.
+Accepts either numeric vectors or DateTime vectors.
 
-Estimate seasonal simply by averaging all Januaries, all Februaries, etc separately.
-
-Note : this works best in the absence of net trends.
+Note: this works best in the absence of net trends.
 
 ```
-zz_mc=Climatology.simple_monthly_climatology(tt,zz)
+dates = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)));
+nt=length(dates); data = randn(nt) .+ sin.(2π .* (1:nt) ./ 12)
+zz_mc = simple_monthly_climatology(dates, data)
 ```    
 """
+function simple_monthly_climatology(tt::Vector{DateTime}, zz::Vector)
+	t_years = datetime_to_years(tt)
+	simple_monthly_climatology(t_years, zz)
+end
+
 function simple_monthly_climatology(tt::Vector,zz::Vector)
 	nt=length(tt)
     ny=Int(floor(nt/12))
@@ -66,4 +79,41 @@ function simple_monthly_climatology(tt::Vector,zz::Vector)
 		[z[t,:]=zmean for t in m:12:nt]
 	end
 	z
+end
+
+"""
+    datetime_to_years(tt::Vector{DateTime})
+
+Convert DateTime vector to time in years, measured from January 1st of the first year in tt.
+Returns time values offset so that year values are preserved (first year y0 is added back).
+
+```
+t_DT = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)))
+t_years = datetime_to_years(t_DT)
+# First value ≈ 2020.0, last value ≈ 2024.92
+```
+"""
+function datetime_to_years(tt::Vector{DateTime})
+	y0 = year(tt[1])
+	t0 = DateTime(y0, 1, 1)  # January 1st of first year
+	t_years = [(Dates.value(t - t0) / (1000 * 86400 * 365.25)) for t in tt]
+	y0 .+ t_years
+end
+
+"""
+    years_to_datetime(t_years::Vector)
+
+Convert years (as returned by datetime_to_years) back to DateTime objects.
+Infers the reference year from the first value.
+
+```
+dates = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)));
+t_years = Climatology.datetime_to_years(dates);
+dates_reconstructed = Climatology.years_to_datetime(t_years)
+```    
+"""
+function years_to_datetime(t_years::Vector)
+	y0 = Int(floor(t_years[1]))
+	t0 = DateTime(y0, 1, 1)
+	[t0 + Day(round(Int, (t - y0) * 365.25)) for t in t_years]
 end
