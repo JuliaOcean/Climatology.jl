@@ -117,3 +117,29 @@ function years_to_datetime(t_years::Vector)
 	t0 = DateTime(y0, 1, 1)
 	[t0 + Day(round(Int, (t - y0) * 365.25)) for t in t_years]
 end
+
+# Handle Date for fit_time_series
+function fit_time_series(tt::Vector{Date}, zz::Vector; order=0)
+    fit_time_series(DateTime.(tt), zz; order=order)
+end
+
+# Handle Date for simple_monthly_climatology
+function simple_monthly_climatology(tt::Vector{Date}, zz::Vector)
+    simple_monthly_climatology(DateTime.(tt), zz)
+end
+
+# Handle AbstractRange for fit_time_series
+function fit_time_series(tt::AbstractRange, zz::Vector; order=0)
+	fit_time_series(collect(tt), zz; order=order)
+end
+
+# Handle AbstractRange for simple_monthly_climatology
+function simple_monthly_climatology(tt::AbstractRange, zz::Vector)
+	simple_monthly_climatology(collect(tt), zz)
+end
+
+# Handle AbstractRange for years_to_datetime
+function years_to_datetime(t_years::AbstractRange)
+	years_to_datetime(collect(t_years))
+end
+
