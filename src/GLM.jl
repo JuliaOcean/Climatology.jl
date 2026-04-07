@@ -91,7 +91,7 @@ Note: this works best in the absence of net trends.
 ```
 dates = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)));
 nt=length(dates); data = randn(nt) .+ sin.(2π .* (1:nt) ./ 12)
-zz_mc = simple_monthly_climatology(dates, data)
+data_smc = simple_monthly_climatology(dates, data)
 ```    
 """
 function simple_monthly_climatology(tt::Vector{DateTime}, zz::Vector)
