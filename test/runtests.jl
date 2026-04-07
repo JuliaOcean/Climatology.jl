@@ -1,5 +1,6 @@
 using Test, Climatology, Statistics, MITgcm, CairoMakie, Suppressor
 import NCDatasets, NetCDF, MeshArrays
+import Climatology.Dates: DateTime, Month 
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
@@ -11,6 +12,18 @@ p=dirname(pathof(Climatology))
     H=ones(length(M.names),length(M.depths),3)
     V=MeshArrays.Integration.volumes(M,G)
     Climatology.write_H_to_T(tempname()*".nc",M,G,H,V)
+end
+
+@testset "Time Series Analysis" begin
+    dates = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)));
+    t_years = Climatology.datetime_to_years(dates);
+    dates_reconstructed = Climatology.years_to_datetime(t_years)
+
+    nt=length(dates); data = randn(nt) .+ sin.(2π .* (1:nt) ./ 12)
+    data_smc = simple_monthly_climatology(dates, data)
+    data_fit = fit_time_series(dates, data, order=1)
+
+    @test isa(data_fit,Vector)
 end
 
 @testset "Climatology.jl" begin
