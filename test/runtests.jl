@@ -1,6 +1,6 @@
 using Test, Climatology, Statistics, MITgcm, CairoMakie, Suppressor
 import NCDatasets, NetCDF, MeshArrays
-import Climatology.Dates: DateTime, Month 
+import Climatology.Dates: DateTime, Month
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
@@ -21,7 +21,7 @@ end
 
     nt=length(dates); data = randn(nt) .+ sin.(2π .* (1:nt) ./ 12)
     data_smc = simple_monthly_climatology(dates, data)
-    data_fit = fit_time_series(dates, data, order=1)
+    data_fit = fit_time_series(dates, data, order_season=3)
 
     @test isa(data_fit,Vector)
 end
