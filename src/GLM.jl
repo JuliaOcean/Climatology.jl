@@ -1,11 +1,13 @@
 
-using GLM, Dates
+using GLM, Dates, StatsModels
 import Statistics: mean
 import DataFrames: DataFrame
 
 function basis_functions(tt::Vector,zz::Vector)
-	t=collect(tt)
-	nt=length(t)
+	t1=collect(tt)
+    t2=t1.^2
+    t3=t1.^2
+	nt=length(t1)
 	tt0=(collect(1:nt).-0.5)./12
 	c1=cos.(2pi.*tt0)
 	c2=cos.(2*2pi.*tt0)
@@ -13,11 +15,44 @@ function basis_functions(tt::Vector,zz::Vector)
 	s1=sin.(2pi.*tt0)
 	s2=sin.(2*2pi.*tt0)
 	s3=sin.(3*2pi.*tt0)
-    t,(c1,c2,c3),(s1,s2,s3)
+    (t1,t2,t3),(c1,c2,c3),(s1,s2,s3)
 end
 
 """
-    fit_time_series(tt::Vector, zz::Vector; order=0)
+    build_formula(order_poly::Int, order_season::Int)
+
+Build a GLM formula with polynomial trend and seasonal harmonics.
+
+Arguments:
+- order_poly: polynomial degree for time trend (0 to 3)
+- order_season: seasonal harmonic order (0 to 3)
+"""
+function build_formula(order_poly::Int, order_season::Int)
+    if order_poly < 0 || order_poly > 3
+        error("order_poly must be between 0 and 3")
+    end
+    if order_season < 0 || order_season > 3
+        error("order_season must be between 0 and 3")
+    end
+    
+    # Start with linear time on RHS
+    rhs = Term(:time)
+    
+    # Add higher order polynomial terms
+    (order_poly>1) ? (rhs = rhs + Term(:time2)) : nothing
+    (order_poly>2) ? (rhs = rhs + Term(:time3)) : nothing
+    
+    # Add seasonal harmonics
+    for i in 1:order_season
+        rhs = rhs + Term(Symbol("c$i")) + Term(Symbol("s$i"))
+    end
+    
+    # Create the full formula with LHS ~ RHS
+    return Term(:property) ~ rhs
+end
+
+"""
+    fit_time_series(tt::Vector, zz::Vector; order_poly::Int=1, order_season::Int=1)
 
 General time series fitting that handles both numeric and DateTime vectors.
 Dispatches to appropriate method based on input type.
@@ -25,30 +60,24 @@ Dispatches to appropriate method based on input type.
 ```
 dates = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)));
 nt=length(dates); data = randn(nt) .+ sin.(2π .* (1:nt) ./ 12)
-zz_fit = fit_time_series(dates, data; order=1)
+data_fit = fit_time_series(dates, data; order_season=3)
 ```    
 """
-function fit_time_series(tt::Vector{DateTime}, zz::Vector; order=0)
+function fit_time_series(tt::Vector{DateTime}, zz::Vector; order_poly::Int=1, order_season::Int=1)
 	t_years = datetime_to_years(tt)
-	fit_time_series(t_years, zz; order=order)
+	fit_time_series(t_years, zz; order_poly, order_season)
 end
 
-function fit_time_series(tt::Vector, zz::Vector; order=0)
+function fit_time_series(tt::Vector, zz::Vector; order_poly::Int=1, order_season::Int=1)
     t, c, s = basis_functions(tt, zz)
-	data = DataFrame(property=zz, time=t,
+	data = DataFrame(property=zz, time=t[1], time2=t[2], time3=t[3],
 		 c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3])
-	if order==0
-		mdl = lm(@formula(property ~ time), data)	
-	elseif order==1
-		mdl = lm(@formula(property ~ time + c1 + s1), data)	
-	elseif order==2
-		mdl = lm(@formula(property ~ time + c1 + s1 + c2 + s2), data)	
-	elseif order==3
-		mdl = lm(@formula(property ~ time + c1 + s1 + c2 + s2 + c3 + s3), data)	
-    else
-        error("order must be between 0 and 3")
-	end
-    predict(mdl, DataFrame(time=t, c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3]))
+         
+    formula=build_formula(order_poly, order_season)
+    mdl = lm(formula, data)	
+
+    predict(mdl, DataFrame(time=t[1], time2=t[2], time3=t[3], 
+        c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3]))
 end
 
 """
