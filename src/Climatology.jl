@@ -37,6 +37,7 @@ include("downloads.jl")
 include("OISST.jl")
 include("SSH.jl")
 include("ECCO.jl")
+include("GLM.jl")
 
 import Climatology.downloads: get_ecco_files, get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 import Climatology.downloads: get_occa_variable_if_needed, get_occa_velocity_if_needed
