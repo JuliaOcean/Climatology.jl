@@ -25,8 +25,7 @@ wspeed(u10,v10)=sqrt(u10^2+v10^2)
 
 ##
 
-function read_lonlat()
-	path_to_data="/Volumes/My Passport/data/ERA5"
+function read_lonlat(; path_to_data="ERA5_data")
 	fil=joinpath(path_to_data,"2023/ERA5_2023_01.nc")
 	lon=read_Dataset(fil)["longitude"][:]
 	lat=read_Dataset(fil)["latitude"][:]
@@ -89,8 +88,7 @@ da=SurfaceFluxDiag((default=true,),df)
 plot(da)
 ```
 """
-function read_one_year(year,ii,jj)
-  path_to_data="/Volumes/My Passport/data/ERA5"
+function read_one_year(year,ii,jj; path_to_data="ERA5_data")
   df=DataFrame()
   for m in 1:12
     mm=(m>9 ? "" : "0")*string(m)
