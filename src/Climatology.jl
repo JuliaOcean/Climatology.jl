@@ -38,6 +38,7 @@ include("OISST.jl")
 include("SSH.jl")
 include("ECCO.jl")
 include("GLM.jl")
+include("SurfaceFluxes.jl")
 
 import Climatology.downloads: get_ecco_files, get_ecco_variable_if_needed, get_ecco_velocity_if_needed
 import Climatology.downloads: get_occa_variable_if_needed, get_occa_velocity_if_needed
@@ -73,6 +74,8 @@ export ScratchSpaces, read_Dataset, plot_examples
 export SLA_PODAAC, SLA_CMEMS, SLA_MAIN
 
 export fit_time_series, simple_monthly_climatology
+
+export SurfaceFluxDiag, ERA5
 
 ## initialize data deps
 

@@ -42,6 +42,15 @@ end
 
 ##
 
+import DataFrames: DataFrame
+
+Base.@kwdef struct SurfaceFluxDiag <: AbstractClimateDiagnostic
+    options :: NamedTuple = NamedTuple()
+    data :: Union{DataFrame,NamedTuple} = DataFrame()
+end
+
+##
+
 Base.@kwdef struct SeaLevelAnomaly <: AbstractClimateDiagnostic
     path :: String = tempdir()
     name :: String = "unknown"
