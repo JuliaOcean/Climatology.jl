@@ -4,6 +4,7 @@ version = "0.5.19"
 authors = ["gaelforget <gforget@mit.edu>"]
 
 [deps]
+AirSeaFluxes = "3dfee02d-11ce-464a-9ee1-cf3f5c5ccad7"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataDeps = "124859b0-ceae-595e-8997-d05f6a7a8dfe"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -13,6 +14,7 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
+Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 MeshArrays = "cb8c808f-1acf-59a3-9d2b-6e38d009f683"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
@@ -37,6 +39,7 @@ ClimatologyMakieExt = ["Makie"]
 ClimatologyNCDatasetsExt = ["NCDatasets"]
 
 [compat]
+AirSeaFluxes = "0.1"
 CSV = "0.10"
 DataDeps = "0.7"
 DataFrames = "1"
@@ -44,6 +47,7 @@ DataStructures = "0.18, 0.19"
 Dataverse = "0.2"
 GLM = "1"
 Glob = "1"
+Interpolations = "0.16"
 JLD2 = "0.4, 0.5, 0.6"
 MITgcm = "0.3, 0.4, 0.5"
 Makie = "0.20, 0.21, 0.22, 0.23, 0.24"
