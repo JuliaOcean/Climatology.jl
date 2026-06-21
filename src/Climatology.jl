@@ -75,7 +75,7 @@ export SLA_PODAAC, SLA_CMEMS, SLA_MAIN
 
 export fit_time_series, simple_monthly_climatology
 
-export SurfaceFluxDiag
+export SurfaceFluxDiag, ERA5
 
 ## initialize data deps
 

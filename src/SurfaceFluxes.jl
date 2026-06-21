@@ -1,5 +1,5 @@
 
-module ERA5_read
+module ERA5
 
 using MeshArrays, DataFrames
 import CSV, Statistics
@@ -71,7 +71,7 @@ end
     read_one_year(year,ii,jj)
 
 ```
-import Climatology.ERA5_read: read_lonlat, read_one_year, ij
+import Climatology.ERA5: read_lonlat, read_one_year, ij
 
 lon,lat=read_lonlat()
 

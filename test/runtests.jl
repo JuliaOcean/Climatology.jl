@@ -241,8 +241,8 @@ end
 ##
 
 @testset "SurfaceFluxes" begin
-    data=Climatology.ERA5_read.read_sample()
-    sst=Climatology.ERA5_read.interpolate_sst(data.OISST.sst,data.tim)
-    df=Climatology.ERA5_read.surface_balance(data.ERA5,sst)
+    data=ERA5.read_sample()
+    sst=ERA5.interpolate_sst(data.OISST.sst,data.tim)
+    df=ERA5.surface_balance(data.ERA5,sst)
     @test isa(df,Climatology.DataFrame)
 end
