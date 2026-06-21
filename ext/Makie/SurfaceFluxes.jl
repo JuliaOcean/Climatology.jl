@@ -1,3 +1,32 @@
+
+"""
+API
+
+```
+da=Climatology.SurfaceFluxDiag((plot_type=:default,),df)
+da=Climatology.SurfaceFluxDiag((plot_type=:surface_balance,),(df=df,tim=tim,sst=sst))
+da=Climatology.SurfaceFluxDiag((plot_type=:Qnet_cumsum,),(df=df,tim=tim,sst=sst))
+```
+"""
+function plot(x::SurfaceFluxDiag)
+	if !isempty(x.options)
+		o=x.options
+		if string(o.plot_type)=="default"
+			ERA5_plot.plot_bulk_formulae(x.data)
+		elseif string(o.plot_type)=="surface_balance"
+			ERA5_plot.plot_surface_balance(x.data.df,x.data.tim,x.data.sst)
+		elseif string(o.plot_type)=="Qnet_cumsum"
+			ERA5_plot.plot_Qnet_cumsum(x.data.df,x.data.tim,x.data.sst)
+		else
+			error("unknown plot_type")
+		end
+	else
+		error("unknown options")
+	end
+end
+
+##
+
 module ERA5_plot
 
 using Makie
