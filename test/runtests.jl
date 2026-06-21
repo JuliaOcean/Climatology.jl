@@ -245,4 +245,12 @@ end
     sst=ERA5.interpolate_sst(data.OISST.sst,data.tim)
     df=ERA5.surface_balance(data.ERA5,sst)
     @test isa(df,Climatology.DataFrame)
+
+    da=Climatology.SurfaceFluxDiag((plot_type=:default,),df)
+    plot(da)
+    da=Climatology.SurfaceFluxDiag((plot_type=:surface_balance,),(df=df,tim=data.tim,sst=sst))
+    plot(da)
+    da=Climatology.SurfaceFluxDiag((plot_type=:Qnet_cumsum,),(df=df,tim=data.tim,sst=sst))
+    fi=plot(da)
+    @test isa(fi,Figure)
 end
