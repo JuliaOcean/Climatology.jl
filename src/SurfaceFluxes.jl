@@ -25,6 +25,14 @@ wspeed(u10,v10)=sqrt(u10^2+v10^2)
 
 ##
 
+"""
+	read_lonlat(; path_to_data="ERA5_data")
+
+```
+using NCDatasets, Climatology
+ERA5.read_lonlat()
+```
+"""
 function read_lonlat(; path_to_data="ERA5_data")
 	fil=joinpath(path_to_data,"2023/ERA5_2023_01.nc")
 	lon=read_Dataset(fil)["longitude"][:]
