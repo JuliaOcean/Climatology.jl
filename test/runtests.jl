@@ -4,6 +4,9 @@ import Climatology.Dates: DateTime, Month
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
+#use this environment variable to bypass downloads / API calls that require server access
+_SKIP_DOWNLOADS = parse(Bool,get(ENV, "SKIP_DOWNLOADS", "false"))
+
 p=dirname(pathof(Climatology))
 
 @testset "NCDatasetsExt" begin
@@ -115,7 +118,7 @@ end
     ## 2. ECCO
 
     γ=MeshArrays.GridSpec(ID=:LLC90)
-    Climatology.get_ecco_files(γ,"oceQnet")
+    _SKIP_DOWNLOADS ? nothing : Climatology.get_ecco_files(γ,"oceQnet")
     tmp=read_nctiles(joinpath(ScratchSpaces.ECCO,"oceQnet/oceQnet"),"oceQnet",γ,I=(:,:,1))
     
     tmp=[mean(tmp[j][findall((!isnan).(tmp[j]))]) for j=1:5]
@@ -123,20 +126,22 @@ end
          3.4402271721659816,30.14270126344508]
     @test tmp==ref
 
-    get_occa_velocity_if_needed()
-    get_occa_variable_if_needed("DDuvel")
+    _SKIP_DOWNLOADS ? nothing : get_occa_velocity_if_needed()
+    _SKIP_DOWNLOADS ? nothing : get_occa_variable_if_needed("DDuvel")
     @test isfile(joinpath(ScratchSpaces.OCCA,"DDuvel.0406clim.nc"))
 
-    get_ecco_velocity_if_needed()
-    get_ecco_variable_if_needed("UVELMASS")
+    _SKIP_DOWNLOADS ? nothing : get_ecco_velocity_if_needed()
+    _SKIP_DOWNLOADS ? nothing : get_ecco_variable_if_needed("UVELMASS")
     @test isdir(joinpath(ScratchSpaces.ECCO,"UVELMASS"))
 
     ##
 
+    if !_SKIP_DOWNLOADS
     Climatology.MITPROFclim_download()
 #   Climatology.CBIOMESclim_download()
     Climatology.ECCOdiags_add("release2")
     @test true 
+    end
 
     ##
 
@@ -144,10 +149,10 @@ end
         var_list3d=("THETA","SALT","UVELMASS","VVELMASS",
         "ADVx_TH","ADVy_TH","DFxE_TH","DFyE_TH")
         var_list2d=("MXLDEPTH","SIarea","sIceLoad","ETAN")
-        [get_ecco_variable_if_needed(v) for v in var_list3d]
-        [get_ecco_variable_if_needed(v) for v in var_list2d]
+        _SKIP_DOWNLOADS ? nothing : [get_ecco_variable_if_needed(v) for v in var_list3d]
+        _SKIP_DOWNLOADS ? nothing : [get_ecco_variable_if_needed(v) for v in var_list2d]
     else
-        get_ecco_variable_if_needed("MXLDEPTH") 
+        _SKIP_DOWNLOADS ? nothing : get_ecco_variable_if_needed("MXLDEPTH")
     end
 
     pth=ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
@@ -222,6 +227,7 @@ end
 
     ## 3. SSH/SLA
 
+    if !_SKIP_DOWNLOADS
     SLA=read(SeaLevelAnomaly(name="sla_podaac"))
     f3=plot(SLA)
     @test isa(f3,Figure)
@@ -236,6 +242,7 @@ end
     file=joinpath(SLA.path,SLA.name*".nc")
     sub=SLA_CMEMS.subset(; read_from_file=file,save_to_file=true)
     @test isa(sub,String)
+    end
 
 end
 ##
