@@ -327,7 +327,7 @@ function transport_lines(Γ,pth_trsp)
         name=namPairs[ii]
         Trsct=Transect(name,lons,lats,Γ,format=:NamedTuple)
         jldsave(joinpath(pth_trsp,"$(Trsct.name).jld2"),
-            tabC=Trsct.tabC,tabW=Trsct.tabW,tabS=Trsct.tabS); 
+            C=Trsct.C,W=Trsct.W,S=Trsct.S); 
     end
     return true
 end
