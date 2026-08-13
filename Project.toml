@@ -1,6 +1,6 @@
 name = "Climatology"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-version = "0.5.19"
+version = "0.5.20"
 authors = ["gaelforget <gforget@mit.edu>"]
 
 [deps]
@@ -41,7 +41,7 @@ ClimatologyNCDatasetsExt = ["NCDatasets"]
 [compat]
 AirSeaFluxes = "0.1"
 CSV = "0.10"
-DataDeps = "0.7"
+DataDeps = "0.7, 1"
 DataFrames = "1"
 DataStructures = "0.18, 0.19"
 Dataverse = "0.2"
@@ -51,7 +51,7 @@ Interpolations = "0.16"
 JLD2 = "0.4, 0.5, 0.6"
 MITgcm = "0.3, 0.4, 0.5"
 Makie = "0.20, 0.21, 0.22, 0.23, 0.24"
-MeshArrays = "0.3, 0.4, 0.5"
+MeshArrays = "0.3, 0.4, 0.5, 0.6"
 NCDatasets = "0.12, 0.13, 0.14"
 RollingFunctions = "0.8"
 STAC = "0.1"

@@ -5,6 +5,9 @@ using Dataverse
 import Climatology: SeaLevelAnomaly, read_Dataset, Dates, write_SLA_PODAAC, write_SLA_CMEMS
 import Base: read
 
+#use this environment variable to bypass downloads / API calls that require server access
+_SKIP_DOWNLOADS = parse(Bool,get(ENV, "SKIP_DOWNLOADS", "false"))
+
 #fil=["sla_podaac.nc","sla_cmems.nc"]
 function read(x::SeaLevelAnomaly)
     ID=x.name
@@ -13,7 +16,7 @@ function read(x::SeaLevelAnomaly)
     fil=string(ID)*".nc"
     sla_file=joinpath(path,fil)
     !isdir(path) ? mkdir(path) : nothing
-    if !isfile(sla_file)
+    if !isfile(sla_file)&&!_SKIP_DOWNLOADS
         DOI="doi:10.7910/DVN/OYBLGK"
         lst=Dataverse.file_list(DOI)
         Dataverse.file_download(lst,fil,path)
