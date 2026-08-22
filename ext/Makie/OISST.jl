@@ -115,7 +115,7 @@
 	
 	function map_base()
 		earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
-		"Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg") 
+		"Blue_Marble_Next_Generation_+_topography_+_bathymetry.jpg") 
 		
 		earth_img=load(earth_jpg)
 		earth_img=reverse(permutedims(earth_img),dims=2)
