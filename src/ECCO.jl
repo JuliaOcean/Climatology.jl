@@ -40,8 +40,15 @@ function standard_analysis_setup(pth0="",sol0="")
 
     !isdir(pth1) ? mkdir(pth1) : nothing
 	link0=joinpath(pth1,"diags")
-	!isfile(link0)&& !islink(link0)&& !isempty(pth0) ? symlink(pth0,link0) : nothing
-	
+	if !isfile(link0)&& !islink(link0)&& !isempty(pth0)
+        @info "linking $(pth0)"
+        @info "to $(link0)"
+        symlink(pth0,link0)
+    else
+        @warn "not linking due to conflict :"
+        @info "$(link0)"
+    end
+    
 	#2. copy Project.toml to run folder
 	tmp0=pkg_pth
 	tmp1=joinpath(tmp0,"..","examples","ECCO","ECCO_standard_Project.toml")
@@ -469,9 +476,11 @@ function read_monthly_default(P,nam,t)
                 tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,t))
             end
         catch
-            error("failed: call to `read_nctiles`
-            This method is provided by `MITgcm.jl`
-            and now activated by `using MITgcm` ")
+            @warn "The following filefolder may be missing."
+            @info nct_path
+            @warn "Method read_nctiles requires external dependencies"
+            @info "try with `import NCDatasets, MITgcm, NetCDF`"
+            error("read_nctiles call failed")
         end
     elseif (sol=="ECCOv4r4_analysis")
         y0=Int(floor((t-1)/12))+1992
