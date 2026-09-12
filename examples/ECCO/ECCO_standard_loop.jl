@@ -1,8 +1,10 @@
 using Distributed, Climatology
+import NCDatasets, MITgcm, NetCDF
 
 @everywhere begin
     using Pkg, Climatology
-    pth0=pwd()
+    import NCDatasets, MITgcm, NetCDF
+    pth0=ScratchSpaces.ECCO
     pth=ECCO.standard_analysis_setup(pth0)
     Pkg.activate(pth)
 
