@@ -39,15 +39,6 @@ md"""## Main Computation"""
 # ╔═╡ d11ef2d8-760e-4b64-aab3-b2f5c4e379b4
 md"""## Configuration"""
 
-# ╔═╡ df2da213-026f-485f-a1eb-b9081e48d8b8
-let
-	#https://doi.org/10.7910/DVN/H8W5VW
-	#fileName="nctiles_grid/GRID"
-	#Depth=read_nctiles(fileName,"Depth",mygrid)
-	mygrid=MeshArrays.GridSpec(ID=:LLC90)
-	Depth=MeshArrays.GridLoadVar("Depth",mygrid)
-end
-
 # ╔═╡ 7a917876-45fb-4e46-8229-28165fc5c469
 begin
 	sol0="r2"
@@ -1624,7 +1615,6 @@ version = "1.7.8+0"
 # ╟─6244de02-bea4-43f6-8963-3723ed192b11
 # ╠═cad6d821-6d49-4a4f-a57c-0511d770fa0c
 # ╟─d11ef2d8-760e-4b64-aab3-b2f5c4e379b4
-# ╟─df2da213-026f-485f-a1eb-b9081e48d8b8
 # ╠═7a917876-45fb-4e46-8229-28165fc5c469
 # ╟─60a040f5-02e6-41e2-813a-bf91e0a9c681
 # ╠═5671b654-cfa1-11ec-05c2-6b103f4ebc5f
