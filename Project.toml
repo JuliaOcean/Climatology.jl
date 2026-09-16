@@ -40,7 +40,7 @@ ClimatologyNCDatasetsExt = ["NCDatasets"]
 
 [compat]
 AirSeaFluxes = "0.1"
-CSV = "0.10"
+CSV = "0.10, 1"
 DataDeps = "0.7, 1"
 DataFrames = "1"
 DataStructures = "0.18, 0.19"
