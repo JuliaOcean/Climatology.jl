@@ -7,6 +7,7 @@ function basis_functions(tt::Vector,zz::Vector)
 	t1=collect(tt)
     t2=t1.^2
     t3=t1.^2
+	cst=0*t1
 	nt=length(t1)
 	tt0=(collect(1:nt).-0.5)./12
 	c1=cos.(2pi.*tt0)
@@ -15,7 +16,7 @@ function basis_functions(tt::Vector,zz::Vector)
 	s1=sin.(2pi.*tt0)
 	s2=sin.(2*2pi.*tt0)
 	s3=sin.(3*2pi.*tt0)
-    (t1,t2,t3),(c1,c2,c3),(s1,s2,s3)
+    cst,(t1,t2,t3),(c1,c2,c3),(s1,s2,s3)
 end
 
 """
@@ -24,7 +25,7 @@ end
 Build a GLM formula with polynomial trend and seasonal harmonics.
 
 Arguments:
-- order_poly: polynomial degree for time trend (0 to 3)
+- order_poly: polynomial degree for time mean, trend, ... (0 to 3)
 - order_season: seasonal harmonic order (0 to 3)
 """
 function build_formula(order_poly::Int, order_season::Int)
@@ -35,8 +36,11 @@ function build_formula(order_poly::Int, order_season::Int)
         error("order_season must be between 0 and 3")
     end
     
-    # Start with linear time on RHS
-    rhs = Term(:time)
+    # Start with time mean on RHS
+    rhs = Term(:cst)
+    
+    # Add linear trend term on RHS
+    (order_poly>0) ? (rhs = rhs + Term(:time1)) : nothing
     
     # Add higher order polynomial terms
     (order_poly>1) ? (rhs = rhs + Term(:time2)) : nothing
@@ -54,8 +58,15 @@ end
 """
     fit_time_series(tt::Vector, zz::Vector; order_poly::Int=1, order_season::Int=1)
 
-General time series fitting that handles both numeric and DateTime vectors.
-Dispatches to appropriate method based on input type.
+General time series fitting that handles both numeric and DateTime vectors for time.
+
+Plain arguments : 
+- tt is time, as a `Vector{DateTime}` or `::Vector`
+- zz is the data time series
+
+Keyword arguments:
+- order_poly: polynomial degree for time mean, trend, ... (0 to 3)
+- order_season: seasonal harmonic order (0 to 3)
 
 ```
 dates = collect((DateTime(2020,1,16):Month(1):DateTime(2024,12,31)));
@@ -69,14 +80,14 @@ function fit_time_series(tt::Vector{DateTime}, zz::Vector; order_poly::Int=1, or
 end
 
 function fit_time_series(tt::Vector, zz::Vector; order_poly::Int=1, order_season::Int=1)
-    t, c, s = basis_functions(tt, zz)
-	data = DataFrame(property=zz, time=t[1], time2=t[2], time3=t[3],
+    cst, t, c, s = basis_functions(tt, zz)
+	data = DataFrame(property=zz, cst=cst, time1=t[1], time2=t[2], time3=t[3],
 		 c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3])
          
     formula=build_formula(order_poly, order_season)
     mdl = lm(formula, data)	
 
-    predict(mdl, DataFrame(time=t[1], time2=t[2], time3=t[3], 
+    predict(mdl, DataFrame(cst=cst, time=t[1], time2=t[2], time3=t[3], 
         c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3]))
 end
 
