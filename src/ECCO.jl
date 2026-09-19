@@ -1003,44 +1003,7 @@ function parameters()
 	clim_files=clim_files,clim_name=clim_name,clim_longname=clim_longname)
 end
 
-##
-
-default_options(plot_type::Symbol) = default_options(Val(plot_type))
-
-default_options(::Val{T}) where T = (plot_type=T,)
-
-default_options(::Val{:ECCO_TimeLat}) = (
-    plot_type=:ECCO_TimeLat, select_method=0, period=(1992,2011),
-    level=1, ylims=(-90,90), colormap_factor=1, years_to_display=nothing,
-)
-
-default_options(::Val{:ECCO_TimeLatAnom}) =
-    merge(default_options(Val(:ECCO_TimeLat)), (plot_type=:ECCO_TimeLatAnom, select_method=1))
-
-default_options(::Val{:ECCO_Overturn2}) = (plot_type=:ECCO_Overturn2,)
-
-default_options(::Val{:ECCO_GlobalMean}) = (plot_type=:ECCO_GlobalMean, level=0, period=(1992,2011), years_to_display=nothing)
-
-default_options(::Val{:ECCO_map}) = (plot_type=:ECCO_map, statistic="mean", time=1)
-
-default_options(::Val{:ECCO_DepthTime}) = (
-    plot_type=:ECCO_DepthTime, period=(1992,2011), factor=1,
-    level=1, klims=(1,50), years_to_display=nothing,
-)
-
-default_options(::Val{:ECCO_OHT1}) = (plot_type=:ECCO_OHT1,)
-
-default_options(::Val{:ECCO_Overturn1}) = (plot_type=:ECCO_Overturn1, level=1, low1="auto", period=(1992,2011), years_to_display=nothing)
-
-default_options(::Val{:ECCO_Transports}) = (plot_type=:ECCO_Transports, ncols=1, period=(1992,2011), years_to_display=nothing)
-
-function finalize_options(o::NamedTuple)
-    if haskey(o,:years_to_display) && isnothing(o.years_to_display) && haskey(o,:period)
-        (y0,y1)=o.period
-        o=merge(o,(years_to_display=(y0,y1+1),))
-    end
-    o
-end
+import Climatology: finalize_options, default_options
 
 ##
 

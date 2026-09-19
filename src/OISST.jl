@@ -253,11 +253,19 @@ end
     nansum(arr[ii,jj].*G.msk[ii,jj].*G.area[ii,jj])
 end
 
-function calc_zm(G::NamedTuple,df)
+function calc_zm(G::NamedTuple,df,dnl=missing)
     gdf_tim=groupby(df, :t)
     arr=NaN*zeros(maximum(df.j),length(gdf_tim))
+
+    dn=if isempty(dnl)
+        dlon=10.0
+        Int(dlon/0.25)
+    else
+        dnl
+    end
+
     for k in minimum(df.j):maximum(df.j)
-        area_tmp=[areaintegral(G.msk,x.i,x.j,G) for x in eachrow(gdf_tim[1])]
+        area_tmp=[areaintegral(G.msk,x.i,x.j,G,dnl) for x in eachrow(gdf_tim[1])]
         area_tmp[gdf_tim[1].j.!==k].=0
         tmp1=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf_tim]
         arr[k,:].=tmp1

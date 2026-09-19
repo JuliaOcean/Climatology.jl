@@ -83,10 +83,14 @@ end
 	(lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
     ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
 
-    plot(SSTdiag(options=(plot_type=:by_year,ts=ts)))
-    options=(plot_type=:by_time,ts=ts,show_anom=false,show_clim=false)
-    plot(SSTdiag(options=options))
-    plot(SSTdiag(options=(plot_type=:MHW,ts=ts)))
+    f1=plot(SSTdiag(input_path,"",:by_year; timeseries=ts))
+    @test isa(f1,Figure)
+
+    f2=plot(SSTdiag(input_path,"",:by_time; timeseries=ts,show_anom=false,show_clim=false))
+    @test isa(f2,Figure)
+
+    f3=plot(SSTdiag(input_path,"",:MHW; timeseries=ts))
+    @test isa(f3,Figure)
 
 	gdf1=SST_FILES.groupby(df, :t)
 	tmp1=gdf1[end]
@@ -94,26 +98,26 @@ end
 	glmsst=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf1]
     ts_global=SST_timeseries.calc(glmsst,list,title="Global Mean SST")
 
-    x=SSTdiag(options=(plot_type=:local_and_global,ts=ts,ts_global=ts_global,kdf0=kdf0))
-    f=plot(x)
-    @test isa(f,Figure)
+    x=SSTdiag(input_path,"local and global SST anomalies",:local_and_global;
+                timeseries=ts,timeseries_global=ts_global)
+    f4=plot(x)
+    @test isa(f4,Figure)
 
     ##
 
     path_OISST_stats=Climatology.downloads.OISST_stats_download()
     file_climatology=joinpath(path_OISST_stats,"OISST_mean_monthly_1992_2011.nc")
-	to_map=(field=SST_FILES.read_map(variable="anom",file=fil,file_climatology=file_climatology),
-			title="test",colorrange=4 .*(-1.0,1.0),colormap=:thermal,
-			lon=gr.lon,lat=gr.lat,lon1=lon1,lat1=lat1,showgrid=false)
-
-    f7=plot(SSTdiag(options=(plot_type=:map,to_map=to_map)))
+    to_map=(field=SST_FILES.read_map(variable="anom",file=fil,file_climatology=file_climatology),
+            colorrange=4 .*(-1.0,1.0),colormap=:thermal,
+            lon=gr.lon,lat=gr.lat,lon1=lon1,lat1=lat1,showgrid=false)
+    f7=plot(SSTdiag(input_path,"test",:map; map_data=to_map))
     @test isa(f7,Figure)
 
     ##
 
-#    zm=SST_coarse_grain.calc_zm(gr,df)
-#    f5=plot(SSTdiag(options=(plot_type=:TimeLat,zm=zm,title="OISST anomaly")))
-#    @test isa(f5,Figure)
+    zm=SST_coarse_grain.calc_zm(gr,df,dnl)
+    f5=plot(SSTdiag(input_path,"OISST anomaly",:TimeLat; timeseries=list,zonal_mean=zm))
+    @test isa(f5,Figure)
 
     ## 2. ECCO
 
@@ -214,9 +218,10 @@ end
         level=29, low1="auto", period=(year0,year1)))
 
     ntr1=P.list_trsp[1]
-    plot(ECCOdiag(pth_out, "trsp", :ECCO_Transports;
+    fig=plot(ECCOdiag(pth_out, "trsp", :ECCO_Transports;
         namtrs=[ntr1], ncols=1, list_trsp=P.list_trsp, period=(year0,year1)))
 
+    @test isa(fig,Figure)
     @test ispath(pth_out)
 
     ## 3. SSH/SLA
