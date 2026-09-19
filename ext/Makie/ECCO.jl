@@ -8,9 +8,8 @@ function plot(x::ECCOdiag)
 			map(ECCO_procs.map(o.nammap,o.P,o.statmap,o.timemap,x.path))
 		elseif pt in ("ECCO_TimeLat","ECCO_TimeLatAnom")
     		TimeLat(ECCO_procs.TimeLat(x))
-		elseif string(o.plot_type)=="ECCO_DepthTime"
-			nam=split(x.name,"_")[1]
-			DepthTime(ECCO_procs.DepthTime(nam,x.path,o.facA,o.l,o.year0,o.year1,o.k0,o.k1,o.P); years_to_display=o.years_to_display)
+		elseif pt=="ECCO_DepthTime"
+			DepthTime(ECCO_procs.DepthTime(x))
 		elseif string(o.plot_type)=="ECCO_GlobalMean"
 			gl1=ECCO_procs.glo(x.path,x.name,o.k,o.year0,o.year1)
 			glo(gl1,o.year0,o.year1; years_to_display=o.years_to_display)
@@ -164,16 +163,16 @@ function glo(gl1,year0,year1;years_to_display=years_to_display)
 	fig1
 end
 
-function DepthTime(XYZ; ClipToRange=true, years_to_display=years_to_display)
-	ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
-	fig1 = Figure(size = (900,400),markersize=0.1)
-	ax1 = Axis(fig1[1,1], title=XYZ.title,
-		xticks=collect(XYZ.year0:4:XYZ.year1))
-	hm1=contourf!(ax1,XYZ.x,XYZ.y,XYZ.z,levels=XYZ.levels,colormap=:turbo)
-	Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-	haskey(XYZ,:years_to_display) ? xlims!(ax1,XYZ.years_to_display) : xlims!(ax1,years_to_display)
-	ylims!(ax1,XYZ.ylims)
-	fig1
+function DepthTime(XYZ; ClipToRange=true)
+    ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
+    fig1 = Figure(size=(900,400),markersize=0.1)
+    ax1 = Axis(fig1[1,1], title=XYZ.title,
+        xticks=collect(XYZ.year0:4:XYZ.year1))
+    hm1=contourf!(ax1,XYZ.x,XYZ.y,XYZ.z,levels=XYZ.levels,colormap=:turbo)
+    Colorbar(fig1[1,2], hm1, height=Relative(0.65))
+    xlims!(ax1,XYZ.years_to_display)
+    ylims!(ax1,XYZ.ylims)
+    fig1
 end
 
 function TimeLat(XYZ; ClipToRange=true)

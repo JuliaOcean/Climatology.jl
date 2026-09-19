@@ -1163,43 +1163,56 @@ end
 
 fn_DepthTime(x)=transpose(x)	
 
-function DepthTime(namzmanom,pth_out,facA,l_Tzm,year0,year1,k0,k1,P)
-if namzmanom=="THETA"
-	levs=(-3.0:0.4:3.0)/8.0; cm=:turbo
-elseif namzmanom=="SALT"
-	levs=(-0.5:0.1:0.5)/10.0;cm=:turbo
-else
-	levs=missing;
-end
-nam_full=namzmanom*"_zonmean"
-tmp=load(ECCOdiag(path=pth_out,name=nam_full))
+default_options(::Val{:ECCO_DepthTime}) = (
+    plot_type=:ECCO_DepthTime, period=(1992,2011), factor=1,
+    level=1, klims=(1,50), years_to_display=nothing,
+)
 
-dlat=2.0
-lats=(-90+dlat/2:dlat:90-dlat/2)
+function DepthTime(X::ECCOdiag)
+    o=X.options
+    nam=split(X.name,"_")[1]
 
-z=fn_DepthTime(tmp[l_Tzm,:,:])
-addon1=" -- at $(lats[l_Tzm])N "
-x=vec(0.5:size(tmp,3)); 
-y=vec(P.Γ.RC)
-nt=size(tmp,3)
+    factor=o.factor
+    level=o.level
+    (year0,year1)=o.period
+    (k0,k1)=o.klims
+    years_to_display=o.years_to_display
+    P=o.P
 
-#a. subtract monthly mean
-ref1="1992-2011 monthy mean"
-m0=(1992-year0)*12
-for m in 1:12
-	zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
-	[z[t,:]=z[t,:]-zmean for t in m:12:nt]
-end
-#b. subtract time mean
-#ref1="1992-2011 annual mean"
-#zmean=vec(mean(z[1:240,:],dims=1))
-#[z[t,:]=z[t,:]-zmean for t in 1:nt]
+    if nam=="THETA"
+        levs=(-3.0:0.4:3.0)/8.0
+    elseif nam=="SALT"
+        levs=(-0.5:0.1:0.5)/10.0
+    else
+        levs=missing
+    end
 
-x=year0 .+ x./12.0
-ttl="$(longname(namzmanom)) -- minus $(ref1) $(addon1)"
+    nam_full=nam*"_zonmean"
+    tmp=load(ECCOdiag(path=X.path,name=nam_full))
 
-(x=x,y=y,z=z,levels=facA*levs,title=ttl,ylims=(P.Γ.RC[k1],P.Γ.RC[k0]),year0=year0,year1=year1)
+    dlat=2.0
+    lats=(-90+dlat/2:dlat:90-dlat/2)
 
+    z=fn_DepthTime(tmp[level,:,:])
+    addon1=" -- at $(lats[level])N "
+    x=vec(0.5:size(tmp,3))
+    y=vec(P.Γ.RC)
+    nt=size(tmp,3)
+
+    #subtract monthly mean
+    ref1="1992-2011 monthy mean"
+    m0=(1992-year0)*12
+    for m in 1:12
+        zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
+        [z[t,:]=z[t,:]-zmean for t in m:12:nt]
+    end
+
+    x=year0 .+ x./12.0
+    ttl="$(longname(nam)) -- minus $(ref1) $(addon1)"
+
+    (x=x,y=y,z=z,levels=factor*levs,title=ttl,
+     ylims=(P.Γ.RC[k1],P.Γ.RC[k0]),year0=year0,year1=year1,
+     years_to_display=years_to_display)
 end
 
 end #module ECCO_procs
