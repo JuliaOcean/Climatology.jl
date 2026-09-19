@@ -87,7 +87,7 @@ function fit_time_series(tt::Vector, zz::Vector; order_poly::Int=1, order_season
     formula=build_formula(order_poly, order_season)
     mdl = lm(formula, data)	
 
-    predict(mdl, DataFrame(cst=cst, time=t[1], time2=t[2], time3=t[3], 
+    predict(mdl, DataFrame(cst=cst, time1=t[1], time2=t[2], time3=t[3], 
         c1=c[1], c2=c[2], c3=c[3], s1=s[1], s2=s[2], s3=s[3]))
 end
 

@@ -1089,7 +1089,7 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)
 	(x=x,y=y,z=z,levels=cmap_fac*levs,title=ttl,ylims=(-90.0,90.0),year0=year0,year1=year1)
 end
 
-function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
+function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P; select_method=1)
 	namzm=namzmanom2d
 	if namzm=="MXLDEPTH"
 		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
@@ -1127,22 +1127,36 @@ function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
 	nt=size(z,1)
 
 	m0=(1992-year0)*12
-	
-	if true
+    x=1992.0-m0/12.0 .+ x./12.0
+    year1=Int(floor(year0+nt/12-1))
+
+	if select_method==1
 		#a. subtract monthly mean
 		ref1="1992-2011 monthy mean"
 		for m in 1:12
 			zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
 			[z[t,:]=z[t,:]-zmean for t in m:12:nt]
 		end
-	else
+	elseif select_method==2
 		#b. subtract time mean
 		ref1="1992-2011 annual mean"
 		zmean=vec(mean(z[m0+1:m0+240,:],dims=1))
 		[z[t,:]=z[t,:]-zmean for t in 1:nt]
+    elseif select_method>2
+        txt1=(select_method==4 ? " + trend" : "")
+        ref1="$(year0)-$(year1) cycle"*txt1
+        tt=collect(x)
+        z1=0*tt
+        z2=0*tt
+        for j in 1:size(z,2)
+            z1.=fit_time_series(tt,z[:,j],order_season=3,order_poly=0)
+            z2.=fit_time_series(tt,z[:,j],order_season=3,order_poly=1)
+            select_method==3 ? (z[:,j] .-= z1) : nothing
+            select_method==4 ? (z[:,j] .-= z2) : nothing
+#            z[:,j] .= z2-z1
+        end
 	end
 
-	x=1992.0-m0/12.0 .+ x./12.0
 	ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
 
 	(x=x,y=y,z=z,levels=cmap_fac*levs,title=ttl,ylims=(y[l0],y[l1]),year0=year0,year1=year1)
