@@ -1026,45 +1026,58 @@ end
 
 ##
 
-function glo(pth_out,nam,k,year0,year1)
-    nam_full=nam*(k>0 ? "_glo2d" : "_glo3d")
-    tmp=load(ECCOdiag(path=pth_out,name=nam_full))
+# ECCO_procs
+default_options(::Val{:ECCO_GlobalMean}) = (plot_type=:ECCO_GlobalMean, level=0, period=(1992,2011), years_to_display=nothing)
 
-	occursin("THETA",nam) ? ln=longname("THETA") : ln=longname("SALT")
-	if k>0
-		nt=Int(length(tmp[:])./50.0)
-		tmp=reshape(tmp,(nt,50))
-		tmp=tmp[:,k]
-		occursin("THETA",fil) ? rng=[18.0,19.0] : rng=[34.65,34.80]
-		txt=ln*" -- level $(k)" 
-		k>1 ? rng=[extrema(tmp)...] : nothing
-	else
-		nt=length(tmp[:])
-		occursin("THETA",nam) ? rng=[3.5,3.65] : rng=[34.724,34.728]
-		txt=ln
-	end
+function glo(X::ECCOdiag)
+    o=X.options
+    level=o.level
+    (year0,year1)=o.period
+    nam=X.name
 
-	x=vec(0.5:nt)
-	x=year0 .+ x./12.0
+    nam_full=nam*(level>0 ? "_glo2d" : "_glo3d")
+    tmp=load(ECCOdiag(path=X.path,name=nam_full))
 
-	(y=tmp,txt=txt,rng=rng,x=x)
+    occursin("THETA",nam) ? ln=longname("THETA") : ln=longname("SALT")
+    if level>0
+        nt=Int(length(tmp[:])./50.0)
+        tmp=reshape(tmp,(nt,50))
+        tmp=tmp[:,level]
+        occursin("THETA",nam) ? rng=[18.0,19.0] : rng=[34.65,34.80]
+        txt=ln*" -- level $(level)"
+        level>1 ? rng=[extrema(tmp)...] : nothing
+    else
+        nt=length(tmp[:])
+        occursin("THETA",nam) ? rng=[3.5,3.65] : rng=[34.724,34.728]
+        txt=ln
+    end
+
+    x=vec(0.5:nt)
+    x=year0 .+ x./12.0
+
+    (y=tmp,txt=txt,rng=rng,x=x,year0=year0,year1=year1,years_to_display=o.years_to_display)
 end
 
-function map(nammap,P,statmap,timemap,pth_out)
-	ii=findall(P.clim_longname.==nammap)[1]
-	nam=P.clim_name[ii]; file=nam*".jld2"
+##
+
+default_options(::Val{:ECCO_map}) = (plot_type=:ECCO_map, statistic="mean", time=1)
+
+function ECCO_map(X::ECCOdiag)
+    o=X.options
+    P=o.P
+    name=X.name
+    ii=findall(P.clim_longname.==name)[1]
+    nam=P.clim_name[ii]; file=nam*".jld2"
     nam_full=split(nam,"_")[1]*"_clim"
-    tmp=load(ECCOdiag(path=pth_out,name=nam_full),file=file,variable=statmap)
-	tmp=(statmap!=="mon" ? tmp : tmp[:,timemap])
+    tmp=load(ECCOdiag(path=X.path,name=nam_full),file=file,variable=o.statistic)
+    tmp=(o.statistic!=="mon" ? tmp : tmp[:,o.time])
 
-	DD=Interpolate(P.μ*tmp,P.λ.f,P.λ.i,P.λ.j,P.λ.w)
-	DD=reshape(DD,size(P.λ.lon))
-	#DD[findall(DD.==0.0)].=NaN
-	statmap=="std" ? rng=P.clim_colors2[nam] : rng=P.clim_colors1[nam]
-	levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
+    DD=Interpolate(P.μ*tmp,P.λ.f,P.λ.i,P.λ.j,P.λ.w)
+    DD=reshape(DD,size(P.λ.lon))
+    rng = o.statistic=="std" ? P.clim_colors2[nam] : P.clim_colors1[nam]
+    levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
-	ttl=P.clim_longname[ii]
-	(λ=P.λ,field=DD,levels=levs,title=ttl)
+    (λ=P.λ,field=DD,levels=levs,title=P.clim_longname[ii])
 end
 
 function TimeLat_parameters(namzm; anomaly=false)

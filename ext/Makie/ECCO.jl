@@ -4,15 +4,14 @@ function plot(x::ECCOdiag)
 	if !isempty(x.options)
 		o=x.options
 		pt=string(o.plot_type)
-		if string(o.plot_type)=="ECCO_map"
-			map(ECCO_procs.map(o.nammap,o.P,o.statmap,o.timemap,x.path))
+		if pt=="ECCO_map"
+			ECCO_map(ECCO_procs.ECCO_map(x))			
 		elseif pt in ("ECCO_TimeLat","ECCO_TimeLatAnom")
     		TimeLat(ECCO_procs.TimeLat(x))
 		elseif pt=="ECCO_DepthTime"
 			DepthTime(ECCO_procs.DepthTime(x))
-		elseif string(o.plot_type)=="ECCO_GlobalMean"
-			gl1=ECCO_procs.glo(x.path,x.name,o.k,o.year0,o.year1)
-			glo(gl1,o.year0,o.year1; years_to_display=o.years_to_display)
+		elseif pt=="ECCO_GlobalMean"
+			glo(ECCO_procs.glo(x))
 		elseif x.name=="OHT"&&string(o.plot_type)=="ECCO_OHT1"
 			OHT(x.path)
 		elseif x.name=="overturn"&&string(o.plot_type)=="ECCO_Overturn1"
@@ -139,11 +138,10 @@ function OHT(pth_out)
 	fig1
 end
 
-function glo(gl1,year0,year1;years_to_display=years_to_display)
-	ttl="Global Mean $(gl1.txt)"
-	zlb=gl1.txt
-	rng=gl1.rng
+"""
+code snippet for conversion to ZJoule from older version of `glo(gl1)`
 
+```
 	if false
 		fac=4e6*1.335*10^9*10^9/1e21
 		ttl="Ocean Heat Uptake (Zetta-Joules)"
@@ -153,14 +151,17 @@ function glo(gl1,year0,year1;years_to_display=years_to_display)
 	else
 		y=gl1.y
 	end
+```
+"""
 
-	fig1 = Figure(size = (900,400),markersize=0.1)
-	ax1 = Axis(fig1[1,1], title=ttl,
-		xticks=collect(year0:4:year1),ylabel=zlb)
-	hm1=lines!(ax1,gl1.x,y)
-	xlims!(ax1,years_to_display)
-	ylims!(ax1,rng)
-	fig1
+function glo(gl1)
+    fig1 = Figure(size = (900,400),markersize=0.1)
+    ax1 = Axis(fig1[1,1], title="Global Mean $(gl1.txt)",
+        xticks=collect(gl1.year0:4:gl1.year1),ylabel=gl1.txt)
+    lines!(ax1,gl1.x,gl1.y)
+    xlims!(ax1,gl1.years_to_display)
+    ylims!(ax1,gl1.rng)
+    fig1
 end
 
 function DepthTime(XYZ; ClipToRange=true)
@@ -187,7 +188,7 @@ function TimeLat(XYZ; ClipToRange=true)
     fig1
 end
 
-function map(X; ClipToRange=true)
+function ECCO_map(X; ClipToRange=true)
 	ClipToRange ? to_range!(X.field,X.levels) : nothing
 	fig = Figure(size = (900,600), backgroundcolor = :grey95)
 	ax = Axis(fig[1,1], title=X.title,xlabel="longitude",ylabel="latitude")
