@@ -18,11 +18,10 @@ function plot(x::ECCOdiag)
 			OHT(x)
 		elseif x.name=="overturn" && pt=="ECCO_Overturn2"
 			figov2(x)
-
-		elseif x.name=="overturn"&&string(o.plot_type)=="ECCO_Overturn1"
-			figov1(x.path,o.kk,o.low1,o.year0,o.year1; years_to_display=o.years_to_display)
-		elseif x.name=="trsp"&&string(o.plot_type)=="ECCO_Transports"
-			transport(o.namtrs,o.ncols,x.path,o.list_trsp,o.year0,o.year1,years_to_display=o.years_to_display)
+		elseif x.name=="overturn" && pt=="ECCO_Overturn1"
+			figov1(x)
+		elseif x.name=="trsp" && pt=="ECCO_Transports"
+			transport(x)
 		else
 			println("unknown option (b)")	
 		end
@@ -64,49 +63,56 @@ function axtr1(ax,namtr,pth_out,list_trsp,year0,year1;years_to_display=years_to_
 	xlims!(ax,years_to_display)
 end
 
-function transport(namtrs,ncols,pth_out,list_trsp,year0,year1;years_to_display=years_to_display)
-	if ncols > 1
-		fig1 = Figure(size = (2000,1000),markersize=0.1)
-	else
-		fig1 = Figure(size = (900,400),markersize=0.1)
-	end
-	for na in 1:length(namtrs)
-		txt=namtrs[na]
-		jj=div.(na,ncols,RoundUp)
-		kk=na-(jj.-1)*ncols
-		ax1 = Axis(fig1[jj,kk], title=" $txt (in Sv)",
-			xticks=(year0:4:year1),ylabel="transport, in Sv")
-		axtr1(ax1,namtrs[na],pth_out,list_trsp,year0,year1,years_to_display=years_to_display)
-		#ylims!(ax1,rng)
-	end
-	fig1
+function transport(X::ECCOdiag)
+    o=X.options
+    namtrs=o.namtrs
+    ncols=o.ncols
+    list_trsp=o.list_trsp
+    (year0,year1)=o.period
+    years_to_display=o.years_to_display
+    pth_out=X.path
+
+    fig1 = ncols>1 ? Figure(size=(2000,1000),markersize=0.1) : Figure(size=(900,400),markersize=0.1)
+    for na in 1:length(namtrs)
+        txt=namtrs[na]
+        jj=div.(na,ncols,RoundUp)
+        kk=na-(jj.-1)*ncols
+        ax1 = Axis(fig1[jj,kk], title=" $txt (in Sv)",
+            xticks=(year0:4:year1),ylabel="transport, in Sv")
+        axtr1(ax1,namtrs[na],pth_out,list_trsp,year0,year1,years_to_display=years_to_display)
+    end
+    fig1
 end
 
-function figov1(pth_out,kk,low1,year0,year1;years_to_display=years_to_display)
-	tmp=-1e-6*load(ECCOdiag(path=pth_out,name="overturn"))
+function figov1(X::ECCOdiag)
+    o=X.options
+    level=o.level
+    low1=o.low1
+    (year0,year1)=o.period
+    years_to_display=o.years_to_display
 
-	nt=size(tmp,3)
-	x=vec(0.5:nt)
-	x=year0 .+ x./12.0
-	lats=vec(-89.0:89.0)
+    tmp=-1e-6*load(ECCOdiag(path=X.path,name=X.name))
+    nt=size(tmp,3)
+    x=vec(0.5:nt)
+    x=year0 .+ x./12.0
+    lats=vec(-89.0:89.0)
 
-	fig1 = Figure(size = (900,400),markersize=0.1)
-	ax1 = Axis(fig1[1,1],ylabel="Sv",
-		title="Global Overturning, in Sv, at kk=$(kk)",
-		xticks=(year0:4:year1))
-	for ll in 115:10:145
-		ov=tmp[ll,kk,:]
-		ov=runmean(ov, 12)
-		ov[1:5].=NaN
-		ov[end-4:end].=NaN
-		hm1=lines!(x,ov,label="$(lats[ll])N")
-	end
-	xlims!(ax1,years_to_display)
-	ylims!(ax1,(5,20))
-	low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
-	fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
-
-	fig1
+    fig1 = Figure(size = (900,400),markersize=0.1)
+    ax1 = Axis(fig1[1,1],ylabel="Sv",
+        title="Global Overturning, in Sv, at kk=$(level)",
+        xticks=(year0:4:year1))
+    for ll in 115:10:145
+        ov=tmp[ll,level,:]
+        ov=runmean(ov, 12)
+        ov[1:5].=NaN
+        ov[end-4:end].=NaN
+        lines!(x,ov,label="$(lats[ll])N")
+    end
+    xlims!(ax1,years_to_display)
+    ylims!(ax1,(5,20))
+    low1!="auto" ? ylims!(ax1,(low1,20.0)) : nothing
+    fig1[1, 2] = Legend(fig1, ax1, "estimate", framevisible = false)
+    fig1
 end
 
 # Makie ext

@@ -1030,6 +1030,10 @@ default_options(::Val{:ECCO_DepthTime}) = (
 
 default_options(::Val{:ECCO_OHT1}) = (plot_type=:ECCO_OHT1,)
 
+default_options(::Val{:ECCO_Overturn1}) = (plot_type=:ECCO_Overturn1, level=1, low1="auto", period=(1992,2011), years_to_display=nothing)
+
+default_options(::Val{:ECCO_Transports}) = (plot_type=:ECCO_Transports, ncols=1, period=(1992,2011), years_to_display=nothing)
+
 function finalize_options(o::NamedTuple)
     if haskey(o,:years_to_display) && isnothing(o.years_to_display) && haskey(o,:period)
         (y0,y1)=o.period
