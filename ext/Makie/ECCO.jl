@@ -3,21 +3,11 @@
 function plot(x::ECCOdiag)
 	if !isempty(x.options)
 		o=x.options
+		pt=string(o.plot_type)
 		if string(o.plot_type)=="ECCO_map"
 			map(ECCO_procs.map(o.nammap,o.P,o.statmap,o.timemap,x.path))
-		elseif string(o.plot_type)=="ECCO_TimeLat"
-			nam=split(x.name,"_")[1]
-			TimeLat(ECCO_procs.TimeLat(nam,x.path,o.P,
-			 	select_method=0,period=(o.year0,o.year1),level=o.k, 
-				ylims=(o.l0,o.l1),colormap_factor=o.cmap_fac),
-				years_to_display=o.years_to_display)
-		elseif string(o.plot_type)=="ECCO_TimeLatAnom"
-			nam=split(x.name,"_")[1]
-			select_method=(haskey(o,:select_method) ? o.select_method : 1)
-			TimeLat(ECCO_procs.TimeLat(nam,x.path,o.P,		
-				select_method=select_method,period=(o.year0,o.year1),level=o.k, 
-				ylims=(o.l0,o.l1),colormap_factor=o.cmap_fac),
-				years_to_display=o.years_to_display)
+		elseif pt in ("ECCO_TimeLat","ECCO_TimeLatAnom")
+    		TimeLat(ECCO_procs.TimeLat(x))
 		elseif string(o.plot_type)=="ECCO_DepthTime"
 			nam=split(x.name,"_")[1]
 			DepthTime(ECCO_procs.DepthTime(nam,x.path,o.facA,o.l,o.year0,o.year1,o.k0,o.k1,o.P); years_to_display=o.years_to_display)
@@ -186,16 +176,16 @@ function DepthTime(XYZ; ClipToRange=true, years_to_display=years_to_display)
 	fig1
 end
 
-function TimeLat(XYZ; ClipToRange=true, years_to_display=years_to_display)
-	ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
-	fig1 = Figure(size = (900,400),markersize=0.1)
-	ax1 = Axis(fig1[1,1], title=XYZ.title,
-		xticks=collect(XYZ.year0:4:XYZ.year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
-	hm1=contourf!(ax1,XYZ.x,XYZ.y,XYZ.z,levels=XYZ.levels,colormap=:turbo)
-	Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-	xlims!(ax1,years_to_display)
-	ylims!(ax1,XYZ.ylims...)
-	fig1
+function TimeLat(XYZ; ClipToRange=true)
+    ClipToRange ? to_range!(XYZ.z,XYZ.levels) : nothing
+    fig1 = Figure(size=(900,400),markersize=0.1)
+    ax1 = Axis(fig1[1,1], title=XYZ.title,
+        xticks=collect(XYZ.year0:4:XYZ.year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
+    hm1=contourf!(ax1,XYZ.x,XYZ.y,XYZ.z,levels=XYZ.levels,colormap=:turbo)
+    Colorbar(fig1[1,2], hm1, height=Relative(0.65))
+    xlims!(ax1,XYZ.years_to_display)
+    ylims!(ax1,XYZ.ylims...)
+    fig1
 end
 
 function map(X; ClipToRange=true)

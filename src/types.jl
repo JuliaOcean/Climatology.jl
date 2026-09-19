@@ -12,6 +12,14 @@ Base.@kwdef struct ECCOdiag <: AbstractClimateDiagnostic
     data :: AbstractArray = []
 end
 
+ECCOdiag(path::String,name::String,plot_type::Symbol; kwargs...) =
+    ECCOdiag(path=path, name=name, options=setopt(plot_type;kwargs...))
+
+setopt(plot_type::Symbol; kwargs...) =
+    ECCO_procs.finalize_options(merge(ECCO_procs.default_options(plot_type), NamedTuple(kwargs)))
+
+getopt(o::NamedTuple,k::Symbol,default) = haskey(o,k) ? getproperty(o,k) : default
+
 import JLD2: load
 
 load(x::ECCOdiag; file="",variable="single_stored_object") = begin

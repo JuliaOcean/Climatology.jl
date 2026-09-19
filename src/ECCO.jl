@@ -1005,6 +1005,27 @@ end
 
 ##
 
+default_options(plot_type::Symbol) = default_options(Val(plot_type))
+default_options(::Val) = NamedTuple()  # unknown/unmigrated types degrade gracefully
+
+default_options(::Val{:ECCO_TimeLat}) = (
+    plot_type=:ECCO_TimeLat, select_method=0, period=(1992,2011),
+    level=1, ylims=(-90,90), colormap_factor=1, years_to_display=nothing,
+)
+
+default_options(::Val{:ECCO_TimeLatAnom}) =
+    merge(default_options(Val(:ECCO_TimeLat)), (plot_type=:ECCO_TimeLatAnom, select_method=1))
+
+function finalize_options(o::NamedTuple)
+    if haskey(o,:years_to_display) && isnothing(o.years_to_display) && haskey(o,:period)
+        (y0,y1)=o.period
+        o=merge(o,(years_to_display=(y0,y1+1),))
+    end
+    o
+end
+
+##
+
 function glo(pth_out,nam,k,year0,year1)
     nam_full=nam*(k>0 ? "_glo2d" : "_glo3d")
     tmp=load(ECCOdiag(path=pth_out,name=nam_full))
@@ -1075,62 +1096,69 @@ function TimeLat_parameters(namzm; anomaly=false)
     (fn=fn,levs=levs,nam=nam,cm=cm)
 end
 
-function TimeLat(namzm,pth_out,P; 
-        select_method=1, period=(1992,2011), ylims=(-90,90),
-        colormap_factor=1, level=1)
+function TimeLat(X::ECCOdiag)
+    o=X.options
+    nam=split(X.name,"_")[1]
+
+    select_method=o.select_method
+    (year0,year1)=o.period
+    level=o.level
+    ylims=o.ylims
+    colormap_factor=o.colormap_factor
+    years_to_display=o.years_to_display
+    P=o.P
+
     do_anom=(select_method>0)
-    meta=TimeLat_parameters(namzm,anomaly=do_anom)
-	tmp=load(ECCOdiag(path=pth_out,name=meta.nam))
+    meta=TimeLat_parameters(nam,anomaly=do_anom)
+    tmp=load(ECCOdiag(path=X.path,name=meta.nam))
 
-	if length(size(tmp))==3
-		z=meta.fn(tmp[:,level,:])
-		x=vec(0.5:size(tmp,3)); 
-		addon1=" -- at $(Int(round(P.Γ.RC[level])))m "
-	else
-		z=meta.fn(tmp[:,:])
-		x=vec(0.5:size(tmp,2)); 
-		addon1=""
-	end
+    if length(size(tmp))==3
+        z=meta.fn(tmp[:,level,:])
+        x=vec(0.5:size(tmp,3))
+        addon1=" -- at $(Int(round(P.Γ.RC[level])))m "
+    else
+        z=meta.fn(tmp[:,:])
+        x=vec(0.5:size(tmp,2))
+        addon1=""
+    end
 
-	dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-	nt=size(z,1)
+    dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+    nt=size(z,1)
 
-    (year0,year1)=period
-	m0=(1992-year0)*12
+    m0=(1992-year0)*12
     x=1992.0-m0/12.0 .+ x./12.0
     year1=Int(floor(year0+nt/12-1))
 
-	if select_method==0
+    if select_method==0
         ref1=""
-    elseif select_method==1 #subtract 1992-2011 monthly mean
-		ref1=" -- minus 1992-2011 monthy mean"
-		for m in 1:12
-			zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
-			[z[t,:]=z[t,:]-zmean for t in m:12:nt]
-		end
-	elseif select_method==2 #subtract 1992-2011 time mean
-		ref1=" -- minus 1992-2011 annual mean"
-		zmean=vec(mean(z[m0+1:m0+240,:],dims=1))
-		[z[t,:]=z[t,:]-zmean for t in 1:nt]
-    elseif select_method>2 #subtract GLM fit
+    elseif select_method==1
+        ref1=" -- minus 1992-2011 monthy mean"
+        for m in 1:12
+            zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
+            [z[t,:]=z[t,:]-zmean for t in m:12:nt]
+        end
+    elseif select_method==2
+        ref1=" -- minus 1992-2011 annual mean"
+        zmean=vec(mean(z[m0+1:m0+240,:],dims=1))
+        [z[t,:]=z[t,:]-zmean for t in 1:nt]
+    elseif select_method>2
         txt1=(select_method==4 ? " and trend" : "")
         ref1=" -- minus $(year0)-$(year1) cycle"*txt1
         tt=collect(x)
-        z1=0*tt
-        z2=0*tt
+        z1=0*tt; z2=0*tt
         for j in 1:size(z,2)
             z1.=fit_time_series(tt,z[:,j],order_season=3,order_poly=0)
             z2.=fit_time_series(tt,z[:,j],order_season=3,order_poly=1)
-            select_method==3 ? (z[:,j] .-= z1) : nothing
-            select_method==4 ? (z[:,j] .-= z2) : nothing
+            select_method==3 ? (z[:,j].-=z1) : nothing
+            select_method==4 ? (z[:,j].-=z2) : nothing
         end
-	end
+    end
 
-	ttl="$(longname(namzm))$(ref1)$(addon1)"
-
-    #ylims=(y[l0],y[l1])
+    ttl="$(longname(nam))$(ref1)$(addon1)"
     cl=colormap_factor*meta.levs
-	(x=x,y=y,z=z,levels=cl,title=ttl,ylims=ylims,year0=year0,year1=year1)
+
+    (x=x,y=y,z=z,levels=cl,title=ttl,ylims=ylims,
+     year0=year0,year1=year1,years_to_display=years_to_display)
 end
 
 fn_DepthTime(x)=transpose(x)	
