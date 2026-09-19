@@ -4,6 +4,8 @@ function plot(x::ECCOdiag)
 	if !isempty(x.options)
 		o=x.options
 		pt=string(o.plot_type)
+		println(x.name)
+		println(pt)
 		if pt=="ECCO_map"
 			ECCO_map(ECCO_procs.ECCO_map(x))			
 		elseif pt in ("ECCO_TimeLat","ECCO_TimeLatAnom")
@@ -12,12 +14,13 @@ function plot(x::ECCOdiag)
 			DepthTime(ECCO_procs.DepthTime(x))
 		elseif pt=="ECCO_GlobalMean"
 			glo(ECCO_procs.glo(x))
-		elseif x.name=="OHT"&&string(o.plot_type)=="ECCO_OHT1"
-			OHT(x.path)
+		elseif x.name=="OHT" && pt=="ECCO_OHT1"
+			OHT(x)
+		elseif x.name=="overturn" && pt=="ECCO_Overturn2"
+			figov2(x)
+
 		elseif x.name=="overturn"&&string(o.plot_type)=="ECCO_Overturn1"
 			figov1(x.path,o.kk,o.low1,o.year0,o.year1; years_to_display=o.years_to_display)
-		elseif x.name=="overturn"&&string(o.plot_type)=="ECCO_Overturn2"
-			figov2(x.path,o.grid)
 		elseif x.name=="trsp"&&string(o.plot_type)=="ECCO_Transports"
 			transport(o.namtrs,o.ncols,x.path,o.list_trsp,o.year0,o.year1,years_to_display=o.years_to_display)
 		else
@@ -106,22 +109,23 @@ function figov1(pth_out,kk,low1,year0,year1;years_to_display=years_to_display)
 	fig1
 end
 
-function figov2(pth_out,Γ; ClipToRange=true)
-	tmp=-1e-6*load(ECCOdiag(path=pth_out,name="overturn"))
-	ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
+# Makie ext
+OHT(X::ECCOdiag) = OHT(X.path)   # unchanged body
 
-	x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1])); #coordinate variables
-	z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
-
-	levs=(-40.0:5.0:40.0)
-	ClipToRange ? to_range!(z,levs) : nothing
-
-	fig1 = Figure(size = (900,400),markersize=0.1)
-	ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, time mean)",
-			xlabel="latitude",ylabel="depth (in m)")
-	hm1=contourf!(ax1,x,y,z,levels=levs)
-	Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-	fig1
+function figov2(X::ECCOdiag; ClipToRange=true)
+    Γ=X.options.grid
+    tmp=-1e-6*load(ECCOdiag(path=X.path,name=X.name))
+    ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
+    x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1]))
+    z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
+    levs=(-40.0:5.0:40.0)
+    ClipToRange ? to_range!(z,levs) : nothing
+    fig1 = Figure(size = (900,400),markersize=0.1)
+    ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, time mean)",
+            xlabel="latitude",ylabel="depth (in m)")
+    hm1=contourf!(ax1,x,y,z,levels=levs)
+    Colorbar(fig1[1,2], hm1, height = Relative(0.65))
+    fig1
 end
 
 function OHT(pth_out)
