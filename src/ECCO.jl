@@ -1075,15 +1075,17 @@ function TimeLat_parameters(namzm; anomaly=false)
     (fn=fn,levs=levs,nam=nam,cm=cm)
 end
 
-function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,l0,l1,P; select_method=1)
+function TimeLat(namzm,pth_out,P; 
+        select_method=1, period=(1992,2011), ylims=(-90,90),
+        colormap_factor=1, level=1)
     do_anom=(select_method>0)
     meta=TimeLat_parameters(namzm,anomaly=do_anom)
 	tmp=load(ECCOdiag(path=pth_out,name=meta.nam))
 
 	if length(size(tmp))==3
-		z=meta.fn(tmp[:,k_zm,:])
+		z=meta.fn(tmp[:,level,:])
 		x=vec(0.5:size(tmp,3)); 
-		addon1=" -- at $(Int(round(P.Γ.RC[k_zm])))m "
+		addon1=" -- at $(Int(round(P.Γ.RC[level])))m "
 	else
 		z=meta.fn(tmp[:,:])
 		x=vec(0.5:size(tmp,2)); 
@@ -1093,6 +1095,7 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,l0,l1,P; select_method=
 	dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
 	nt=size(z,1)
 
+    (year0,year1)=period
 	m0=(1992-year0)*12
     x=1992.0-m0/12.0 .+ x./12.0
     year1=Int(floor(year0+nt/12-1))
@@ -1125,7 +1128,9 @@ function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,l0,l1,P; select_method=
 
 	ttl="$(longname(namzm))$(ref1)$(addon1)"
 
-	(x=x,y=y,z=z,levels=cmap_fac*meta.levs,title=ttl,ylims=(y[l0],y[l1]),year0=year0,year1=year1)
+    #ylims=(y[l0],y[l1])
+    cl=colormap_factor*meta.levs
+	(x=x,y=y,z=z,levels=cl,title=ttl,ylims=ylims,year0=year0,year1=year1)
 end
 
 fn_DepthTime(x)=transpose(x)	
