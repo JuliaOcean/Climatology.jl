@@ -4,8 +4,6 @@ function plot(x::ECCOdiag)
 	if !isempty(x.options)
 		o=x.options
 		pt=string(o.plot_type)
-		println(x.name)
-		println(pt)
 		if pt=="ECCO_map"
 			ECCO_map(ECCO_procs.ECCO_map(x))			
 		elseif pt in ("ECCO_TimeLat","ECCO_TimeLatAnom")

@@ -90,7 +90,7 @@ function TimeLat(X::SSTdiag)
     levs = (-2.0:0.25:2.0)/5.0
 
     clip_to_range ? to_range!(z,levs) : nothing
-    fig1 = Figure(resolution = (900,400),markersize=0.1)
+    fig1 = Figure(size = (900,400),markersize=0.1)
     ax1 = Axis(fig1[1,1], title=title_or(X,"OISST anomaly"),
         xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
     hm1 = contourf!(ax1,x[1:7:end],y,z[1:7:end,:],levels=levs,colormap=:curl)
