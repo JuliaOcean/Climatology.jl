@@ -7,10 +7,17 @@ function plot(x::ECCOdiag)
 			map(ECCO_procs.map(o.nammap,o.P,o.statmap,o.timemap,x.path))
 		elseif string(o.plot_type)=="ECCO_TimeLat"
 			nam=split(x.name,"_")[1]
-			TimeLat(ECCO_procs.TimeLat(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.P); years_to_display=o.years_to_display)
+			TimeLat(ECCO_procs.TimeLat(nam,x.path,o.P,
+			 	select_method=0,period=(o.year0,o.year1),level=o.k, 
+				ylims=(o.l0,o.l1),colormap_factor=o.cmap_fac),
+				years_to_display=o.years_to_display)
 		elseif string(o.plot_type)=="ECCO_TimeLatAnom"
 			nam=split(x.name,"_")[1]
-			TimeLat(ECCO_procs.TimeLatAnom(nam,x.path,o.year0,o.year1,o.cmap_fac,o.k,o.l0,o.l1,o.P); years_to_display=o.years_to_display)
+			select_method=(haskey(o,:select_method) ? o.select_method : 1)
+			TimeLat(ECCO_procs.TimeLat(nam,x.path,o.P,		
+				select_method=select_method,period=(o.year0,o.year1),level=o.k, 
+				ylims=(o.l0,o.l1),colormap_factor=o.cmap_fac),
+				years_to_display=o.years_to_display)
 		elseif string(o.plot_type)=="ECCO_DepthTime"
 			nam=split(x.name,"_")[1]
 			DepthTime(ECCO_procs.DepthTime(nam,x.path,o.facA,o.l,o.year0,o.year1,o.k0,o.k1,o.P); years_to_display=o.years_to_display)

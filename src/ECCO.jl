@@ -40,8 +40,15 @@ function standard_analysis_setup(pth0="",sol0="")
 
     !isdir(pth1) ? mkdir(pth1) : nothing
 	link0=joinpath(pth1,"diags")
-	!isfile(link0)&& !islink(link0)&& !isempty(pth0) ? symlink(pth0,link0) : nothing
-	
+	if !isfile(link0)&& !islink(link0)&& !isempty(pth0)
+        @info "linking $(pth0)"
+        @info "to $(link0)"
+        symlink(pth0,link0)
+    else
+        @warn "not linking due to conflict :"
+        @info "$(link0)"
+    end
+    
 	#2. copy Project.toml to run folder
 	tmp0=pkg_pth
 	tmp1=joinpath(tmp0,"..","examples","ECCO","ECCO_standard_Project.toml")
@@ -469,9 +476,11 @@ function read_monthly_default(P,nam,t)
                 tmp=read_nctiles_alias(nct_path,nam,γ,I=(:,:,t))
             end
         catch
-            error("failed: call to `read_nctiles`
-            This method is provided by `MITgcm.jl`
-            and now activated by `using MITgcm` ")
+            @warn "The following filefolder may be missing."
+            @info nct_path
+            @warn "Method read_nctiles requires external dependencies"
+            @info "try with `import NCDatasets, MITgcm, NetCDF`"
+            error("read_nctiles call failed")
         end
     elseif (sol=="ECCOv4r4_analysis")
         y0=Int(floor((t-1)/12))+1992
@@ -1037,79 +1046,48 @@ function map(nammap,P,statmap,timemap,pth_out)
 	(λ=P.λ,field=DD,levels=levs,title=ttl)
 end
 
-function TimeLat(namzm,pth_out,year0,year1,cmap_fac,k_zm,P)
-	fn(x)=transpose(x);
+function TimeLat_parameters(namzm; anomaly=false)
 	if namzm=="MXLDEPTH"
-		levs=(0.0:50.0:400.0); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		levs=anomaly ? (-100.0:25.0:100.0)/2.0 : (0.0:50.0:400.0)
+        fn=transpose; cm=:turbo
 		nam=namzm*"_zonmean2d"
 	elseif namzm=="SIarea"
-		levs=(0.0:0.1:1.0); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		levs=anomaly ? (-0.5:0.1:0.5)/5.0 : (0.0:0.1:1.0)
+        fn=transpose; cm=:turbo
 		nam=namzm*"_zonmean2d"
 	elseif namzm=="THETA"
-		levs=(-2.0:2.0:34.0); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		levs=anomaly ? (-2.0:0.25:2.0)/5.0 : (-2.0:2.0:34.0)
+        fn=transpose; cm=:turbo
 		nam=namzm*"_zonmean"
 	elseif namzm=="SALT"
-		levs=(32.6:0.2:36.2); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
+		levs=anomaly ? (-0.5:0.1:0.5)/5.0 : (32.6:0.2:36.2)
+        fn=transpose; cm=:turbo
 		nam=namzm*"_zonmean"
 	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=10*(-0.15:0.02:0.15); cm=:turbo
-		dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
-		nam=namzm*"_zonmean2d"
-	else
-		levs=missing
-        nam="missing"
-	end
-
-	tmp=load(ECCOdiag(path=pth_out,name=nam))
-	if length(size(tmp))==3
-		z=fn(tmp[:,k_zm,:])
-		x=vec(0.5:size(tmp,3))
-		addon1=" at $(Int(round(P.Γ.RC[k_zm])))m "
-	else
-		z=fn(tmp[:,:])
-		x=vec(0.5:size(tmp,2))
-		addon1=""
-	end
-
-	x=year0 .+ x./12.0
-	ttl="$(longname(namzm)) : Zonal Mean $(addon1)"
-	(x=x,y=y,z=z,levels=cmap_fac*levs,title=ttl,ylims=(-90.0,90.0),year0=year0,year1=year1)
-end
-
-function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
-	namzm=namzmanom2d
-	if namzm=="MXLDEPTH"
-		levs=(-100.0:25.0:100.0)/2.0; fn=transpose; cm=:turbo
-		nam=namzm*"_zonmean2d"
-	elseif namzm=="SIarea"
-		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		nam=namzm*"_zonmean2d"
-	elseif namzm=="THETA"
-		levs=(-2.0:0.25:2.0)/5.0; fn=transpose; cm=:turbo
-		nam=namzm*"_zonmean"
-	elseif namzm=="SALT"
-		levs=(-0.5:0.1:0.5)/5.0; fn=transpose; cm=:turbo
-		nam=namzm*"_zonmean"
-	elseif (namzm=="ETAN")||(namzm=="SSH")
-		levs=(-0.5:0.1:0.5)/2.0; fn=transpose; cm=:turbo
+		levs=anomaly ? (-0.5:0.1:0.5)/2.0 : 10*(-0.15:0.02:0.15)
+        fn=transpose; cm=:turbo
         nam=namzm*"_zonmean2d"
     else
 		fn=transpose
 		levs=missing
         nam="missing"
     end
+    (fn=fn,levs=levs,nam=nam,cm=cm)
+end
 
-	tmp=load(ECCOdiag(path=pth_out,name=nam))
+function TimeLat(namzm,pth_out,P; 
+        select_method=1, period=(1992,2011), ylims=(-90,90),
+        colormap_factor=1, level=1)
+    do_anom=(select_method>0)
+    meta=TimeLat_parameters(namzm,anomaly=do_anom)
+	tmp=load(ECCOdiag(path=pth_out,name=meta.nam))
+
 	if length(size(tmp))==3
-		z=fn(tmp[:,k_zm2d,:])
+		z=meta.fn(tmp[:,level,:])
 		x=vec(0.5:size(tmp,3)); 
-		addon1=" -- at $(Int(round(P.Γ.RC[k_zm2d])))m "
+		addon1=" -- at $(Int(round(P.Γ.RC[level])))m "
 	else
-		z=fn(tmp[:,:])
+		z=meta.fn(tmp[:,:])
 		x=vec(0.5:size(tmp,2)); 
 		addon1=""
 	end
@@ -1117,26 +1095,42 @@ function TimeLatAnom(namzmanom2d,pth_out,year0,year1,cmap_fac,k_zm2d,l0,l1,P)
 	dlat=2.0; y=vec(-90+dlat/2:dlat:90-dlat/2)
 	nt=size(z,1)
 
+    (year0,year1)=period
 	m0=(1992-year0)*12
-	
-	if true
-		#a. subtract monthly mean
-		ref1="1992-2011 monthy mean"
+    x=1992.0-m0/12.0 .+ x./12.0
+    year1=Int(floor(year0+nt/12-1))
+
+	if select_method==0
+        ref1=""
+    elseif select_method==1 #subtract 1992-2011 monthly mean
+		ref1=" -- minus 1992-2011 monthy mean"
 		for m in 1:12
 			zmean=vec(mean(z[m0+m:12:m0+240,:],dims=1))
 			[z[t,:]=z[t,:]-zmean for t in m:12:nt]
 		end
-	else
-		#b. subtract time mean
-		ref1="1992-2011 annual mean"
+	elseif select_method==2 #subtract 1992-2011 time mean
+		ref1=" -- minus 1992-2011 annual mean"
 		zmean=vec(mean(z[m0+1:m0+240,:],dims=1))
 		[z[t,:]=z[t,:]-zmean for t in 1:nt]
+    elseif select_method>2 #subtract GLM fit
+        txt1=(select_method==4 ? " and trend" : "")
+        ref1=" -- minus $(year0)-$(year1) cycle"*txt1
+        tt=collect(x)
+        z1=0*tt
+        z2=0*tt
+        for j in 1:size(z,2)
+            z1.=fit_time_series(tt,z[:,j],order_season=3,order_poly=0)
+            z2.=fit_time_series(tt,z[:,j],order_season=3,order_poly=1)
+            select_method==3 ? (z[:,j] .-= z1) : nothing
+            select_method==4 ? (z[:,j] .-= z2) : nothing
+        end
 	end
 
-	x=1992.0-m0/12.0 .+ x./12.0
-	ttl="$(longname(namzm)) -- minus $(ref1) $(addon1)"
+	ttl="$(longname(namzm))$(ref1)$(addon1)"
 
-	(x=x,y=y,z=z,levels=cmap_fac*levs,title=ttl,ylims=(y[l0],y[l1]),year0=year0,year1=year1)
+    #ylims=(y[l0],y[l1])
+    cl=colormap_factor*meta.levs
+	(x=x,y=y,z=z,levels=cl,title=ttl,ylims=ylims,year0=year0,year1=year1)
 end
 
 fn_DepthTime(x)=transpose(x)	
