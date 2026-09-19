@@ -192,11 +192,12 @@ end
     plot(ECCOdiag(path=pth_out,name="tbd",options=
         (plot_type=:ECCO_map,nammap=nammap,P=P,statmap=statmap,timemap=timemap)))
     
+    l0=1; l1=90
+
     plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
         (plot_type=:ECCO_TimeLat,year0=year0,year1=year1,cmap_fac=1.0,
-        k=1,P=P,years_to_display=[year0 year1+1])))
+        k=1,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1])))
 
-    l0=1; l1=90
     plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
         (plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=1.0,
         k=1,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1])))

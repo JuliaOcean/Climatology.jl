@@ -37,6 +37,9 @@ import Climatology: read_nctiles_alias
 using Statistics, MeshArrays
 using Dataverse, DataDeps, Glob
 
+## to disable downloads and related API calls
+_SKIP_DOWNLOADS = parse(Bool,get(ENV, "SKIP_DOWNLOADS", "false"))
+
 ## Dataverse Donwloads
 
 """
@@ -66,6 +69,7 @@ end
 Download ECCO output for variable `v` to scratch space if needed
 """
 function get_ecco_variable_if_needed(v::String)
+if !_SKIP_DOWNLOADS
     lst=Dataverse.file_list("doi:10.7910/DVN/3HPRZI")
 
     fil=joinpath(ScratchSpaces.ECCO,v,v*".0001.nc")
@@ -75,6 +79,9 @@ function get_ecco_variable_if_needed(v::String)
         !isdir(pth1) ? mkdir(pth1) : nothing
         [Dataverse.file_download(lst,v,pth1) for v in lst.filename[lst1]]
     end
+else
+    @warn "skipping since ENV SKIP_DOWNLOADS is true"
+end
 end
 
 """
@@ -94,9 +101,13 @@ end
 Download OCCA output for variable `v` to scratch space if needed
 """
 function get_occa_variable_if_needed(v::String)
+if !_SKIP_DOWNLOADS
     lst=Dataverse.file_list("doi:10.7910/DVN/RNXA2A")
     fil=joinpath(ScratchSpaces.OCCA,v*".0406clim.nc")
     !isfile(fil) ? Dataverse.file_download(lst,v,ScratchSpaces.OCCA) : nothing
+else
+    @warn "skipping since ENV SKIP_DOWNLOADS is true"
+end
 end
 
 """
