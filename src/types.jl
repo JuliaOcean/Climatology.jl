@@ -3,9 +3,6 @@
 
 abstract type AbstractClimateDiagnostic <: Any end
 
-default_options(plot_type::Symbol) = default_options(Val(plot_type))
-default_options(::Val{T}) where T = (plot_type=T,)
-
 ##
 
 Base.@kwdef struct ECCOdiag <: AbstractClimateDiagnostic
@@ -17,8 +14,10 @@ end
 
 ###
 
-default_options(::Val{T}) where T = (plot_type=T, period=(1982,2024))
+default_options(plot_type::Symbol) = default_options(Val(plot_type))
+default_options(::Val{T}) where T = (plot_type=T,)
 
+## SSTdiag
 default_options(::Val{:by_year})          = (plot_type=:by_year,)
 default_options(::Val{:by_time})          = (plot_type=:by_time, period=(1982,2024), show_anom=true, show_clim=true)
 default_options(::Val{:MHW})              = (plot_type=:MHW, period=(1982,2024))
@@ -27,20 +26,21 @@ default_options(::Val{:map_base})         = (plot_type=:map_base,)
 default_options(::Val{:map})              = (plot_type=:map,)
 default_options(::Val{:TimeLat})          = (plot_type=:TimeLat, period=(1982,2024), ylims=(-90,90), clip_to_range=true)
 
+##ECCOdiag
 default_options(::Val{:ECCO_TimeLat}) = (
     plot_type=:ECCO_TimeLat, select_method=0, period=(1992,2011),
     level=1, ylims=(-90,90), colormap_factor=1, years_to_display=nothing,
 )
 default_options(::Val{:ECCO_TimeLatAnom}) =
     merge(default_options(Val(:ECCO_TimeLat)), (plot_type=:ECCO_TimeLatAnom, select_method=1))
-default_options(::Val{:ECCO_Overturn2}) = (plot_type=:ECCO_Overturn2,)
 default_options(::Val{:ECCO_GlobalMean}) = (plot_type=:ECCO_GlobalMean, level=0, period=(1992,2011), years_to_display=nothing)
 default_options(::Val{:ECCO_map}) = (plot_type=:ECCO_map, statistic="mean", time=1)
 default_options(::Val{:ECCO_DepthTime}) = (
     plot_type=:ECCO_DepthTime, period=(1992,2011), factor=1,
     level=1, klims=(1,50), years_to_display=nothing,
 )
-default_options(::Val{:ECCO_OHT1}) = (plot_type=:ECCO_OHT1,)
+default_options(::Val{:ECCO_OHT1}) = (plot_type=:ECCO_OHT1, period=(1992,2011), years_to_display=nothing)
+default_options(::Val{:ECCO_Overturn2}) = (plot_type=:ECCO_Overturn2, period=(1992,2011), years_to_display=nothing)
 default_options(::Val{:ECCO_Overturn1}) = (plot_type=:ECCO_Overturn1, level=1, low1="auto", period=(1992,2011), years_to_display=nothing)
 default_options(::Val{:ECCO_Transports}) = (plot_type=:ECCO_Transports, ncols=1, period=(1992,2011), years_to_display=nothing)
 
@@ -59,6 +59,12 @@ setopt(plot_type::Symbol; kwargs...) =
     finalize_options(merge(default_options(plot_type), NamedTuple(kwargs)))
 
 getopt(o::NamedTuple,k::Symbol,default) = haskey(o,k) ? getproperty(o,k) : default
+
+function year_range(o::NamedTuple)
+    (year0,year1)=o.period
+    yd=getopt(o,:years_to_display,nothing)
+    isnothing(yd) ? (year0,year1+1) : yd
+end
 
 import JLD2: load
 

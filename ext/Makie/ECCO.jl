@@ -1,4 +1,5 @@
 
+import Climatology: year_range
 
 function plot(x::ECCOdiag)
 	if !isempty(x.options)
@@ -113,37 +114,47 @@ function figov1(X::ECCOdiag)
     fig1
 end
 
-# Makie ext
-OHT(X::ECCOdiag) = OHT(X.path)   # unchanged body
-
 function figov2(X::ECCOdiag; ClipToRange=true)
-    Γ=X.options.grid
+    o=X.options
+    Γ=o.grid
+    (year0,year1)=o.period
+    (Y0,Y1)=year_range(o)
+    i0=Int(round((Y0-year0)*12+1))
+    i1=Int(round((Y1-year0)*12))
+
     tmp=-1e-6*load(ECCOdiag(path=X.path,name=X.name))
-    ovmean=dropdims(mean(tmp[:,:,1:240],dims=3),dims=3)
+    ovmean=dropdims(mean(tmp[:,:,i0:i1],dims=3),dims=3)
     x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1]))
     z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
     levs=(-40.0:5.0:40.0)
     ClipToRange ? to_range!(z,levs) : nothing
     fig1 = Figure(size = (900,400),markersize=0.1)
-    ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, time mean)",
+    ax1 = Axis(fig1[1,1], title="Meridional Overturning Streamfunction (in Sv, $(Y0)-$(Y1-1) mean)",
             xlabel="latitude",ylabel="depth (in m)")
     hm1=contourf!(ax1,x,y,z,levels=levs)
     Colorbar(fig1[1,2], hm1, height = Relative(0.65))
     fig1
 end
 
-function OHT(pth_out)
-	tmp=load(ECCOdiag(path=pth_out,name="MHT"))
-	MT=vec(mean(tmp[:,1:240],dims=2))
+function OHT(X::ECCOdiag)
+    o=X.options
+    (year0,year1)=o.period
+    (Y0,Y1)=year_range(o)
+    i0=Int(round((Y0-year0)*12+1))
+    i1=Int(round((Y1-year0)*12))
+    pth_out=X.path
 
-	x=vec(-89.0:89.0)
-	fig1 = Figure(size = (900,400),markersize=0.1)
-	ax1 = Axis(fig1[1,1], title="Northward Heat Transport (in PW, time mean)",
-		xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
-		xlabel="latitude",ylabel="Transport (in PW)")
-	hm1=lines!(x,MT)
-	ylims!(ax1,(-2.0,2.0))
-	fig1
+    tmp=load(ECCOdiag(path=pth_out,name="MHT"))
+    MT=vec(mean(tmp[:,i0:i1],dims=2))
+
+    x=vec(-89.0:89.0)
+    fig1 = Figure(size = (900,400),markersize=0.1)
+    ax1 = Axis(fig1[1,1], title="Northward Heat Transport (in PW, $(Y0)-$(Y1-1) mean)",
+        xticks=(-90.0:10.0:90.0),yticks=(-2.0:0.25:2.0),
+        xlabel="latitude",ylabel="Transport (in PW)")
+    lines!(x,MT)
+    ylims!(ax1,(-2.0,2.0))
+    fig1
 end
 
 """
