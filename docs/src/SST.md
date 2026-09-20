@@ -30,3 +30,10 @@ Modules = [Climatology.SST_FILES,SST_processing,SST_coarse_grain,SST_timeseries,
 ```@autodocs
 Modules = [ClimatologyMakieExt.SST_plots,ClimatologyMakieExt.ERA5_plot]
 ```
+
+## Surface Fluxes (ERA5)
+
+```@autodocs
+Modules = [Climatology.ERA5]
+```
+

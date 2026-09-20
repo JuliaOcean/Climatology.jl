@@ -6,6 +6,9 @@ The workflow presented here is as follows.
 
 ```@docs
 ECCO.standard_analysis_setup
+ECCO.diagnostics_set1
+ECCO.diagnostics_set2
+ECCO.diagnostics_set3
 ```
 
 Here is an example of parameters `P` to compute zonal mean temperatures at level 5.
