@@ -51,6 +51,17 @@ import Climatology: read_bulk_formulae, SurfaceFluxDiag
 #"pres","rain","d2m",
 #"u10m","v10m",
 #"ustr","vstr",
+
+"""
+    ERA5_plot.plot_bulk_formulae(df::DataFrame)
+    ERA5_plot.plot_bulk_formulae(fil::String)
+
+Plot a stacked column of time series for `["dlw","dsw","hl","hs","qnet"]`
+from bulk-formula output `df` (one panel per variable, in that order).
+
+The `String` method is a convenience wrapper: it loads `df` from file
+`fil` via `read_bulk_formulae`, then delegates to the `DataFrame` method.
+"""
 function plot_bulk_formulae(df)
     fig=Figure(size=(600,900))
     lst=["dlw","dsw","hl","hs","qnet"]
@@ -114,6 +125,25 @@ function plot_surface_balance(df,tim,sst)
 	fig
 end
 
+"""
+    ERA5_plot.plot_Qnet_cumsum(df, tim, sst)
+
+Plot the normalized cumulative sum of the net surface heat flux anomaly,
+as a single-panel diagnostic of persistent warming/cooling bias over the
+record.
+
+Computed as:
+
+```julia
+z = rnmn(df.qnet, 24)             # 24-hour rolling mean of Qnet
+z = cumsum(z .- mean(z))          # cumulative sum of the mean-removed series
+z = z ./ sqrt(mean(z.^2))         # normalized to unit RMS ("non-dimensional")
+```
+
+A steadily increasing or decreasing trend indicates a persistent net
+warming or cooling bias in df.qnet over the plotted period, rather than
+noise around zero.
+"""
 function plot_Qnet_cumsum(df,tim,sst)
     fig=Figure(size=(500,300),fontsize=11)
 	ax=Axis(fig[1,1],title="cumulated(Qnet')",xlabel="day since Jan. 1",ylabel="non-dimensional")

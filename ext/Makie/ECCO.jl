@@ -9,26 +9,26 @@ Render the Makie figure appropriate for `x.options.plot_type`.
 Dispatches on `x.options.plot_type` (a `Symbol`, see [`default_options`](@ref)),
 combined for a few plot types with `x.name`:
 
-| `plot_type`          | requires `x.name ==` | renders via                                  |
-|:----------------------|:-----------------------|:-----------------------------------------------|
-| `:ECCO_map`            |                         | [`ECCO_map`](@ref) applied to `ECCO_procs.ECCO_map(x)` |
-| `:ECCO_TimeLat`        |                         | [`TimeLat`](@ref) applied to `ECCO_procs.TimeLat(x)`   |
-| `:ECCO_TimeLatAnom`    |                         | [`TimeLat`](@ref) applied to `ECCO_procs.TimeLat(x)`   |
-| `:ECCO_DepthTime`      |                         | [`DepthTime`](@ref) applied to `ECCO_procs.DepthTime(x)` |
-| `:ECCO_GlobalMean`     |                         | [`glo`](@ref) applied to `ECCO_procs.glo(x)`           |
-| `:ECCO_OHT1`           | `"OHT"`                 | [`OHT`](@ref)                                  |
-| `:ECCO_Overturn2`      | `"overturn"`            | [`figov2`](@ref)                               |
-| `:ECCO_Overturn1`      | `"overturn"`            | [`figov1`](@ref)                               |
-| `:ECCO_Transports`     | `"trsp"`                | [`transport`](@ref)                            |
+| `plot_type`          | requires `x.name ==` | renders via                                              |
+|:----------------------|:-----------------------|:-------------------------------------------------------------|
+| `:ECCO_map`            |                         | [`ECCO_map`](@ref) applied to `ECCO_procs.ECCO_map(x)`        |
+| `:ECCO_TimeLat`        |                         | [`TimeLat`](@ref) applied to `ECCO_procs.TimeLat(x)`          |
+| `:ECCO_TimeLatAnom`    |                         | [`TimeLat`](@ref) applied to `ECCO_procs.TimeLat(x)`          |
+| `:ECCO_DepthTime`      |                         | [`DepthTime`](@ref) applied to `ECCO_procs.DepthTime(x)`      |
+| `:ECCO_GlobalMean`     |                         | [`glo`](@ref) applied to `ECCO_procs.glo(x)`                  |
+| `:ECCO_OHT1`           | `"OHT"`                 | [`OHT`](@ref)                                                 |
+| `:ECCO_Overturn2`      | `"overturn"`            | [`OverturnStreamfunction`](@ref) (formerly `figov2`)          |
+| `:ECCO_Overturn1`      | `"overturn"`            | [`OverturnTimeseries`](@ref) (formerly `figov1`)              |
+| `:ECCO_Transports`     | `"trsp"`                | [`transport`](@ref)                                           |
 
 For the first five rows, `x` (an `ECCOdiag`) is first passed through the
 same-named function in `ECCO_procs` to compute a plain `NamedTuple` of plot
 data, which is then rendered by the like-named method in this extension —
 i.e. `ECCO_map`/`TimeLat`/`DepthTime`/`glo` each name *two* functions
 (one data-producing, in `ECCO_procs`; one figure-producing, here). The
-remaining plot types (`OHT`, `figov1`, `figov2`, `transport`) instead read
-and process data directly from `x.path`/`x.name`, without a separate
-`ECCO_procs` precompute step.
+remaining plot types (`OHT`, `OverturnTimeseries`, `OverturnStreamfunction`,
+`transport`) instead read and process data directly from `x.path`/`x.name`,
+without a separate `ECCO_procs` precompute step.
 
 Prints `"unknown option (a)"` if `x.options` is empty, or
 `"unknown option (b)"` if `plot_type`/`name` match none of the cases
@@ -49,9 +49,9 @@ function plot(x::ECCOdiag)
 		elseif x.name=="OHT" && pt=="ECCO_OHT1"
 			OHT(x)
 		elseif x.name=="overturn" && pt=="ECCO_Overturn2"
-			figov2(x)
+			OverturnStreamfunction(x)
 		elseif x.name=="overturn" && pt=="ECCO_Overturn1"
-			figov1(x)
+			OverturnTimeseries(x)
 		elseif x.name=="trsp" && pt=="ECCO_Transports"
 			transport(x)
 		else
@@ -64,15 +64,42 @@ end
 
 ##
 
-to_range!(DD,levs::Tuple) = to_range!(DD,range(levs[1],levs[2],length=10))
-
-function to_range!(DD,levs)
-	DD[findall(DD.<=levs[1])].=levs[1]+(levs[2]-levs[1])/100
-	DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
-end
-
 #	years_to_display=(1960,2023)
 years_to_display=(1980,2024)
+
+"""
+    time_average_indices(o::NamedTuple, nt::Int)
+
+Compute the clamped `(i0,i1)` month-index range to average over, given
+options `o` (using `o.period` and [`year_range`](@ref)) and the actual
+number of time records `nt` available in the loaded data.
+
+```julia
+(year0,year1) = o.period
+(Y0,Y1) = year_range(o)
+i0 = Int(round((Y0-year0)*12+1))
+i1 = Int(round((Y1-year0)*12))
+```
+
+`i0` and `i1` are clamped to `1:nt` (rather than left to error via
+`BoundsError`) so that a `years_to_display`/`period` window extending
+past the end (or before the start) of the loaded record silently
+truncates to the available data instead of failing. A warning is emitted
+via `@warn` when clamping actually occurs, to surface a likely
+mismatched-window mistake without hard-failing the plot.
+"""
+function time_average_indices(o::NamedTuple, nt::Int)
+    (year0,year1) = o.period
+    (Y0,Y1) = year_range(o)
+    i0 = Int(round((Y0-year0)*12+1))
+    i1 = Int(round((Y1-year0)*12))
+    if i0 < 1 || i1 > nt
+        @warn "requested averaging window ($Y0,$Y1) exceeds available data range; clamping"
+    end
+    (max(i0,1), min(i1,nt))
+end
+
+##
 
 function axtr1(ax,namtr,pth_out,list_trsp,year0,year1;years_to_display=years_to_display)
 	itr=findall(list_trsp.==namtr)[1]
@@ -95,6 +122,21 @@ function axtr1(ax,namtr,pth_out,list_trsp,year0,year1;years_to_display=years_to_
 	xlims!(ax,years_to_display)
 end
 
+"""
+    transport(X::ECCOdiag)
+
+Plot 12-month running-mean volume transport (in Sv) time series, one
+panel per named section in `X.options.namtrs`.
+
+Reads from `X.options`: `namtrs` (section names to plot, matched against
+`list_trsp`), `ncols` (panels per row), `list_trsp` (full list of section
+names as stored in the `"trsp"` data file), and `period` (a `(year0,year1)`
+tuple used for tick spacing). The plotted x-axis range is
+`years_to_display = year_range(X.options)`.
+
+Each panel is rendered by the internal helper `axtr1`, which loads and
+converts the corresponding section's transport from `X.path`.
+"""
 function transport(X::ECCOdiag)
     o=X.options
     namtrs=o.namtrs
@@ -117,7 +159,7 @@ function transport(X::ECCOdiag)
 end
 
 """
-    figov1(X::ECCOdiag)
+    OverturnTimeseries(X::ECCOdiag)
 
 Plot 12-month running-mean overturning transport (in Sv) time series at a
 fixed depth level, for a fixed set of latitudes.
@@ -132,10 +174,10 @@ the fixed `(5,20)` Sv range).
 
 The x-axis is set to `years_to_display = year_range(X.options)`, which
 for this plot type is a genuine axis range (contrast with [`OHT`](@ref)
-and [`figov2`](@ref), where the same accessor instead selects a
+and [`OverturnStreamfunction`](@ref), where the same accessor instead selects a
 time-averaging window).
 """
-function figov1(X::ECCOdiag)
+function OverturnTimeseries(X::ECCOdiag)
     o=X.options
     level=o.level
     low1=o.low1
@@ -167,13 +209,13 @@ function figov1(X::ECCOdiag)
 end
 
 """
-    figov2(X::ECCOdiag; ClipToRange=true)
+    OverturnStreamfunction(X::ECCOdiag; ClipToRange=true)
 
 Plot the time-averaged meridional overturning streamfunction (in Sv) as a
 filled contour over latitude and depth.
 
 Like [`OHT`](@ref), and unlike the `ECCO_procs`-mediated plot types,
-`figov2` takes `X` directly (`X.options.plot_type == :ECCO_Overturn2`,
+`OverturnStreamfunction` takes `X` directly (`X.options.plot_type == :ECCO_Overturn2`,
 `X.name == "overturn"`), loading `X.name` data from `X.path` and
 computing the time average inline over month indices `i0:i1` derived from
 `year_range(X.options)` relative to `X.options.period` (see [`OHT`](@ref)
@@ -188,15 +230,14 @@ When `ClipToRange` is `true` (default), the time-averaged field is
 clipped to the fixed contour levels `-40:5:40` Sv via `to_range!` before
 contouring.
 """
-function figov2(X::ECCOdiag; ClipToRange=true)
+function OverturnStreamfunction(X::ECCOdiag; ClipToRange=true)
     o=X.options
     Γ=o.grid
     (year0,year1)=o.period
     (Y0,Y1)=year_range(o)
-    i0=Int(round((Y0-year0)*12+1))
-    i1=Int(round((Y1-year0)*12))
 
     tmp=-1e-6*load(ECCOdiag(path=X.path,name=X.name))
+    i0,i1=time_average_indices(o,size(tmp,3))
     ovmean=dropdims(mean(tmp[:,:,i0:i1],dims=3),dims=3)
     x=vec(-89.0:89.0); y=reverse(vec(Γ.RF[1:end-1]))
     z=reverse(ovmean,dims=2); z[z.==0.0].=NaN
@@ -239,11 +280,10 @@ function OHT(X::ECCOdiag)
     o=X.options
     (year0,year1)=o.period
     (Y0,Y1)=year_range(o)
-    i0=Int(round((Y0-year0)*12+1))
-    i1=Int(round((Y1-year0)*12))
     pth_out=X.path
 
     tmp=load(ECCOdiag(path=pth_out,name="MHT"))
+    i0,i1=time_average_indices(o,size(tmp,2))
     MT=vec(mean(tmp[:,i0:i1],dims=2))
 
     x=vec(-89.0:89.0)

@@ -51,6 +51,7 @@ import Climatology: MeshArrays, DataDeps
 import Statistics: median
 
 import Climatology: getopt
+import ClimatologyMakieExt: to_range!
 
 # unified title resolution: explicit SSTdiag.name wins, else caller-supplied default
 title_or(X::SSTdiag, default::AbstractString="") =
@@ -93,6 +94,23 @@ function by_time(X::SSTdiag)
     f
 end
 
+"""
+    SST_plots.by_year(X::SSTdiag)
+
+Plot the SST time series `X.options.timeseries.sst` as one overlaid line
+per calendar year, from 1982 through the most recent full year, using a
+fixed 365-day-per-year assumption (leap days are not separately handled).
+
+Color coding is hardcoded by year:
+- 1982–2020: gray
+- 2021–2022: blue
+- 2023: orange
+- 2024 onward: red (linewidth doubled)
+
+These year cutoffs are literal constants in the function body and will
+need updating in future years to keep highlighting the most recent data;
+they do not derive from `X.options` or the current date.
+"""
 function by_year(X::SSTdiag)
     ts = X.options.timeseries
     f,a,l = lines(ts.sst[1:365],color=:gray)
@@ -107,11 +125,6 @@ function by_year(X::SSTdiag)
 end
 
 #
-
-function to_range!(DD,levs)
-    DD[findall(DD.<=levs[1])].=levs[1]+(levs[2]-levs[1])/100
-    DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
-end
 
 """
     SST_plots.TimeLat(X::SSTdiag)
@@ -227,6 +240,19 @@ end
 
 ##
 
+"""
+    SST_plots.MHW(X::SSTdiag)
+
+Plot the SST anomaly time series (`X.options.timeseries.sst .-
+X.options.timeseries.clim`), highlighting marine heat wave (MHW) periods
+in red.
+
+A point is classified as an MHW day when the anomaly exceeds
+`X.options.timeseries.high` — the day-of-year 90th percentile threshold
+computed by `SST_timeseries.calc_quantile` (see that function for how
+`.high` is derived); all other points are blue. `period`, read via
+[`getopt`](@ref) with default `(1982,2024)`, sets the x-axis limits.
+"""
 function MHW(X::SSTdiag)
     o = X.options
     ts = o.timeseries
@@ -243,6 +269,19 @@ function MHW(X::SSTdiag)
     fig
 end
 
+"""
+    SST_plots.plot_sst_map(X::SSTdiag)
+
+Plot an SST (or anomaly) map over the [`map_base`](@ref) basemap, with an
+optional grid overlay and a highlighted point of interest.
+
+Reads `X.options.map_data`, a `NamedTuple` expected to provide: `lon`,
+`lat`, `field` (the gridded values to show via `heatmap!`), `colormap`,
+`colorrange`, `showgrid::Bool` (whether to overlay [`lowres_scatter`](@ref)'s
+coarse-grain grid-index labels), and `lon1`/`lat1` (coordinates of a
+single point, marked with both a blue circle and a yellow X — e.g. to
+indicate the location a companion time-series plot corresponds to).
+"""
 function plot_sst_map(X::SSTdiag)
     md = X.options.map_data
     fig,ax,_ = map_base()
