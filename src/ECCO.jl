@@ -225,6 +225,31 @@ end
 nansum(x) = sum(filter(!isnan,x))
 nansum(x,y) = mapslices(nansum,x,dims=y)
 
+"""
+    GridLoad_Plus()
+
+Load the ECCO LLC90 grid and augment it with the extra fields needed by
+`ECCO_diagnostics`/`ECCO_procs`.
+
+Returns `(γ, Γ, LC)`:
+- `γ`: the grid specification (`G.XC.grid`).
+- `Γ`: the grid `NamedTuple` from `GridLoad(ID=:LLC90, option=:light)`,
+  merged with:
+  - `hFacC`, `hFacW`, `hFacS`: cell fractional-open-volume fields at
+    tracer, U-, and V-points, loaded via `GridLoadVar`;
+  - `mskC = hFacC./hFacC`: a `NaN`/`1` land mask derived from `hFacC`
+    (`NaN` on land, `1` on wet cells);
+  - `tot_RAC`: total surface area per depth level, land-masked
+    (`Σ mskC .* RAC`, summed horizontally);
+  - `tot_VOL`: total cell volume per depth level, `hFacC`-weighted
+    (`Σ hFacC .* RAC .* DRF`, summed horizontally).
+- `LC`: latitude circles at each integer latitude `-89.0:89.0`, from
+  `LatitudeCircles`, used for meridional transport/overturning integrals
+  (e.g. `ECCO_diagnostics.comp_overturn`, `comp_MHT`).
+
+Used to build the `γ`, `Γ`, `LC` fields of the parameter `NamedTuple`
+returned by `ECCO_helpers.parameters`.
+"""
 function GridLoad_Plus()
     G=GridLoad(ID=:LLC90,option=:light)
     γ=G.XC.grid
@@ -254,6 +279,36 @@ function push!(allcalc::Vector{String},allnam::Vector{String},allkk::Vector{Int}
     push!(allkk,kk)
 end
 
+"""
+    standard_list_toml(fil)
+
+Build the standard list of ECCO diagnostics — as `(calc, nam, lev)`
+`NamedTuple`s suitable for [`ECCO_helpers.parameters`](@ref) /
+[`ECCO_diagnostics.driver`](@ref) — and, if `fil` is non-empty, write the
+list to TOML at path `fil`.
+
+The standard list covers (with `nam`/`lev` where applicable):
+- `"trsp"` (transport sections), `"MHT"` (meridional heat transport)
+- `"zonmean2d"` for `SIarea`, `MXLDEPTH`, `SSH`
+- `"zonmean"` for `THETA`, `SALT`
+- `"glo2d"`/`"glo3d"` global means for `THETA`, `SALT`
+- `"overturn"` (meridional overturning)
+- `"clim"` climatologies for `THETA`/`SALT` at levels
+  `[1,10,20,29,38,44]`, and for `SSH`, `MXLDEPTH`, `SIarea`, `BSF`
+  (surface fields, level unused)
+
+Returns a `Vector` of `(calc=..., nam=..., lev=...)` `NamedTuple`s, one
+per entry, in the order listed above. When `fil` is provided, the same
+data is also written as a TOML dictionary with keys `"calc"`, `"nam"`,
+`"kk"`.
+
+# Examples
+```julia
+list0 = ECCO_helpers.standard_list_toml("")   # in-memory only, no file written
+pth = ECCO.standard_analysis_setup(ScratchSpaces.ECCO)
+P1 = ECCO_helpers.parameters(pth, "r2", list0[1])
+```
+"""
 function standard_list_toml(fil)
     
     allcalc=String[]
@@ -444,6 +499,40 @@ function read_monthly_BSF(P,t)
     return TrspPsi
 end
 
+"""
+    read_monthly_default(P, nam, t)
+
+Read variable `nam` at time record `t`, using file-format logic selected
+by `P.sol`. This is the default reader used by [`read_monthly`](@ref) for
+all variables other than `"SSH"`, `"MHT"`, `"BSF"` (which have their own
+dedicated readers).
+
+`P` is expected to provide (see [`ECCO_helpers.parameters`](@ref)):
+`pth_in`, `sol`, `list_steps`, `γ`, and (for the MDS-format branch) `Γ`.
+
+Three file-format branches, selected by `P.sol`:
+
+1. **`sol` in `("ECCOv4r1_analysis","ECCOv4r2_analysis","ECCOv4r3_analysis")`**:
+   reads NetCDF tile files via `read_nctiles_alias` from
+   `joinpath(P.pth_in, nam)`, requires `NCDatasets`/`MITgcm`/`NetCDF` to be
+   available (raises an informative error otherwise).
+2. **`sol == "ECCOv4r4_analysis"`**: reads a single per-year, per-month
+   NetCDF file (`nam_YYYY_MM.nc`, under `pth_in/nam/YYYY/`), then stitches
+   the on-disk tiled layout into a `MeshArray` via `Tiles(γ,90,90)`.
+3. **Otherwise (MDS/MITgcm binary format)**: reads via
+   `read_mdsio_alias`, selecting the correct `.data`/`.meta` file stem
+   from `P.list_steps[t]` and a lookup table mapping `nam` to its
+   containing MDS diagnostic file (`state_3d_set1`, `trsp_3d_set1`,
+   `trsp_3d_set2` for 3D variables; `state_2d_set1` for 2D variables — with
+   or without a leading `STATE/`/`TRSP/` subdirectory depending on
+   whether `pth_in/STATE` exists), then applies `P.Γ.mskC`/`P.Γ.mskC[:,1]`
+   land-masking to the result.
+
+Which variables are treated as 3D vs. 2D is fixed by two internal name
+lists: 3D — `THETA`, `SALT`, `UVELMASS`, `VVELMASS`, `ADVx_TH`, `ADVy_TH`,
+`DFxE_TH`, `DFyE_TH`; 2D — `MXLDEPTH`, `SIarea`, `sIceLoad`, `ETAN`.
+Requesting a `nam` outside both lists in the MDS branch will error.
+"""
 function read_monthly_default(P,nam,t)
     (; pth_in, sol, list_steps, γ) = P
 
@@ -563,6 +652,22 @@ include("ECCO_standard_analysis.jl")
 
 ## climatological mean
 
+"""
+    comp_clim(P, tmp_m, tmp_s1, tmp_s2, m)
+
+Accumulate monthly-climatology sums for calendar month `m` into the
+shared arrays `tmp_m`, `tmp_s1`, `tmp_s2`, by reading every time record
+`t = m:12:nt` via `ECCO_io.read_monthly`.
+
+- `tmp_m[:,:,m]`: running climatological mean for month `m` (mean over
+  years, i.e. over `t = m, m+12, m+24, ...`).
+- `tmp_s1[:,:,m]`, `tmp_s2[:,:,m]`: running sum and sum-of-squares for
+  month `m`, used by [`main_clim`](@ref) after all 12 months are
+  processed to compute the overall (all-months) mean/standard deviation.
+
+Intended to be called once per `m in 1:12`, typically in parallel via
+`@distributed` (see [`main_clim`](@ref)); mutates its array arguments.
+"""
 function comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
 
@@ -579,6 +684,31 @@ function comp_clim(P,tmp_m,tmp_s1,tmp_s2,m)
     end
 end
 
+"""
+    main_clim(P)
+
+Compute and save a climatology for `P.nam` (mean, standard deviation, and
+per-month mean) — the `calc == "clim"` entry point for
+[`ECCO_diagnostics.driver`](@ref).
+
+For each calendar month `m in 1:12`, [`comp_clim`](@ref) accumulates the
+monthly mean and running sums across all years (distributed via
+`@distributed`). After the loop:
+
+- the 12 monthly means are combined into `"mon"` (the full climatological
+  monthly cycle);
+- `"mean"` is the overall temporal mean, `1/nt * Σ tmp_s1`;
+- `"std"` is the overall temporal standard deviation, computed from
+  `tmp_s1`/`tmp_s2` via the standard sum-of-squares formula
+  (`sqrt(nt/(nt-1) * (E[x²] - E[x]²))`), clipped at zero to avoid
+  negative values from floating-point round-off.
+
+If the variable is 3D, `P.kk` selects the depth level (used only to name
+the output file, via a `_k%02d` suffix); 2D variables have no suffix.
+
+Saves `"mean"`, `"std"`, `"mon"` to
+`joinpath(P.pth_out, P.nam*suffix*".jld2")`. Returns `true` on completion.
+"""
 function main_clim(P)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
 
@@ -652,6 +782,20 @@ end
 
 ##
 
+"""
+    comp_msk0(P, msk0, zm0, l)
+
+Precompute, for latitude band `l`, the horizontal mask `msk0[:,:,l]`
+(area-weighted, land-masked, `NaN` outside the band) and the
+depth-dependent normalization `zm0[l,:]` (inverse of the masked cell
+count/area per depth level), used to speed up the per-timestep zonal-mean
+loop in [`comp_zonmean`](@ref)/[`comp_zonmean2d`](@ref).
+
+Latitude band `l`'s bounds `(la0,la1)` are read from
+`joinpath(P.pth_out, P.calc*"_lats.jld2")` (written by
+[`main_zonmean`](@ref) before this function is called). Mutates
+`msk0`/`zm0` in place.
+"""
 function comp_msk0(P,msk0,zm0,l)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
     nr=length(Γ.DRF)
@@ -674,6 +818,17 @@ function comp_msk0(P,msk0,zm0,l)
     zm0[l,:]=1.0 ./nansum(tmp2,2)
 end
 
+"""
+    zmsum!(tmp1, tmp, msk, idx)
+
+In-place helper: sum `tmp[idx[i],j] * msk[idx[i]]` over `i` (grid points
+within a latitude band) into `tmp1[j]` for each depth/level index `j`.
+
+`idx` is expected to be a vector of point indices already known to lie
+within the target latitude band (see [`comp_zonmean`](@ref), which
+precomputes `idx0` once and reuses it across all time steps). Used as the
+performance-critical inner loop of [`comp_zonmean`](@ref).
+"""
 function zmsum!(tmp1,tmp,msk,idx)
    tmp1.=0.0
    for j in 1:length(tmp1)
@@ -683,6 +838,23 @@ function zmsum!(tmp1,tmp,msk,idx)
    end
 end
 
+"""
+    comp_zonmean(P, zm, t, msk0, zm0)
+    comp_zonmean(P, zm, t, msk0, zm0, idx0)
+
+Compute the zonal (latitude-band) mean of variable `P.nam` at time
+record `t`, for the 3D `calc == "zonmean"` case, and store it in
+`zm[:,:,t]`.
+
+The four-argument method recomputes `idx0` (grid indices within each
+latitude band, from `msk0`) on every call; the five-argument method takes
+a precomputed `idx0` and should be preferred when called repeatedly (as
+[`main_zonmean`](@ref) does).
+
+Reads `P.nam` at time `t` via `ECCO_io.read_monthly`, zero-fills `NaN`s,
+then applies [`zmsum!`](@ref) per latitude band using the precomputed
+masks `msk0`/normalization `zm0` (from [`comp_msk0`](@ref)).
+"""
 function comp_zonmean(P,zm,t,msk0,zm0)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
     nl=size(msk0,3)
@@ -706,6 +878,18 @@ function comp_zonmean(P,zm,t,msk0,zm0,idx0)
     end
 end
 
+"""
+    comp_zonmean2d(P, zm, t, msk0, zm0)
+
+Compute the zonal (latitude-band) mean of variable `P.nam` at time
+record `t`, for the 2D `calc == "zonmean2d"` case, and store it in
+`zm[:,t]`.
+
+Unlike [`comp_zonmean`](@ref) (3D case), this reads `msk0[:,:,l]` back
+into a full-grid `MeshArray` via `read` for each latitude band `l`
+(rather than reusing precomputed point indices), since the 2D case has no
+depth dimension to amortize the cost over.
+"""
 function comp_zonmean2d(P,zm,t,msk0,zm0)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
 
@@ -720,6 +904,29 @@ function comp_zonmean2d(P,zm,t,msk0,zm0)
     end
 end
 
+"""
+    main_zonmean(P)
+
+Compute and save the zonal (latitude-band) mean of variable `P.nam` — the
+`calc in ("zonmean","zonmean2d")` entry point for
+[`ECCO_diagnostics.driver`](@ref).
+
+Latitude bands are fixed at 2°-wide bins spanning `-90:90`
+(`P.calc*"_lats.jld2"`). Proceeds in two phases:
+
+1. **Setup** (parallel over latitude bands `l`, via [`comp_msk0`](@ref)):
+   precompute and cache to disk the per-band horizontal mask `msk0` and
+   depth-dependent normalization `zm0`, since these don't depend on time
+   and are expensive to redo every time step.
+2. **Main loop** (parallel over time `t`): using the cached `msk0`/`zm0`
+   (reloaded from disk) and precomputed point indices `idx0`, compute the
+   per-time-step zonal mean via [`comp_zonmean`](@ref) (if `calc ==
+   "zonmean"`, 3D) or [`comp_zonmean2d`](@ref) (if `calc == "zonmean2d"`,
+   2D).
+
+Saves the final `zm` array to `joinpath(P.pth_out, P.calc*".jld2")`.
+Returns `true` on completion.
+"""
 function main_zonmean(P)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, γ, Γ) = P
     nr=length(Γ.DRF)
@@ -973,6 +1180,38 @@ end
 
 ##
 
+"""
+    ECCO_procs.parameters()
+
+Assemble the shared `NamedTuple` of grid, masking, interpolation, and
+metadata needed by the `ECCO_procs` plot-data functions ([`glo`](@ref),
+[`TimeLat`](@ref), [`DepthTime`](@ref), `ECCO_map`) — i.e. the `P` field
+expected in their options (`X.options.P`).
+
+Loads the full LLC90 grid (`GridSpec`/`GridLoad(...;option="full")`), a
+land mask (`land_mask`), and interpolation weights for mapping
+(`interpolation_setup`). Also derives, from the `"OCCA2HR1"` ECCO
+diagnostics output (`ECCOdiags_add("OCCA2HR1")`):
+
+- `list_trsp`: names of the standard transport sections (from the
+  `"trsp"` diagnostic file, section-name suffix stripped);
+- `clim_colors1`/`clim_colors2`: mean/std-dev color scale ranges per
+  variable, read from `examples/ECCO/clim_colors{1,2}.toml`;
+  `clim_files`, `clim_name`, `clim_longname`: the list of available
+  climatology output files, their short names, and human-readable long
+  names (via [`longname`](@ref)).
+
+Returns a `NamedTuple` with fields `γ`, `Γ`, `λ`, `μ`, `list_trsp`,
+`clim_colors1`, `clim_colors2`, `clim_files`, `clim_name`,
+`clim_longname`.
+
+!!! note
+    This hardcodes `"OCCA2HR1"` as the diagnostics source for
+    `list_trsp`/climatology metadata, regardless of which solution the
+    resulting plots ultimately display data from — the underlying data
+    values plotted via `glo`/`TimeLat`/etc. come from each `ECCOdiag`'s
+    own `path`, not from this function.
+"""
 function parameters()
 
 	γ=GridSpec(ID=:LLC90)
@@ -1007,6 +1246,29 @@ import Climatology: finalize_options, default_options, year_range
 
 ##
 
+"""
+    ECCO_procs.glo(X::ECCOdiag)
+
+Compute the global-mean time series data for `X` (`X.name` should be
+`"THETA"` or `"SALT"`; `X.options.plot_type == :ECCO_GlobalMean`),
+returning a plain `NamedTuple` ready for the Makie extension's `glo` to
+render.
+
+`X.options.level` selects between the depth-integrated global mean
+(`level == 0`, loads `X.name*"_glo3d"`) and a single depth level's global
+mean (`level > 0`, loads `X.name*"_glo2d"`, reshapes to `(nt,50)`, and
+selects column `level`).
+
+Default y-axis ranges (`rng`) are fixed, narrow bands appropriate for
+long-term global-mean drift (e.g. `[3.5,3.65]` °C for global-mean THETA,
+`[18.0,19.0]` °C for level-1 THETA) — except for `level > 1`, where `rng`
+is instead set to the data's own `extrema`, since the fixed default
+ranges are calibrated for the surface/whole-ocean cases only.
+
+Returns `(y, txt, rng, x, year0, year1, years_to_display)`, where `x` is
+in decimal years starting from `X.options.period[1]`, and
+`years_to_display = year_range(X.options)`.
+"""
 function glo(X::ECCOdiag)
     o=X.options
     level=o.level
@@ -1085,6 +1347,40 @@ function TimeLat_parameters(namzm; anomaly=false)
     (fn=fn,levs=levs,nam=nam,cm=cm)
 end
 
+"""
+    ECCO_procs.TimeLat(X::ECCOdiag)
+
+Compute the time-versus-latitude (Hovmöller) data for `X`
+(`X.options.plot_type in (:ECCO_TimeLat, :ECCO_TimeLatAnom)`), optionally
+removing a reference climatology/trend, and return a plain `NamedTuple`
+ready for the Makie extension's `TimeLat` to render.
+
+`X.name`'s prefix (before the first `"_"`) selects the variable and its
+default color levels/orientation via the internal helper
+`TimeLat_parameters` — one of `MXLDEPTH`, `SIarea`, `THETA`, `SALT`,
+`ETAN`/`SSH` (levels chosen tighter, divided by 2 or 5, when
+`X.options.select_method > 0`, i.e. an anomaly is being shown).
+
+`X.options.select_method` controls reference removal:
+- `0`: no reference removed (raw field).
+- `1`: subtract the 1992–2011 **monthly** mean (separately for each
+  calendar month, removing the seasonal cycle's inter-annual level).
+- `2`: subtract the 1992–2011 **annual** mean (single number per
+  latitude, seasonal cycle retained).
+- `3`: subtract a fitted seasonal cycle (order-3) with no polynomial
+  trend, via `fit_time_series`, fit over `X.options.period`.
+- `4`: subtract a fitted seasonal cycle **and** a linear trend (order-3
+  season, order-1 polynomial), via `fit_time_series`.
+
+`X.options.level` selects the depth index for 3D variables (`THETA`,
+`SALT`); ignored for 2D variables. `X.options.colormap_factor` scales the
+chosen contour levels.
+
+Returns `(x, y, z, levels, title, ylims, year0, year1,
+years_to_display)`, where `x` is time (decimal years), `y` is latitude
+(2° bins over `-90:90`), and `z` is the (possibly reference-subtracted)
+field, oriented `time × latitude`. `years_to_display = year_range(X.options)`.
+"""
 function TimeLat(X::ECCOdiag)
     o=X.options
     nam=split(X.name,"_")[1]
@@ -1152,6 +1448,31 @@ end
 
 fn_DepthTime(x)=transpose(x)	
 
+"""
+    ECCO_procs.DepthTime(X::ECCOdiag)
+
+Compute the time-versus-depth data for `X`
+(`X.options.plot_type == :ECCO_DepthTime`; `X.name`'s prefix should be
+`"THETA"` or `"SALT"`), at a single fixed latitude band, subtracting the
+1992–2011 monthly-mean seasonal cycle, and return a plain `NamedTuple`
+ready for the Makie extension's `DepthTime` to render.
+
+`X.options.level` selects the latitude band index (2° bins over
+`-90:90` — despite the name, this indexes latitude, not depth; the depth
+axis `y` spans the full vertical grid `P.Γ.RC`). `X.options.factor` scales
+the fixed contour `levels` (`THETA`: `(-3.0:0.4:3.0)/8`; `SALT`:
+`(-0.5:0.1:0.5)/10`). `X.options.klims = (k0,k1)` sets the plotted depth
+range via `ylims = (Γ.RC[k1], Γ.RC[k0])` (reversed so depth increases
+downward).
+
+Reference removal is always the 1992–2011 monthly mean (analogous to
+[`TimeLat`](@ref)'s `select_method == 1`; `DepthTime` has no
+`select_method` option — the seasonal-mean subtraction is unconditional).
+
+Returns `(x, y, z, levels, title, ylims, year0, year1,
+years_to_display)`, with `x` in decimal years, `y` in depth (m), `z`
+oriented `depth × time`. `years_to_display = year_range(X.options)`.
+"""
 function DepthTime(X::ECCOdiag)
     o=X.options
     nam=split(X.name,"_")[1]

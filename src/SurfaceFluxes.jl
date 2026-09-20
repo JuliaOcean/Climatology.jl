@@ -41,6 +41,44 @@ function read_lonlat(; path_to_data="ERA5_data")
 end
 ##
 
+"""
+    read_from_nc(fil::String, ii, jj)
+
+Read ERA5 reanalysis variables at grid point `(ii,jj)` from NetCDF file
+`fil`, apply unit conversions, and derive specific humidity and wind
+speed.
+
+Reads 10 ERA5 dataset variables (`list_ds`, ECMWF short names) and
+renames/rescales them to `list_in` (this package's working names), via
+parallel `offset`/`factor` lookup tables indexed by position:
+
+| `list_in`      | `list_ds`  | offset  | factor    | notes                          |
+|:----------------|:-------------|:----------|:------------|:---------------------------------|
+| `dlw`            | `msdwlwrf`    | 0         | `-1.0`        | sign flip                        |
+| `dsw`            | `msdwswrf`    | 0         | `-1.0`        | sign flip                        |
+| `pres`           | `sp`          | 0         | `1.0`         |                                   |
+| `rain`           | `tp`          | 0         | `1/3600`      | per-hour rate from per-hour total|
+| `d2m`            | `d2m`         | 0         | `1.0`         | dewpoint, Kelvin                 |
+| `tmp2m_degC`     | `t2m`         | `-273.15` | `1.0`         | Kelvin → Celsius                 |
+| `u10m`           | `u10`         | 0         | `1.0`         |                                   |
+| `ustr`           | `metss`       | 0         | `-1.0`        | sign flip                        |
+| `v10m`           | `v10`         | 0         | `1.0`         |                                   |
+| `vstr`           | `mntss`       | 0         | `-1.0`        | sign flip                        |
+
+then derives:
+- `spfh`: saturation specific humidity at 2 m, via `qsat(pres, E(d2m))`
+  (Teten's formula, see `E`/`qsat`);
+- `wspeed`: 10 m wind speed, via `wspeed.(u10m, v10m)`.
+
+Returns a `DataFrame` with one row per time record in `fil`, columns
+`list_in` plus `spfh`, `wspeed`.
+
+!!! note
+    `offset`/`factor` are sized `12`, but only the first `10` entries
+    (matching `list_in`/`list_ds`'s length) are ever indexed. Worth
+    double-checking this isn't hiding an intended 11th/12th variable
+    dropped from `list_in`/`list_ds` without trimming the tables.
+"""
 function read_from_nc(fil::String,ii,jj)
 
 list_in=["dlw","dsw","pres","rain","d2m","tmp2m_degC","u10m","ustr","v10m","vstr"]#,"wspeed"];
@@ -157,6 +195,35 @@ function interpolate_sst(sst,tim)
 	interp_linear(tim)
 end
 
+"""
+    surface_balance(df, sst)
+
+Compute the full air-sea surface heat budget for `df` given sea surface
+temperature(s) `sst`, mutating `df` in place with the added flux columns
+and returning it.
+
+Requires `df` to already have `tmp2m_degC`, `spfh`, `wspeed` (e.g. from
+[`read_from_nc`](@ref)) and `dlw`, `dsw` (downward long-/shortwave, sign
+convention: made positive-down via `abs.(...)` here regardless of input
+sign).
+
+Computes, via `AirSeaFluxes.bulkformulae` (turbulent fluxes) plus
+Stefan-Boltzmann/albedo (radiative fluxes):
+- `hl`, `hs`, `evap`: latent heat flux, sensible heat flux, evaporation,
+  from `bulkformulae(tmp2m_degC + 273.16, spfh, wspeed, sst)` (temperature
+  converted to Kelvin);
+- `ulw = σ(sst+273.15)^4`: upward longwave (Stefan-Boltzmann,
+  `σ = 5.670e-8` W·m⁻²·K⁻⁴);
+- `usw = albedo * |dsw|`: upward (reflected) shortwave, `albedo = 0.06`;
+- `lw = dlw - ulw`, `sw = dsw - usw`: net longwave/shortwave;
+- `qnet = hl + hs + lw + sw`: total net surface heat flux into the
+  ocean.
+
+!!! note
+    Locally redefines `upsw`/`uplw` closures identical to the
+    module-level `upsw`/`uplw` functions defined earlier in this file —
+    harmless shadowing, but redundant.
+"""
 function surface_balance(df,sst)
 	fluxes=bulkformulae.(df.tmp2m_degC.+273.16,df.spfh,df.wspeed,sst)
 	df.hl=[x.hl for x in fluxes]
