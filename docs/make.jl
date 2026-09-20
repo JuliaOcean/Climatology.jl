@@ -6,6 +6,7 @@ import Climatology: Downloads, DataDeps
 Pkg.precompile()
 
 const ClimatologyMakieExt = Base.get_extension(Climatology, :ClimatologyMakieExt)
+const ClimatologyNCDatasetsExt = Base.get_extension(Climatology, :ClimatologyNCDatasetsExt)
 
 makedocs(;
     modules=[Climatology, ClimatologyMakieExt],
