@@ -1,6 +1,8 @@
 ## Intro
 
-Climatologies are readily downloaded and accessed using the [Scratch.jl](https://github.com/JuliaPackaging/Scratch.jl#readme) artifact system as explained below. 
+Climatologies are downloaded and accessed lazily, via the artifact mechanisms 
+described in [Guide](@ref). This page lists the data-retrieval functions and 
+artifact paths for each supported data set, followed by full function reference.
 
 ## Use Examples
 
@@ -75,7 +77,18 @@ Gridded fields are mostly retrieved from [Harvard Dataverse](https://dataverse.h
 | `ScratchSpaces.OCCA`             | NetCDF              |lazy, by variable, [dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RNXA2A) |
 | `datadep"CBIOMES-clim1"`             | NetCDF    | lazy, whole, [zenodo](https://zenodo.org/record/5598417#.YoW46C-B3MU) |
 
-## Functions Reference
+## Options System Reference
+
+See [Guide](@ref) for how these fit together conceptually.
+
+```@docs
+Climatology.default_options
+Climatology.getopt
+Climatology.setopt
+Climatology.year_range
+```
+
+## Download Functions Reference
 
 ```@autodocs
 Modules = [Climatology.downloads]
