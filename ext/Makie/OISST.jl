@@ -1,4 +1,24 @@
 
+"""
+    plot(x::SSTdiag)
+
+Render the Makie figure appropriate for `x.options.plot_type`.
+
+Dispatches on `string(x.options.plot_type)` to a method in `SST_plots`:
+
+| `plot_type`         | renders via                        |
+|:----------------------|:--------------------------------------|
+| `"map_base"`           | `SST_plots.map_base()` (figure only)  |
+| `"local_and_global"`   | `SST_plots.local_and_global(x)`       |
+| `"by_year"`            | `SST_plots.by_year(x)`                |
+| `"by_time"`            | `SST_plots.by_time(x)`                |
+| `"TimeLat"`            | `SST_plots.TimeLat(x)`                |
+| `"MHW"`                | `SST_plots.MHW(x)`                    |
+| `"map"`                | `SST_plots.plot_sst_map(x)`           |
+
+Throws an `ErrorException` if `x.options` is empty, or if `plot_type`
+matches none of the cases above.
+"""
 	function plot(x::SSTdiag)
 		isempty(x.options) && error("unknown options")
 		o = x.options
@@ -38,6 +58,24 @@ title_or(X::SSTdiag, default::AbstractString="") =
 
 #
 
+"""
+    SST_plots.by_time(X::SSTdiag)
+
+Plot the SST time series `X.options.timeseries`, optionally overlaid with
+its seasonal climatology and/or anomaly.
+
+Reads, via [`getopt`](@ref) (all optional, with the defaults shown):
+
+- `X.options.timeseries` — a `NamedTuple` with fields `sst`, `clim`,
+  `anom`, `title` (as produced by, e.g., `SST_timeseries.calc`)
+- `show_anom::Bool = true` — overlay `timeseries.anom` in red
+- `show_clim::Bool = true` — overlay `timeseries.clim` in orange
+- `period::Tuple = (1982,2024)` — x-axis limits
+
+The time axis assumes `timeseries.sst` is a daily series starting in
+1982 (`collect(1:length(ts.sst))/365.25 .+ 1982`), independent of
+`period`.
+"""
 function by_time(X::SSTdiag)
     o = X.options
     ts = o.timeseries
@@ -75,6 +113,30 @@ function to_range!(DD,levs)
     DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
 end
 
+"""
+    SST_plots.TimeLat(X::SSTdiag)
+
+Plot a time-versus-latitude filled-contour anomaly diagram directly from
+`X.options`.
+
+Unlike the ECCO extension's [`TimeLat`](@ref) — which renders a
+`NamedTuple` precomputed by a separate `ECCO_procs.TimeLat` step — this
+method reads `X.options` directly, since SST currently has no
+`_procs`-equivalent precompute stage. Fields read (via [`getopt`](@ref)
+where optional):
+
+- `X.options.timeseries` — used only for `.year`'s length, to build the
+  time axis
+- `X.options.zonal_mean` — the raw latitude × time array to contour
+- `period::Tuple = (1982,2024)` — x-axis limits
+- `ylims::Tuple = (-90,90)` — y-axis (latitude) limits
+- `clip_to_range::Bool = true` — clip the field to the fixed contour
+  levels `(-2.0:0.25:2.0)/5` via `to_range!` before contouring
+
+Latitude bins are inferred from `size(zonal_mean,1)`, assuming they evenly
+tile `-90:90`. The time axis/field are subsampled by a factor of 7
+(`x[1:7:end]`, `z[1:7:end,:]`) for plotting performance.
+"""
 function TimeLat(X::SSTdiag)
     o = X.options
     list = o.timeseries
@@ -134,6 +196,21 @@ function local_and_global(X::SSTdiag)
     fig
 end
 
+"""
+    SST_plots.map_base()
+
+Build a base `Figure`/`Axis` showing the Blue Marble Next Generation
+basemap image, for use as a background under subsequent `heatmap!`/
+`scatter!` calls (see [`plot_sst_map`](@ref)).
+
+Returns `(fig, ax, im)`.
+
+The image is fetched via `MeshArrays.mydatadep("basemap_jpg1")`, then
+`reverse`d, `permutedims`d, and `circshift`ed by `(1800,0)` pixels to
+align its native orientation and longitude origin with the `[0,360)`
+convention used elsewhere in this package (displayed on `-0.05 .. 359.95`
+in `x`, `-89.95 .. 89.95` in `y`). Axis decorations are hidden.
+"""
 function map_base()
     earth_jpg = joinpath(MeshArrays.mydatadep("basemap_jpg1"),
         "Blue_Marble_Next_Generation_+_topography_+_bathymetry.jpg")

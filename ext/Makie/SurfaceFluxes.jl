@@ -1,11 +1,24 @@
 
 """
-API
+    plot(x::SurfaceFluxDiag)
 
-```
-da=Climatology.SurfaceFluxDiag((plot_type=:default,),df)
-da=Climatology.SurfaceFluxDiag((plot_type=:surface_balance,),(df=df,tim=tim,sst=sst))
-da=Climatology.SurfaceFluxDiag((plot_type=:Qnet_cumsum,),(df=df,tim=tim,sst=sst))
+Render the Makie figure appropriate for `x.options.plot_type`, given
+`x.data`.
+
+| `plot_type`         | expects `x.data ==`         | renders via                                                  |
+|:----------------------|:-------------------------------|:-----------------------------------------------------------------|
+| `:default`             | `df` (a `DataFrame`)             | `ERA5_plot.plot_bulk_formulae(x.data)`                            |
+| `:surface_balance`     | `(df=df, tim=tim, sst=sst)`      | `ERA5_plot.plot_surface_balance(x.data.df,x.data.tim,x.data.sst)` |
+| `:Qnet_cumsum`         | `(df=df, tim=tim, sst=sst)`      | `ERA5_plot.plot_Qnet_cumsum(x.data.df,x.data.tim,x.data.sst)`     |
+
+Throws an `ErrorException` if `x.options` is empty, or if `plot_type`
+matches none of the cases above.
+
+# Examples
+```julia
+da = Climatology.SurfaceFluxDiag((plot_type=:default,), df)
+da = Climatology.SurfaceFluxDiag((plot_type=:surface_balance,), (df=df,tim=tim,sst=sst))
+da = Climatology.SurfaceFluxDiag((plot_type=:Qnet_cumsum,), (df=df,tim=tim,sst=sst))
 ```
 """
 function plot(x::SurfaceFluxDiag)
@@ -58,6 +71,28 @@ end
 #"pres","rain","d2m",
 #"u10m","v10m",
 #"ustr","vstr",
+
+"""
+    ERA5_plot.plot_surface_balance(df, tim, sst)
+
+Plot a 4-panel surface heat budget summary from bulk-formula output `df`
+(e.g. from `read_bulk_formulae`/`surface_balance`), a time axis `tim`
+(days since Jan. 1), and an SST series `sst`.
+
+Panels (row, column):
+
+1. `(1,1)` temperature — `df.tmp2m_degC` versus `sst`
+2. `(1,2)` radiative components — 24-hour rolling means (via `rnmn`) of
+   `lw`, `sw`, `dlw`, `dsw`, `ulw`, `usw`; y-axis fixed to `(-300,500)` W/m²
+3. `(2,1)` turbulent components & net — rolling means of `hl`, `hs`,
+   `qnet`; y-axis fixed to `(-400,400)` W/m²
+4. `(2,2)` radiative components & net — rolling means of `lw`, `sw`,
+   `qnet`; y-axis fixed to `(-500,300)` W/m²
+
+The y-axis ranges in panels 2–4 are fixed constants chosen for visual
+comparability across components, not derived from `df`, and may clip
+series with larger excursions.
+"""
 function plot_surface_balance(df,tim,sst)
     fig=Figure(size=(1500,900),fontsize=24)
 	ax=Axis(fig[1,1],title="temperature",xlabel="day since Jan. 1",ylabel="degree C")

@@ -21,8 +21,11 @@ ECCO_diagnostics.driver
 ```
 
 ```@autodocs
-Modules = [Climatology.ECCO_io]
+Modules = [ Climatology.ECCO_io, Climatology.ECCO_helpers,
+            Climatology.ECCO_diagnostics,Climatology.ECCO_procs]
 ```
+
+
 
 ## Plotting (Makie extension)
 

@@ -91,5 +91,5 @@ Climatology.year_range
 ## Download Functions Reference
 
 ```@autodocs
-Modules = [Climatology.downloads]
+Modules = [Climatology.downloads,Climatology.ScratchSpaces]
 ```

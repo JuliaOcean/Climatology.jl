@@ -28,5 +28,5 @@ Modules = [Climatology.SST_FILES,SST_processing,SST_coarse_grain,SST_timeseries,
 ## Plotting (Makie extension)
 
 ```@autodocs
-Modules = [ClimatologyMakieExt.SST_plots]
+Modules = [ClimatologyMakieExt.SST_plots,ClimatologyMakieExt.ERA5_plot]
 ```
