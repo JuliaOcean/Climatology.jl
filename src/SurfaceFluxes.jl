@@ -16,9 +16,24 @@ end
 ##
 
 Rdry=287.0597 ; Rvap=461.5250 ; a1=611.21 ; a3=17.502 ; a4=32.19 ; T0=273.16
-#Calculation of E saturation water vapour from Teten's formula
+
+"""
+    E(dtas)
+
+Saturation water vapor pressure via Teten's formula, given temperature
+`dtas` (Kelvin). Constants `a1=611.21` Pa, `a3=17.502`, `a4=32.19` K,
+`T0=273.16` K.
+"""
 E(dtas)=a1*exp(a3*(dtas-T0)/(dtas-a4))
-#Calculation of saturation specific humidity at 2m qsat  (equal to huss)
+
+"""
+    qsat(ps, E)
+
+Saturation specific humidity (equivalent to `huss`) at surface pressure
+`ps` given saturation vapor pressure `E` (e.g. from [`E`](@ref)), via
+`(Rdry/Rvap)*E/(ps - (1-Rdry/Rvap)*E)`, with `Rdry=287.0597`,
+`Rvap=461.5250` J/(kg·K).
+"""
 qsat(ps,E)=(Rdry/Rvap)*E/(ps-((1-Rdry/Rvap)*E))
 
 wspeed(u10,v10)=sqrt(u10^2+v10^2)
@@ -26,9 +41,18 @@ wspeed(u10,v10)=sqrt(u10^2+v10^2)
 ##
 
 """
-	read_lonlat(; path_to_data="ERA5_data")
+    read_lonlat(; path_to_data="ERA5_data")
 
-```
+Read the longitude/latitude grid vectors from a fixed sample file,
+`joinpath(path_to_data, "2023/ERA5_2023_01.nc")` — i.e. this assumes that
+specific file exists under `path_to_data` and that all ERA5 files share
+the same grid (a reasonable assumption for a fixed reanalysis product,
+but note the file/path is hardcoded rather than derived from `path_to_data`
+generically).
+
+Returns `(lon, lat)`.
+
+```julia
 using NCDatasets, Climatology
 ERA5.read_lonlat()
 ```
@@ -144,6 +168,19 @@ function read_one_year(year,ii,jj; path_to_data="ERA5_data")
   df
 end
 
+"""
+    read_bulk_formulae(fil::String)
+
+Demo/sanity-check helper: reads ERA5 variables at the fixed sample point
+`(lon0,lat0) = (205,45)` from `fil` via [`read_from_nc`](@ref), computes
+bulk-formula turbulent fluxes (`hl`, `hs`, `evap`) and net flux `qnet`
+against a **hardcoded** constant SST of `15.0` °C (not a real SST
+product) — intended for illustrating/testing the bulk-formula pipeline
+at a single point, not for general-purpose flux computation (see
+[`surface_balance`](@ref) for that, which takes `sst` as an argument).
+
+Returns the augmented `DataFrame`.
+"""
 function read_bulk_formulae(fil::String)
 	lon=read_Dataset(fil)["longitude"][:]
 	lat=read_Dataset(fil)["latitude"][:]
@@ -189,6 +226,13 @@ albedo=0.06
 upsw(dsw)=albedo*abs(dsw)
 uplw(sst)=stefanBoltzmann*(sst+273.15)^4
 
+"""
+    interpolate_sst(sst, tim)
+
+Linearly interpolate a 365-day daily SST climatology `sst` (assumed
+indexed at day-of-year midpoints `0.5:364.5`) onto arbitrary time points
+`tim`, extrapolating linearly (`Line()`) beyond the endpoints.
+"""
 function interpolate_sst(sst,tim)
 	xs = 0.5:364.5
 	interp_linear = linear_interpolation(xs, sst, extrapolation_bc=Line())

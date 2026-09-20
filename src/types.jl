@@ -1,6 +1,13 @@
 
 ##
 
+"""
+    AbstractClimateDiagnostic
+
+Abstract parent type unifying [`ECCOdiag`](@ref), [`SSTdiag`](@ref),
+[`SurfaceFluxDiag`](@ref), and [`SeaLevelAnomaly`](@ref) for shared
+dispatch (e.g. `plot`).
+"""
 abstract type AbstractClimateDiagnostic <: Any end
 
 ##
@@ -41,6 +48,14 @@ Base.@kwdef struct ECCOdiag <: AbstractClimateDiagnostic
     data :: AbstractArray = []
 end
 
+"""
+    ECCOdiag(path::String, name::String, plot_type::Symbol; kwargs...)
+
+Convenience constructor: builds `options` via
+`setopt(plot_type; kwargs...)` (applying [`default_options`](@ref) for
+`plot_type` then [`finalize_options`](@ref)), and sets `path`/`name`
+directly. Preferred over assigning `options=(...)` by hand.
+"""
 ECCOdiag(path::String,name::String,plot_type::Symbol; kwargs...) =
     ECCOdiag(path=path, name=name, options=setopt(plot_type;kwargs...))
 
@@ -302,6 +317,17 @@ Base.@kwdef struct SSTdiag <: AbstractClimateDiagnostic
     data :: AbstractArray = []
 end
 
+"""
+    SSTdiag(path::String, name::String, plot_type::Symbol; kwargs...)
+
+Convenience constructor: merges [`default_options`](@ref) for
+`plot_type` with `kwargs`, and sets `path`/`name` directly.
+
+!!! note
+    Unlike [`ECCOdiag`](@ref)'s equivalent constructor, this does **not**
+    apply [`finalize_options`](@ref) — see the note on the [`SSTdiag`](@ref)
+    struct docstring.
+"""
 function SSTdiag(path::String, name::String, plot_type::Symbol; kwargs...)
     o = merge(default_options(Val(plot_type)), NamedTuple(kwargs))
     SSTdiag(path=path, name=name, options=o)
@@ -311,6 +337,26 @@ end
 
 import DataFrames: DataFrame
 
+"""
+    SurfaceFluxDiag <: AbstractClimateDiagnostic
+
+Container type for surface heat/flux diagnostics.
+
+# Fields
+- `options::NamedTuple`: plot options; `options.plot_type` selects among
+  `:default`, `:surface_balance`, `:Qnet_cumsum` (see `plot` in the Makie
+  extension).
+- `data::Union{DataFrame,NamedTuple}`: the underlying data, whose shape
+  depends on `plot_type` — a plain `DataFrame` for `:default`
+  (bulk-formula output), or a `(df=..., tim=..., sst=...)` `NamedTuple`
+  for `:surface_balance`/`:Qnet_cumsum`.
+
+# Examples
+```julia
+da = SurfaceFluxDiag((plot_type=:default,), df)
+da = SurfaceFluxDiag((plot_type=:surface_balance,), (df=df,tim=tim,sst=sst))
+```
+"""
 Base.@kwdef struct SurfaceFluxDiag <: AbstractClimateDiagnostic
     options :: NamedTuple = NamedTuple()
     data :: Union{DataFrame,NamedTuple} = DataFrame()
@@ -318,6 +364,13 @@ end
 
 ##
 
+"""
+    SeaLevelAnomaly <: AbstractClimateDiagnostic
+
+Container type for sea-level-anomaly diagnostics, mirroring
+[`ECCOdiag`](@ref)'s shape: `path`, `name`, `options`, and optionally
+pre-loaded `data`.
+"""
 Base.@kwdef struct SeaLevelAnomaly <: AbstractClimateDiagnostic
     path :: String = tempdir()
     name :: String = "unknown"

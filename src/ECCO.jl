@@ -63,7 +63,14 @@ add_diag!(list,file=tempname(),name="variable",units="unknown",dims=("time",)) =
     append!(list,DataFrame("file"=>file,"name"=>name,"units"=>units,"dims"=>dims))
 end
 
-#time series
+"""
+    ECCO.diagnostics_set1(path_in=".")
+
+Time-series diagnostics: global-mean and level-1 THETA/SALT, volume
+transport, meridional heat transport, zonal-mean THETA/SALT/MXLDEPTH/
+SSH/SIarea, and overturning — as a `DataFrame` of `(file, name, units,
+dims)` describing each diagnostic's output file location and shape.
+"""
 function diagnostics_set1(path_in=".")
     list=DataFrame("file"=>String[],"name"=>String[],"units"=>String[],"dims"=>Tuple[])
     add_diag!(list,joinpath(path_in,"THETA_glo3d","glo3d.jld2"),"temperature_global","degreeC",("time",))
@@ -81,7 +88,12 @@ function diagnostics_set1(path_in=".")
     list
 end
 
-#2d climatologies on ECCO's LLC90 grid
+"""
+    ECCO.diagnostics_set2(path_in=".")
+
+2D climatologies on ECCO's LLC90 grid: `BSF`, `MXLDEPTH`, `SIarea`, `SSH`
+— as a `DataFrame` of `(file, name, units, dims)`.
+"""
 function diagnostics_set2(path_in=".")
     list=DataFrame("file"=>String[],"name"=>String[],"units"=>String[],"dims"=>Tuple[])
     add_diag!(list,joinpath(path_in,"BSF_clim","BSF.jld2"),"BSF_clim","m3/s",("time",))
@@ -91,7 +103,12 @@ function diagnostics_set2(path_in=".")
     list
 end
 
-#3d climatologies on ECCO's LLC90 grid
+"""
+    ECCO.diagnostics_set3(path_in=".")
+
+3D climatologies on ECCO's LLC90 grid: `THETA`, `SALT` — as a `DataFrame`
+of `(file, name, units, dims)`.
+"""
 function diagnostics_set3(path_in=".")
     list=DataFrame("file"=>String[],"name"=>String[],"units"=>String[],"dims"=>Tuple[])
     add_diag!(list,joinpath(path_in,"THETA_clim","THETA_k01.jld2"),"THETA_clim","degreeC",("time",))
@@ -380,6 +397,17 @@ function transport_lines()
     lonPairs,latPairs,namPairs
 end
 
+"""
+    transport_lines(Γ, pth_trsp)
+
+Compute the standard transport-section masks from `transport_lines()`'s
+lon/lat/name list, and save each section's `Transect` (`C`, `W`, `S`
+fields) to its own file under `pth_trsp` (created by this call — errors
+if it already exists, since it uses `mkdir` rather than `mkpath`).
+
+Returns `true` on completion; the computed data is written to disk, not
+returned. See [`reload_transport_lines`](@ref) to read it back.
+"""
 function transport_lines(Γ,pth_trsp)
     mkdir(pth_trsp)
     lonPairs,latPairs,namPairs=transport_lines()
@@ -434,6 +462,14 @@ function read_monthly(P,nam,t)
     end
 end
 
+"""
+    read_monthly_SSH(P, t)
+
+Compute sea surface height at time `t`: `ETAN + sIceLoad/1029.0`, i.e.
+the dynamic height `ETAN` plus the sea-ice load's equivalent height
+contribution (`sIceLoad`, in kg/m², divided by seawater reference density
+1029 kg/m³), masked by `P.Γ.mskC[:,1]`.
+"""
 function read_monthly_SSH(P,t)
     (; Γ) = P
     ETAN=read_monthly_default(P,"ETAN",t)
@@ -441,6 +477,18 @@ function read_monthly_SSH(P,t)
     (ETAN+sIceLoad/1029.0)*Γ.mskC[:,1]
 end
 
+"""
+    read_monthly_MHT(P, t)
+
+Compute the depth-integrated horizontal heat flux components at time `t`,
+combining advective (`ADVx_TH`/`ADVy_TH`) and diffusive (`DFxE_TH`/
+`DFyE_TH`) contributions, with `NaN`s zero-filled before summing over
+depth.
+
+Returns `(Tx, Ty)`, the raw depth-integrated flux components — not yet
+converted to physical heat-transport units (PW); that scaling
+(`1e-15*4e6`) is applied later, in [`ECCO_diagnostics.comp_MHT`](@ref).
+"""
 function read_monthly_MHT(P,t)
     (; Γ) = P
 
@@ -460,6 +508,25 @@ function read_monthly_MHT(P,t)
     return Tx,Ty
 end
 
+"""
+    read_monthly_BSF(P, t)
+
+Compute the barotropic streamfunction (horizontal transport
+streamfunction) at time `t`, via Helmholtz decomposition of the
+depth-integrated velocity transport:
+
+1. depth-integrate `UVELMASS`/`VVELMASS` (converted to transport via
+   `MeshArrays.UVtoTransport!`) to get `Tx`, `Ty`;
+2. compute the land-masked horizontal convergence `TrspCon`;
+3. solve for the scalar potential `TrspPot` whose gradient reproduces the
+   divergent part of the transport (`TxD`, `TyD`);
+4. subtract to isolate the rotational component (`TxR`, `TyR` = total
+   minus divergent);
+5. solve for the vector potential `TrspPsi` of the rotational component —
+   this is the returned barotropic streamfunction.
+
+Returns `TrspPsi`.
+"""
 function read_monthly_BSF(P,t)
     (; Γ) = P
 
@@ -749,6 +816,17 @@ nansum(x,y) = mapslices(nansum,x,dims=y)
 
 ## global mean
 
+"""
+    comp_glo(P, glo, t)
+
+Compute the global (or global-per-depth-level) integral of `P.nam` at
+time `t`, and store it in `glo[:,t]`.
+
+For `P.calc == "glo2d"`: area-weighted horizontal sum (`Σ tmp .* RAC`)
+per depth level. Otherwise (`"glo3d"`): volume-weighted sum
+(`Σ tmp .* hFacC .* RAC .* DRF`) per depth level. In both cases the
+per-level sums are further summed across grid faces (`nansum(...,2)`).
+"""
 function comp_glo(P,glo,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
     nr=length(Γ.DRF)
@@ -761,7 +839,22 @@ function comp_glo(P,glo,t)
     end
     glo[:,t]=nansum(tmp,2)
 end
-    
+
+"""
+    main_glo(P)
+
+Compute and save the global-mean (or global-mean-per-level) time series
+of `P.nam` — the `calc in ("glo2d","glo3d")` entry point for
+[`ECCO_diagnostics.driver`](@ref).
+
+Computes [`comp_glo`](@ref) for every time step (distributed via
+`@distributed`), then normalizes: for `"glo2d"`, divides by
+`Γ.tot_RAC[r]` per depth level `r` (area-mean per level); for `"glo3d"`,
+sums over levels and divides by total volume `Γ.tot_VOL` (single global
+mean per time step).
+
+Saves the result to `joinpath(P.pth_out, P.calc*".jld2")`.
+"""
 function main_glo(P)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
     nr=length(Γ.DRF)
@@ -972,6 +1065,18 @@ end
 
 ##
 
+"""
+    comp_overturn(P, ov, t)
+
+Compute the meridional overturning circulation at time `t`: integrate
+volume transport (`UVELMASS`/`VVELMASS`, converted via
+`MeshArrays.UVtoTransport!`) across each latitude circle in `P.LC`, at
+each depth level, then integrate vertically from the bottom upward via a
+reversed cumulative sum (`reverse(cumsum(reverse(...,dims=2),dims=2),dims=2)`)
+— i.e. transport accumulates from depth toward the surface, matching the
+usual overturning-streamfunction convention. Stores the result in
+`ov[:,:,t]`.
+"""
 function comp_overturn(P,ov,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
 
@@ -996,6 +1101,16 @@ function comp_overturn(P,ov,t)
     true
 end
 
+"""
+    main_overturn(P)
+
+Compute and save the meridional overturning streamfunction — the
+`calc == "overturn"` entry point for [`ECCO_diagnostics.driver`](@ref).
+
+Computes [`comp_overturn`](@ref) for every time step (distributed via
+`@distributed`), and saves the resulting `(latitude, depth, time)` array
+to `joinpath(P.pth_out, P.calc*".jld2")`.
+"""
 function main_overturn(P)  
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
 
@@ -1014,6 +1129,14 @@ end
 
 ##
 
+"""
+    comp_MHT(P, MHT, t)
+
+Compute the meridional heat transport at time `t`: sum the advective +
+diffusive heat flux components from [`ECCO_io.read_monthly_MHT`](@ref)
+over depth, integrate across each latitude circle in `P.LC`, and scale by
+`1e-15*4e6` to convert to petawatts. Stores the result in `MHT[:,t]`.
+"""
 function comp_MHT(P,MHT,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC, Γ) = P
 
@@ -1034,6 +1157,16 @@ function comp_MHT(P,MHT,t)
     [MHT[l,t]=1e-15*4e6*ThroughFlow(UV,LC[l],Γ) for l=1:nl]
 end
 
+"""
+    main_MHT(P)
+
+Compute and save the meridional heat transport time series — the
+`calc == "MHT"` entry point for [`ECCO_diagnostics.driver`](@ref).
+
+Computes [`comp_MHT`](@ref) for every time step (distributed via
+`@distributed`), and saves the resulting `(latitude, time)` array (in PW)
+to `joinpath(P.pth_out, P.calc*".jld2")`.
+"""
 function main_MHT(P)  
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, LC) = P
 
@@ -1049,6 +1182,15 @@ end
 
 ##
 
+"""
+    comp_trsp(P, trsp, t)
+
+Compute volume transport across each standard transport section at time
+`t`: depth-integrate `UVELMASS`/`VVELMASS` (converted via
+`MeshArrays.UVtoTransport!`) through each section mask loaded via
+`ECCO_helpers.reload_transport_lines`, storing the result in
+`trsp[:,:,t]` (section × depth).
+"""
 function comp_trsp(P,trsp,t)
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol, Γ) = P
 
@@ -1069,6 +1211,18 @@ function comp_trsp(P,trsp,t)
     end
 end
 
+"""
+    main_trsp(P)
+
+Compute and save volume transport time series across all standard
+transport sections — the `calc == "trsp"` entry point for
+[`ECCO_diagnostics.driver`](@ref).
+
+Computes [`comp_trsp`](@ref) for every time step (distributed via
+`@distributed`), then packages the result as a vector of
+`(nam=<section file name>, val=<depth × time array>)` `NamedTuple`s (one
+per section), saved to `joinpath(P.pth_out, P.calc*".jld2")`.
+"""
 function main_trsp(P) 
     (; pth_in, pth_out, list_steps, nt, calc, nam, kk, sol) = P
 
@@ -1300,6 +1454,24 @@ end
 
 ##
 
+"""
+    ECCO_procs.ECCO_map(X::ECCOdiag)
+
+Compute the map data for `X` (`X.options.plot_type == :ECCO_map`),
+returning a plain `NamedTuple` ready for the Makie extension's
+`ECCO_map` to render.
+
+`X.name` is matched against `X.options.P.clim_longname` (see
+[`ECCO_procs.parameters`](@ref)) to find the corresponding climatology
+file; `X.options.statistic` selects which field to show (`"mean"`,
+`"std"`, or `"mon"` for a specific month, indexed by `X.options.time`).
+The field is interpolated onto the regular lon/lat grid `X.options.P.λ`
+via `Interpolate`, land-masked by `X.options.P.μ`. Color levels are drawn
+from `X.options.P.clim_colors1` (for `"mean"`/`"mon"`) or `clim_colors2`
+(for `"std"`).
+
+Returns `(λ, field, levels, title)`.
+"""
 function ECCO_map(X::ECCOdiag)
     o=X.options
     P=o.P
@@ -1355,11 +1527,16 @@ Compute the time-versus-latitude (Hovmöller) data for `X`
 removing a reference climatology/trend, and return a plain `NamedTuple`
 ready for the Makie extension's `TimeLat` to render.
 
-`X.name`'s prefix (before the first `"_"`) selects the variable and its
-default color levels/orientation via the internal helper
-`TimeLat_parameters` — one of `MXLDEPTH`, `SIarea`, `THETA`, `SALT`,
-`ETAN`/`SSH` (levels chosen tighter, divided by 2 or 5, when
-`X.options.select_method > 0`, i.e. an anomaly is being shown).
+`X.name`'s prefix (before the first `"_"`) selects the variable, its
+source zonal-mean file, and default color levels/orientation:
+
+| variable    | source file suffix | default levels (raw)      | default levels (anomaly, `select_method>0`) |
+|:-------------|:-----------------------|:------------------------------|:------------------------------------------------|
+| `MXLDEPTH`   | `_zonmean2d`             | `0.0:50.0:400.0`                | `(-100.0:25.0:100.0)/2`                          |
+| `SIarea`     | `_zonmean2d`             | `0.0:0.1:1.0`                    | `(-0.5:0.1:0.5)/5`                                |
+| `THETA`      | `_zonmean`               | `-2.0:2.0:34.0`                  | `(-2.0:0.25:2.0)/5`                               |
+| `SALT`       | `_zonmean`               | `32.6:0.2:36.2`                  | `(-0.5:0.1:0.5)/5`                                |
+| `ETAN`/`SSH` | `_zonmean2d`             | `10*(-0.15:0.02:0.15)`           | `(-0.5:0.1:0.5)/2`                                 |
 
 `X.options.select_method` controls reference removal:
 - `0`: no reference removed (raw field).

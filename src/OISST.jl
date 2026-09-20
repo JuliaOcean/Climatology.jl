@@ -63,7 +63,20 @@ function file_lists(;path=tempname())
     return fil1,fil2    
 end
 
+"""
+    SST_FILES.ersst_file_lists(; path=SST_demo_path)
 
+Build ERSST (Extended Reconstructed SST, monthly, 1854–present) file
+lists, mirroring [`file_lists`](@ref) (which targets daily OISST files
+instead): writes `"ersst_whole_file_list.csv"` (all months through the
+latest available) and `"ersst_to_get_file_list.csv"` (months not yet
+downloaded) to `path`.
+
+Source URL pattern:
+`https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/netcdf/ersst.v5.YYYYMM.nc`.
+
+Returns `(fil1, fil2)`, the paths to the whole-list and to-get-list CSVs.
+"""
 function ersst_file_lists(;path=SST_demo_path)
     url0="https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/netcdf/"
 
@@ -126,6 +139,16 @@ function ymd!(d::DataFrame)
 	d
 end
 
+"""
+    SST_FILES.monthlymean(gdf, m; path0=pwd(), varname="sst")
+
+Compute the mean of `varname` across all files in group `m` of grouped
+file list `gdf` (e.g. grouped by calendar month), reading each file
+relative to `path0`.
+
+Used by `SST_processing.monthly_climatology` to average all years' daily
+files for a given calendar month into one climatological monthly field.
+"""
 function monthlymean(gdf,m;path0=pwd(),varname="sst")
     list=joinpath.(path0,gdf[m].fil)
     ds=read_Dataset(list[1])
@@ -145,9 +168,23 @@ end
 ###
 
 """
-    read_map(;variable="anom",file="",file_climatology="")
+    SST_FILES.read_map(; variable="anom", file="", file_climatology="")
 
-variable can be "sst", "anom", or "anom_recompute"
+Read a single day's OISST field from `file` (falling back to
+`file[1:end-3]*"_preliminary.nc"` if `file` itself doesn't exist — OISST
+publishes near-real-time files under a `_preliminary` suffix before the
+finalized file is available).
+
+`variable` selects what to return:
+- `"sst"`: the raw SST field;
+- `"anom"` (default): the precomputed anomaly field as stored in `file`;
+- `"anom_recompute"`: SST minus the corresponding calendar month's field
+  from `file_climatology` (read at `file`'s own month, `mon_sst`, derived
+  from `file`'s date-stamped name) — i.e. an anomaly recomputed against a
+  caller-supplied climatology rather than using the file's own stored
+  anomaly.
+
+Returns the selected 2D field.
 """
 function read_map(;variable="anom",file="",file_climatology="")
 	(year_sst,mon_sst,day_sst)=ymd(file)	
@@ -180,11 +217,30 @@ module SST_coarse_grain
 using Statistics, DataFrames, CSV, Glob
 import Climatology: read_Dataset, SST_demo_path
 
+"""
+    SST_coarse_grain.areamean(arr, ii, jj, dnl)
+
+Mean of `arr` over the `dnl × dnl` block of native-resolution cells
+corresponding to coarse-grid cell `(ii,jj)`, skipping `missing` values.
+"""
 @inline areamean(arr,ii,jj,dnl) = 
     mean(skipmissing(
         arr[(ii-1)*dnl.+collect(1:dnl),(jj-1)*dnl.+collect(1:dnl)]
         ))
 
+
+"""
+    SST_coarse_grain.indices(list, dlon=10.0)
+
+Determine which coarse-grid cells (at `dlon`-degree resolution) contain
+valid (non-`NaN`) ocean data, using the first file in `list` as a
+representative sample.
+
+Returns `(i=ii[kk], j=jj[kk], k=kk)`: the coarse-grid `i`/`j` indices of
+valid cells, and their linear index `k` into the full coarse grid — used
+by [`calc_zm`](@ref) and `SST_processing.coarse_grain` to avoid computing
+or storing land/all-`NaN` cells.
+"""
 function indices(list,dlon=10.0)
     dnl=Int(dlon/0.25)
     nnl=Int(720/dnl)
@@ -247,6 +303,14 @@ end
 @inline nansum(x) = sum(filter(!isnan,x))
 @inline nansum(x,y) = mapslices(nansum,x,dims=y)
 
+"""
+    SST_coarse_grain.areaintegral(arr, i::Int, j::Int, G::NamedTuple, dnl)
+
+Area-weighted sum of `arr` over the `dnl × dnl` block of native-resolution
+cells corresponding to coarse-grid cell `(i,j)`, weighted by the native
+grid's mask `G.msk` and cell area `G.area`. Used by [`calc_zm`](@ref) to
+build per-latitude-band area weights.
+"""
 @inline areaintegral(arr,i::Int,j::Int,G::NamedTuple,dnl) = begin
     ii=(i-1)*dnl.+collect(1:dnl)
     jj=(j-1)*dnl.+collect(1:dnl)
@@ -334,6 +398,14 @@ function lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst_10.0.csv")
     return (df,gdf,kdf)
 end
 
+"""
+    SST_coarse_grain.lowres_index(lon0, lat0, kdf)
+
+Find the index into grouped-keys `kdf` (coarse-grid `(i,j)` pairs) whose
+cell center is nearest to `(lon0,lat0)`.
+
+See also [`lowres_position`](@ref) (the inverse: index → coordinates).
+"""
 function lowres_index(lon0,lat0,kdf)
     (i,j)=([x.i for x in kdf],[x.j for x in kdf])
 	dx=Int(360/maximum(i))
@@ -342,6 +414,15 @@ function lowres_index(lon0,lat0,kdf)
     findall(d.==minimum(d))[1]
 end
 
+"""
+    SST_coarse_grain.lowres_position(ii, jj, kdf)
+
+Convert coarse-grid indices `ii`,`jj` (as found in `kdf`) to their cell-
+center `(longitude, latitude)` coordinates, given the coarse resolution
+implied by `kdf`'s index range (`dx = 360/maximum(i)`).
+
+See also [`lowres_index`](@ref) (the inverse: coordinates → index).
+"""
 lowres_position(ii,jj,kdf) = begin
     (i,j)=([x.i for x in kdf],[x.j for x in kdf])
 	dx=Int(360/maximum(i))
