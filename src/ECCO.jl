@@ -1003,7 +1003,7 @@ function parameters()
 	clim_files=clim_files,clim_name=clim_name,clim_longname=clim_longname)
 end
 
-import Climatology: finalize_options, default_options
+import Climatology: finalize_options, default_options, year_range
 
 ##
 
@@ -1033,7 +1033,7 @@ function glo(X::ECCOdiag)
     x=vec(0.5:nt)
     x=year0 .+ x./12.0
 
-    (y=tmp,txt=txt,rng=rng,x=x,year0=year0,year1=year1,years_to_display=o.years_to_display)
+    (y=tmp,txt=txt,rng=rng,x=x,year0=year0,year1=year1,years_to_display=year_range(o))
 end
 
 ##
@@ -1094,7 +1094,7 @@ function TimeLat(X::ECCOdiag)
     level=o.level
     ylims=o.ylims
     colormap_factor=o.colormap_factor
-    years_to_display=o.years_to_display
+    years_to_display=year_range(o)
     P=o.P
 
     do_anom=(select_method>0)
@@ -1160,7 +1160,7 @@ function DepthTime(X::ECCOdiag)
     level=o.level
     (year0,year1)=o.period
     (k0,k1)=o.klims
-    years_to_display=o.years_to_display
+    years_to_display=year_range(o)
     P=o.P
 
     if nam=="THETA"

@@ -68,7 +68,7 @@ function transport(X::ECCOdiag)
     ncols=o.ncols
     list_trsp=o.list_trsp
     (year0,year1)=o.period
-    years_to_display=o.years_to_display
+    years_to_display=year_range(o)
     pth_out=X.path
 
     fig1 = ncols>1 ? Figure(size=(2000,1000),markersize=0.1) : Figure(size=(900,400),markersize=0.1)
@@ -88,7 +88,7 @@ function figov1(X::ECCOdiag)
     level=o.level
     low1=o.low1
     (year0,year1)=o.period
-    years_to_display=o.years_to_display
+    years_to_display=year_range(o)
 
     tmp=-1e-6*load(ECCOdiag(path=X.path,name=X.name))
     nt=size(tmp,3)
