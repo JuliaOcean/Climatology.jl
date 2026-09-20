@@ -11,6 +11,21 @@ Modules = [Climatology]
 Pages = ["types.jl"]
 ```
 
+## GLM-Based Time Series Analysis
+
+```@docs
+fit_time_series
+simple_monthly_climatology
+```
+
+### GLM-Based Time Series Helpers
+
+```@docs
+Climatology.build_formula
+Climatology.datetime_to_years
+Climatology.years_to_datetime
+```
+
 ### Options System Reference
 
 See [Guide](@ref) for how these fit together conceptually.
@@ -74,6 +89,12 @@ To retrieve the MITprof climatologies :
 withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
 	readdir(datadep"MITprof-clim1")
 end
+```
+
+## Read Methods
+
+```@docs
+read_Dataset
 ```
 
 ## Path Names
