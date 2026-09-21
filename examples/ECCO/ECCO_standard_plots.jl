@@ -16,6 +16,9 @@ macro bind(def, element)
     #! format: on
 end
 
+# ╔═╡ dc87bf0f-9581-414d-9d50-1413156eaea6
+import Pkg; Pkg.status()
+
 # ╔═╡ 91f04e7e-4645-11ec-2d30-ddd4d9932541
 begin	
 	using ClimateModels, Climatology, PlutoUI, CairoMakie
@@ -36,12 +39,12 @@ PlutoUI.TableOfContents()
 # ╔═╡ 63b0b781-c6b0-46a1-af06-a228af8211dc
 md"""#  Standard Views of The Ocean State
 
-The ocean state history for the 1980-2023 period is depicted in this notebook using the [OCCA2](https://doi.org/10.21203/rs.3.rs-3979671/v1) ocean state estimate. The displayed quantities were calculated via the [Climatology.jl](https://github.com/JuliaOcean/Climatology.jl#readme) Julia package. The same variables can also be viewed for the [ECCO4](https://doi.org/10.5194/gmd-8-3071-2015) ocean state estimates.
+The ocean state history for the multidecadal period is depicted in this notebook using the ECCO4 and OCCA2 ocean state estimates. The displayed quantities were calculated via the [Climatology.jl](https://github.com/JuliaOcean/Climatology.jl#readme) Julia package. The same variables can also be viewed for the [ECCO4](https://doi.org/10.5194/gmd-8-3071-2015) ocean state estimates.
 
 **References :**
 
-- Gaël Forget. Energy Imbalance in the Sunlit Ocean Layer, 11 April 2024, PREPRINT (under review), https://doi.org/10.21203/rs.3.rs-3979671/v1
-- Forget, G., Campin, J.-M., Heimbach, P., Hill, C. N., Ponte, R. M., and Wunsch, C.: ECCO version 4: an integrated framework for non-linear inverse modeling and global ocean state estimation, Geosci. Model Dev., 8, 3071–3104, https://doi.org/10.5194/gmd-8-3071-2015, 2015
+- Forget, G.: Ocean Heat Transport Convergence Drives Regional Energy Imbalance in the Sunlit Ocean Layer, EGUsphere [preprint], <https://doi.org/10.5194/egusphere-2026-4643>, 2026
+- Forget, G., Campin, J.-M., Heimbach, P., Hill, C. N., Ponte, R. M., and Wunsch, C.: ECCO version 4: an integrated framework for non-linear inverse modeling and global ocean state estimation, Geosci. Model Dev., 8, 3071–3104, <https://doi.org/10.5194/gmd-8-3071-2015>, 2015
 
 !!! introduction
 	This [Julia](https://julialang.org) [notebook](https://github.com/fonsp/Pluto.jl) let's you explore [ECCO](https://ecco-group.org) ocean state estimates interactively -- [ECCO version 4](https://doi.org/10.5194/gmd-8-3071-2015) [releases 1 to 5](https://ecco-group.org/products.htm) initially. 
@@ -81,8 +84,8 @@ begin
 	namzmanom2d_select = @bind namzmanom2d Select(["MXLDEPTH","SIarea","SSH","THETA","SALT"],default="THETA")
 	k_zm2d_select = @bind k_zm2d PlutoUI.Slider(1:50,show_value=true)
 	cmap_fac_select = @bind cmap_fac Select(vec([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0]), default=1.0)
-	l0_select = @bind l0 PlutoUI.Slider(1:90;default=1, show_value=true)
-	l1_select = @bind l1 PlutoUI.Slider(1:90;default=90, show_value=true)
+	l0_select = @bind l0 PlutoUI.Slider(-90:10:90;default=-90, show_value=true)
+	l1_select = @bind l1 PlutoUI.Slider(-90:10:90;default=90, show_value=true)
 
 	#cmap_fac_select = @bind cmap_fac Select(string.([0.05 0.1 0.25 0.5 0.75 1.0 1.5 2.0 5.0])[:])
 	#cmap_fac_select = @bind cmap_fac Select([1 2])
@@ -90,8 +93,8 @@ md"""Select a quantity and plot it's anomaly as a function of time and latitude.
 
 - variable for zonal mean anomaly vs time : $(namzmanom2d_select)
 - depth level for zonal mean vs time : $(k_zm2d_select)
-- latitude index, min : $(l0_select)
-- latitude index, max : $(l1_select)
+- latitude min : $(l0_select)
+- latitude max : $(l1_select)
 - scaling factor for color range : $(cmap_fac_select)
 
 !!! note
@@ -242,7 +245,7 @@ end
 
 # ╔═╡ 09b47016-c954-4fe3-a972-e3de81f40171
 if sol=="custom"
-	year0_default,year1_default=(1992,2011)
+	year0_default,year1_default=(1992,2027)
 else
 	year0_default,year1_default=ECCO_procs.years_min_max(sol)
 end
@@ -303,45 +306,40 @@ begin
 end
 
 # ╔═╡ 4d8aa01d-09ef-4f0b-bc7e-16b9ca71a884
-MC.outputs[:map]=plot(ECCOdiag(path=pth_out,name="tbd",options=
-    (plot_type=:ECCO_map,nammap=nammap,P=P,statmap=statmap,timemap=timemap)))
+MC.outputs[:map]=plot(ECCOdiag(pth_out, nammap, :ECCO_map; P=P, statistic=statmap, time=timemap))
 
 # ╔═╡ 39ca358a-6e4b-45ed-9ccb-7785884a9868
-MC.outputs[:TimeLat]=plot(ECCOdiag(path=pth_out,name=namzm*"_clim",options=
-    (plot_type=:ECCO_TimeLat,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm,P=P,years_to_display=[year0 year1+1])))
+MC.outputs[:TimeLat]=plot(ECCOdiag(pth_out, namzm*"_clim", :ECCO_TimeLat;
+    P=P, period=(year0,year1), level=k_zm, ylims=(l0,l1), colormap_factor=cmap_fac))
 
 # ╔═╡ 2d819d3e-f62e-4a73-b51c-0e1204da2369
-MC.outputs[:TimeLatAnom]=plot(ECCOdiag(path=pth_out,name=namzmanom2d*"_clim",options=
-    (plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=cmap_fac,k=k_zm2d,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1])))
+MC.outputs[:TimeLatAnom]=plot(ECCOdiag(pth_out, namzmanom2d*"_clim", :ECCO_TimeLatAnom;
+    P=P, period=(year0,year1), level=k_zm2d, ylims=(l0,l1), colormap_factor=cmap_fac))
 
 # ╔═╡ 3f73757b-bab9-4d72-9fff-8884e96e76cd
-MC.outputs[:DepthTime]=plot(ECCOdiag(path=pth_out,name=namzmanom*"_clim",options=
-    (plot_type=:ECCO_DepthTime,facA=facA,l=l_Tzm,year0=year0,year1=year1,k0=k0,k1=k1,P=P,years_to_display=[year0 year1+1])))
+MC.outputs[:DepthTime]=plot(ECCOdiag(pth_out, namzmanom*"_clim", :ECCO_DepthTime;
+    P=P, period=(year0,year1), factor=facA, level=l_Tzm, klims=(k0,k1)))   
 
 # ╔═╡ 16fd6241-8ec1-449d-93ac-ef84c8325867
-MC.outputs[:global]=plot(ECCOdiag(path=pth_out,name=ngl1,options=
-    (plot_type=:ECCO_GlobalMean,k=kgl1,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
+MC.outputs[:global]=plot(ECCOdiag(pth_out, ngl1, :ECCO_GlobalMean; level=kgl1, period=(year0,year1)))
 
 # ╔═╡ a19561bb-f9d6-4f05-9696-9b69bba024fc
-MC.outputs[:OHT]=plot(ECCOdiag(path=pth_out,name="OHT",options=(plot_type=:ECCO_OHT1,)))
+MC.outputs[:OHT]=plot(ECCOdiag(pth_out,"OHT",:ECCO_OHT1))
 
 # ╔═╡ 594c8843-f03f-4230-bdba-a943d535524d
-MC.outputs[:overturning]=plot(ECCOdiag(path=pth_out,name="overturn",options=(plot_type=:ECCO_Overturn2,grid=P.Γ)))
+MC.outputs[:overturning]=plot(ECCOdiag(pth_out,"overturn",:ECCO_Overturn2; grid=P.Γ))
 
 # ╔═╡ 88e85850-b09d-4f46-b104-3489ffe63fa0
-MC.outputs[:overturnings]=plot(ECCOdiag(path=pth_out,name="overturn",options=
-    (plot_type=:ECCO_Overturn1,kk=ktr1,low1=low1,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
+MC.outputs[:overturnings]=plot(ECCOdiag(pth_out,"overturn",:ECCO_Overturn1; level=ktr1, low1=low1, period=(year0,year1)))
 
 # ╔═╡ f5e41a76-e56c-4889-821a-68abcb5a72c8
-MC.outputs[:transport]=plot(ECCOdiag(path=pth_out,name="trsp",options=
-    (plot_type=:ECCO_Transports,namtrs=[ntr1],ncols=1,list_trsp=P.list_trsp,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
+# notebook
+MC.outputs[:transport]=plot(ECCOdiag(pth_out,"trsp",:ECCO_Transports; namtrs=[ntr1], ncols=1, list_trsp=P.list_trsp, period=(year0,year1)))
 
 # ╔═╡ 8702a6cf-69de-4e9c-8e77-81f39b55efc7
 begin
-    #namtrs=[ntr1,ntr1,ntr1,ntr1]
     ncols=Int(floor(sqrt(length(namtrs))))
-    MC.outputs[:transports]=plot(ECCOdiag(path=pth_out,name="trsp",options=
-        (plot_type=:ECCO_Transports,namtrs=namtrs,ncols=ncols,list_trsp=P.list_trsp,year0=year0,year1=year1,years_to_display=[year0 year1+1])))
+    MC.outputs[:transports]=plot(ECCOdiag(pth_out,"trsp",:ECCO_Transports; namtrs=namtrs, ncols=ncols, list_trsp=P.list_trsp, period=(year0,year1)))
 end
 
 # ╔═╡ 1fb8f44b-d6f7-4539-8459-fdae07bb6a58
@@ -462,12 +460,13 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 ClimateModels = "f6adb021-9183-4f40-84dc-8cea6f651bb0"
 Climatology = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
-CairoMakie = "~0.15.14"
+CairoMakie = "~0.15.15"
 ClimateModels = "~0.3.16"
-Climatology = "~0.5.21"
+Climatology = "~0.6.0"
 PlutoUI = "~0.7.83"
 """
 
@@ -477,7 +476,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "8fd018de955f875a9354b6cd789ed01025dd4b30"
+project_hash = "22b23ac3adc463dc9ad8900ea57bf56ad098c737"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -526,9 +525,9 @@ version = "0.1.45"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "daa72978cd7a624246e894a4f4f067706d4e17e2"
+git-tree-sha1 = "7c2c19b5a26e601634bf718490b89d59685f122e"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "4.7.0"
+version = "4.7.1"
 weakdeps = ["SparseArrays", "StaticArrays"]
 
     [deps.Adapt.extensions]
@@ -645,9 +644,9 @@ version = "1.1.1"
 
 [[deps.CairoMakie]]
 deps = ["CRC32c", "Cairo", "Cairo_jll", "Colors", "FileIO", "FreeType", "GeometryBasics", "LinearAlgebra", "Makie", "PrecompileTools"]
-git-tree-sha1 = "3495bfc164949714579501b825b8e5e2cce7c56f"
+git-tree-sha1 = "1cda0b7d5abfc95357dae18aca934d401f7869ad"
 uuid = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
-version = "0.15.14"
+version = "0.15.15"
 
 [[deps.Cairo_jll]]
 deps = ["Artifacts", "Bzip2_jll", "CompilerSupportLibraries_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "JLLWrappers", "Libdl", "Pixman_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Zlib_jll", "libpng_jll"]
@@ -714,9 +713,9 @@ version = "0.3.16"
 
 [[deps.Climatology]]
 deps = ["AirSeaFluxes", "CSV", "DataDeps", "DataFrames", "DataStructures", "Dataverse", "Dates", "Distributed", "GLM", "Glob", "Interpolations", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "STAC", "Scratch", "SharedArrays", "Statistics", "StatsModels", "TOML", "URIs"]
-git-tree-sha1 = "197c09ca258f4c9b28f4115a63dbe498c540f979"
+git-tree-sha1 = "89958cb266b9f081a43071321c05d870489d958e"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-version = "0.5.21"
+version = "0.6.0"
 
     [deps.Climatology.extensions]
     ClimatologyMITgcmExt = ["MITgcm"]
@@ -981,9 +980,9 @@ version = "2.2.9"
 
 [[deps.ExceptionUnwrapping]]
 deps = ["Test"]
-git-tree-sha1 = "d36f682e590a83d63d1c7dbd287573764682d12a"
+git-tree-sha1 = "4e468f521e1f9f86891cb07186de5df90360a666"
 uuid = "460bff9d-24e4-43bc-9d9f-a8973cb893f4"
-version = "0.1.11"
+version = "0.1.12"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -998,9 +997,9 @@ version = "0.1.6"
 
 [[deps.FFMPEG_jll]]
 deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libva_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
-git-tree-sha1 = "7a58e45171b63ed4782f2d36fdee8713a469e6e0"
+git-tree-sha1 = "e3c081ec777297fb8fc433012d15a6eaf806b4d2"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
-version = "8.1.2+0"
+version = "9.0.1+0"
 
 [[deps.FFTA]]
 deps = ["AbstractFFTs", "DocStringExtensions", "LinearAlgebra", "MuladdMacro", "Primes", "Random", "Reexport"]
@@ -1156,9 +1155,9 @@ version = "0.8.4"
 
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "LinearAlgebra", "PrecompileTools", "Random", "StaticArrays"]
-git-tree-sha1 = "592cfb5ed8b02804f6a9c04091571c393081f73a"
+git-tree-sha1 = "ec46c5825710fa1a15d468acb2d93cc939a7a5fe"
 uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-version = "0.5.12"
+version = "0.5.13"
 weakdeps = ["Extents", "GeoInterface", "IntervalSets"]
 
     [deps.GeometryBasics.extensions]
@@ -1429,10 +1428,10 @@ uuid = "82899510-4779-5014-852e-03e436cf321d"
 version = "1.0.0"
 
 [[deps.JLD2]]
-deps = ["ChunkCodecLibZlib", "ChunkCodecLibZstd", "FileIO", "MacroTools", "Mmap", "OrderedCollections", "PrecompileTools", "ScopedValues"]
-git-tree-sha1 = "877edc1d2f51adcef0bfacd19464a19e7cfddddb"
+deps = ["ChunkCodecCore", "ChunkCodecLibZlib", "ChunkCodecLibZstd", "FileIO", "MacroTools", "Mmap", "OrderedCollections", "PrecompileTools", "ScopedValues"]
+git-tree-sha1 = "9ce2e7c49ae4a7035b7d60db3a553b1f6c16875d"
 uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-version = "0.6.6"
+version = "0.6.7"
 
     [deps.JLD2.extensions]
     UnPackExt = "UnPack"
@@ -1448,9 +1447,9 @@ version = "1.8.0"
 
 [[deps.JSON]]
 deps = ["Dates", "Logging", "Parsers", "PrecompileTools", "StructUtils", "UUIDs", "Unicode"]
-git-tree-sha1 = "88352712893ec50bee3680605891eaf0e9ed6368"
+git-tree-sha1 = "633b5a34494e711f694ccbc88a6e00102f10238c"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
-version = "1.8.0"
+version = "1.9.0"
 
     [deps.JSON.extensions]
     JSONArrowExt = ["ArrowTypes"]
@@ -1648,9 +1647,9 @@ version = "0.5.16"
 
 [[deps.Makie]]
 deps = ["Animations", "Base64", "CRC32c", "ColorBrewer", "ColorSchemes", "ColorTypes", "Colors", "ComputePipeline", "Contour", "Dates", "DelaunayTriangulation", "Distributions", "DocStringExtensions", "Downloads", "FFMPEG_jll", "FileIO", "FilePaths", "FixedPointNumbers", "Format", "FreeType", "FreeTypeAbstraction", "GeometryBasics", "GridLayoutBase", "ImageBase", "ImageIO", "InteractiveUtils", "Interpolations", "IntervalSets", "InverseFunctions", "Isoband", "KernelDensity", "LaTeXStrings", "LinearAlgebra", "MacroTools", "Markdown", "MathTeXEngine", "Observables", "OffsetArrays", "PNGFiles", "Packing", "Pkg", "PlotUtils", "PolygonOps", "PrecompileTools", "Printf", "REPL", "Random", "RelocatableFolders", "Scratch", "ShaderAbstractions", "SignedDistanceFields", "SparseArrays", "Statistics", "StatsBase", "StatsFuns", "StructArrays", "TriplotBase", "UnicodeFun", "Unitful"]
-git-tree-sha1 = "37b10d17f74f54dc5fa7d3c6c20fd75613c71d80"
+git-tree-sha1 = "5f6f5d1b1fb7ff98c9a083bbfd4c661a9808e758"
 uuid = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-version = "0.24.14"
+version = "0.24.15"
 
     [deps.Makie.extensions]
     MakieDynamicQuantitiesExt = "DynamicQuantities"
@@ -1907,10 +1906,10 @@ uuid = "eebad327-c553-4316-9ea0-9fa01ccd7688"
 version = "0.3.3"
 
 [[deps.PlotUtils]]
-deps = ["ColorSchemes", "Colors", "Dates", "PrecompileTools", "Printf", "Random", "Reexport", "StableRNGs", "Statistics"]
-git-tree-sha1 = "26ca162858917496748aad52bb5d3be4d26a228a"
+deps = ["ColorSchemes", "Colors", "Dates", "PrecompileTools", "Printf", "Reexport", "Statistics"]
+git-tree-sha1 = "f20e945b895d2009c6c28d8bbf40a5cd846f7c2f"
 uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
-version = "1.4.4"
+version = "1.5.0"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "Downloads", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -2122,9 +2121,9 @@ version = "1.11.0"
 
 [[deps.ShaderAbstractions]]
 deps = ["ColorTypes", "FixedPointNumbers", "GeometryBasics", "LinearAlgebra", "Observables", "StaticArrays"]
-git-tree-sha1 = "818554664a2e01fc3784becb2eb3a82326a604b6"
+git-tree-sha1 = "57aa595158717ef165e6f5ab639fe2e3178c0a2b"
 uuid = "65257c39-d410-5151-9873-9b3e5be5013e"
-version = "0.5.0"
+version = "0.5.1"
 
 [[deps.SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
@@ -2184,12 +2183,6 @@ weakdeps = ["ChainRulesCore"]
     [deps.SpecialFunctions.extensions]
     SpecialFunctionsChainRulesCoreExt = "ChainRulesCore"
 
-[[deps.StableRNGs]]
-deps = ["Random"]
-git-tree-sha1 = "4f96c596b8c8258cc7d3b19797854d368f243ddc"
-uuid = "860ef19b-820b-49d6-a774-d7a799459cd3"
-version = "1.0.4"
-
 [[deps.StackViews]]
 deps = ["OffsetArrays"]
 git-tree-sha1 = "be1cf4eb0ac528d96f5115b4ed80c26a8d8ae621"
@@ -2198,9 +2191,9 @@ version = "0.1.2"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
-git-tree-sha1 = "e206cf4850fd7ac4255ffd2b98922f563e18ac53"
+git-tree-sha1 = "39e70e0ab5d7f89833a62ab7c79df15d4fc417c1"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.9.20"
+version = "1.9.22"
 weakdeps = ["ChainRulesCore", "Statistics"]
 
     [deps.StaticArrays.extensions]
@@ -2286,16 +2279,18 @@ version = "1.11.0"
 
 [[deps.StructUtils]]
 deps = ["Dates", "UUIDs"]
-git-tree-sha1 = "2d0fc55c61321ba245c47be599570d11bac50303"
+git-tree-sha1 = "b814d5005d6a529d740ffe06f8a86396f6501138"
 uuid = "ec057cc2-7a8d-4b58-b3b3-92acb9f63b42"
-version = "2.8.5"
+version = "2.9.2"
 
     [deps.StructUtils.extensions]
+    StructUtilsLazilyInitializedFieldsExt = ["LazilyInitializedFields"]
     StructUtilsMeasurementsExt = ["Measurements"]
     StructUtilsStaticArraysCoreExt = ["StaticArraysCore"]
     StructUtilsTablesExt = ["Tables"]
 
     [deps.StructUtils.weakdeps]
+    LazilyInitializedFields = "0e77f7df-68c5-4e49-93ce-4cd80f5598bf"
     Measurements = "eff96d63-e80a-5855-80a2-b1b0885c5ab7"
     StaticArraysCore = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
     Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
@@ -2670,5 +2665,6 @@ version = "4.1.0+0"
 # ╟─ff40a006-915a-4d35-847f-5f10085f60a2
 # ╟─77339a25-c26c-4bfe-84ee-15274389619f
 # ╟─4bc4a859-93f6-409f-8bf3-77cd6ceb0836
+# ╠═dc87bf0f-9581-414d-9d50-1413156eaea6
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
