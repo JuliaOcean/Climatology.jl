@@ -20,7 +20,6 @@ _It is in early development stage; breaking changes remain likely._
 | MITprof | in-situ temperature/salinity profile climatology | supported |
 | [HadIOD](@ref Other-Notebooks) | in-situ T/S observational database | supported |
 | Satellite altimetry / SSH | sea level anomaly maps (NASA/PODAAC, CMEMS) | supported |
-| NSLCT | NASA sea level time series & maps | supported |
 
 ## Design
 
