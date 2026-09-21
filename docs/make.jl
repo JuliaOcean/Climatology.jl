@@ -5,18 +5,25 @@ import Climatology: Downloads, DataDeps
 
 Pkg.precompile()
 
+const ClimatologyMakieExt = Base.get_extension(Climatology, :ClimatologyMakieExt)
+const ClimatologyNCDatasetsExt = Base.get_extension(Climatology, :ClimatologyNCDatasetsExt)
+
 makedocs(;
-    modules=[Climatology],
+    modules=[Climatology, ClimatologyMakieExt],
     format=Documenter.HTML(),
     pages=[
         "Home" => "index.md",
-        "Data Sets" => "examples.md",
-        "Data Files" => "API.md",
-        "Internals (ECCO)" => "ECCO.md",
+        "Guide" => "Guide.md",
+        "Examples" => "examples.md",
+        "ECCO" => "ECCO.md",
+        "SST" => "SST.md",
+        "API" => "API.md",
     ],
     repo="https://github.com/JuliaOcean/Climatology.jl/blob/{commit}{path}#L{line}",
     sitename="Climatology.jl",
-    authors="JuliaOcean <gforget@mit.edu>",
+    
+
+authors="JuliaOcean <gforget@mit.edu>",
     warnonly = [:cross_references,:missing_docs],
 )
 

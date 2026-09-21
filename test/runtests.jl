@@ -83,10 +83,14 @@ end
 	(lon1,lat1)=SST_coarse_grain.lowres_position(kdf0.i,kdf0.j,kdf)
     ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
 
-    plot(SSTdiag(options=(plot_type=:by_year,ts=ts)))
-    options=(plot_type=:by_time,ts=ts,show_anom=false,show_clim=false)
-    plot(SSTdiag(options=options))
-    plot(SSTdiag(options=(plot_type=:MHW,ts=ts)))
+    f1=plot(SSTdiag(input_path,"",:by_year; timeseries=ts))
+    @test isa(f1,Figure)
+
+    f2=plot(SSTdiag(input_path,"",:by_time; timeseries=ts,show_anom=false,show_clim=false))
+    @test isa(f2,Figure)
+
+    f3=plot(SSTdiag(input_path,"",:MHW; timeseries=ts))
+    @test isa(f3,Figure)
 
 	gdf1=SST_FILES.groupby(df, :t)
 	tmp1=gdf1[end]
@@ -94,26 +98,26 @@ end
 	glmsst=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf1]
     ts_global=SST_timeseries.calc(glmsst,list,title="Global Mean SST")
 
-    x=SSTdiag(options=(plot_type=:local_and_global,ts=ts,ts_global=ts_global,kdf0=kdf0))
-    f=plot(x)
-    @test isa(f,Figure)
+    x=SSTdiag(input_path,"local and global SST anomalies",:local_and_global;
+                timeseries=ts,timeseries_global=ts_global)
+    f4=plot(x)
+    @test isa(f4,Figure)
 
     ##
 
     path_OISST_stats=Climatology.downloads.OISST_stats_download()
     file_climatology=joinpath(path_OISST_stats,"OISST_mean_monthly_1992_2011.nc")
-	to_map=(field=SST_FILES.read_map(variable="anom",file=fil,file_climatology=file_climatology),
-			title="test",colorrange=4 .*(-1.0,1.0),colormap=:thermal,
-			lon=gr.lon,lat=gr.lat,lon1=lon1,lat1=lat1,showgrid=false)
-
-    f7=plot(SSTdiag(options=(plot_type=:map,to_map=to_map)))
+    to_map=(field=SST_FILES.read_map(variable="anom",file=fil,file_climatology=file_climatology),
+            colorrange=4 .*(-1.0,1.0),colormap=:thermal,
+            lon=gr.lon,lat=gr.lat,lon1=lon1,lat1=lat1,showgrid=false)
+    f7=plot(SSTdiag(input_path,"test",:map; map_data=to_map))
     @test isa(f7,Figure)
 
     ##
 
-#    zm=SST_coarse_grain.calc_zm(gr,df)
-#    f5=plot(SSTdiag(options=(plot_type=:TimeLat,zm=zm,title="OISST anomaly")))
-#    @test isa(f5,Figure)
+    zm=SST_coarse_grain.calc_zm(gr,df,dnl)
+    f5=plot(SSTdiag(input_path,"OISST anomaly",:TimeLat; timeseries=list,zonal_mean=zm))
+    @test isa(f5,Figure)
 
     ## 2. ECCO
 
@@ -189,41 +193,35 @@ end
     nammap=P.clim_longname[11]
     statmap="mean"
     timemap=1
-    plot(ECCOdiag(path=pth_out,name="tbd",options=
-        (plot_type=:ECCO_map,nammap=nammap,P=P,statmap=statmap,timemap=timemap)))
+
+    plot(ECCOdiag(pth_out, nammap, :ECCO_map; P=P, statistic=statmap, time=timemap))
     
     l0=1; l1=90
 
-    plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
-        (plot_type=:ECCO_TimeLat,year0=year0,year1=year1,cmap_fac=1.0,
-        k=1,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1])))
+    plot(ECCOdiag(pth_out, "THETA_clim", :ECCO_TimeLat;
+        P=P, period=(year0,year1), level=1, ylims=(l0,l1), colormap_factor=1.0))
 
-    plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
-        (plot_type=:ECCO_TimeLatAnom,year0=year0,year1=year1,cmap_fac=1.0,
-        k=1,l0=l0,l1=l1,P=P,years_to_display=[year0 year1+1])))
+    plot(ECCOdiag(pth_out, "THETA_clim", :ECCO_TimeLatAnom;
+        P=P, period=(year0,year1), level=1, ylims=(l0,l1), colormap_factor=1.0))
 
     k0=1; k1=30
-    plot(ECCOdiag(path=pth_out,name="THETA_clim",options=
-        (plot_type=:ECCO_DepthTime,facA=1.0,l=28,year0=year0,year1=year1,
-        k0=k0,k1=k1,P=P,years_to_display=[year0 year1+1])))
+    plot(ECCOdiag(pth_out, "THETA_clim", :ECCO_DepthTime;
+        P=P, period=(year0,year1), factor=1.0, level=28, klims=(k0,k1)))
 
-    plot(ECCOdiag(path=pth_out,name="THETA",options=
-        (plot_type=:ECCO_GlobalMean,k=0,year0=year0,year1=year1,
-        years_to_display=[year0 year1+1])))
+    plot(ECCOdiag(pth_out, "THETA", :ECCO_GlobalMean; level=0, period=(year0,year1)))
 
-    plot(ECCOdiag(path=pth_out,name="OHT",options=(plot_type=:ECCO_OHT1,)))
+    plot(ECCOdiag(pth_out, "OHT", :ECCO_OHT1))
 
-    plot(ECCOdiag(path=pth_out,name="overturn",options=(plot_type=:ECCO_Overturn2,grid=P.Γ)))
+    plot(ECCOdiag(pth_out, "overturn", :ECCO_Overturn2; grid=P.Γ))
 
-    plot(ECCOdiag(path=pth_out,name="overturn",options=
-    (plot_type=:ECCO_Overturn1,kk=29,low1="auto",year0=year0,year1=year1,
-    years_to_display=[year0 year1+1])))
+    plot(ECCOdiag(pth_out, "overturn", :ECCO_Overturn1;
+        level=29, low1="auto", period=(year0,year1)))
 
     ntr1=P.list_trsp[1]
-    plot(ECCOdiag(path=pth_out,name="trsp",options=
-    (plot_type=:ECCO_Transports,namtrs=[ntr1],ncols=1,list_trsp=P.list_trsp,
-    year0=year0,year1=year1,years_to_display=[year0 year1+1])))
+    fig=plot(ECCOdiag(pth_out, "trsp", :ECCO_Transports;
+        namtrs=[ntr1], ncols=1, list_trsp=P.list_trsp, period=(year0,year1)))
 
+    @test isa(fig,Figure)
     @test ispath(pth_out)
 
     ## 3. SSH/SLA

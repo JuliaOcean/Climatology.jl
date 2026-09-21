@@ -1,160 +1,297 @@
 
-	function plot(x::SSTdiag)
-		if !isempty(x.options)
-			o=x.options
-			if string(o.plot_type)=="map_base"
-				fig,ax,im=SST_plots.map_base()
-				fig
-			elseif string(o.plot_type)=="local_and_global"
-				SST_plots.local_and_global(o.ts,o.ts_global,o.kdf0)
-			elseif string(o.plot_type)=="by_year"
-				SST_plots.by_year(o.ts)
-			elseif string(o.plot_type)=="by_time"
-				SST_plots.by_time(o.ts,show_anom=o.show_anom,show_clim=o.show_clim)
-			elseif string(o.plot_type)=="TimeLat"
-				SST_plots.TimeLat(o.ts,o.zm,o.title)
-			elseif string(o.plot_type)=="MHW"
-				SST_plots.MHW(o.ts)
-			elseif string(o.plot_type)=="map"
-				SST_plots.plot_sst_map(o.to_map)
-			else
-				error("unknown plot_type")
-			end
-		else
-			error("unknown options")
-		end
-	end
-	
-	module SST_plots
+"""
+    plot(x::SSTdiag)
 
-	using Makie
-	import Climatology: load, Statistics, SSTdiag
-	import Climatology: MeshArrays, DataDeps
-	import Statistics: median
-	
-	#
-	
-	function by_time(ts; show_anom = true, show_clim=true)
-		tim=collect(1:length(ts.sst))/365.25 .+ 1982
-		f,a=lines(tim,ts.sst,label="SST",linewidth=4)
-		show_clim ? lines!(a,tim,ts.clim,color=:orange,label="seasonal climatology",linewidth=1) : nothing
-		show_anom ? lines!(a,tim,ts.anom,color=:red,label="SST - seasonal cycle") : nothing
-		a.title=ts.title
-		xlims!(1982,2024)
-		axislegend(a,position=:rb)    
-		f
-	end
-	
-	function by_year(ts)
-		f,a,l=lines(ts.sst[1:365],color=:gray)
-		[lines!(ts.sst[ (1:365) .+ 365*(y-1)] ,color=:gray) for y in 2:length(1982:2022)]
-		lines!(ts.sst[ 365*(2023-1982):365*(2024-1982)],color=:orange)
-		lines!(ts.sst[ 365*(2024-1982):end],color=:red,linewidth=2)
-		for y in 2021:2022
-			tt1=vec(1:365) .+(y-1982)*365; lines!(ts.sst[tt1],color=:blue)
-		end
-		a.title="SST year by year (red=2024, orange=2023, blue=2021:2022)"
-		f
-	end
-	
-	#
-		
-	function to_range!(DD,levs)
-		DD[findall(DD.<=levs[1])].=levs[1]+(levs[2]-levs[1])/100
-		DD[findall(DD.>=levs[end])].=levs[end]-(levs[end]-levs[end-1])/100
-	end
-	
-	function TimeLat(list,zm,ttl; 
-		ClipToRange=true, year0=1982, year1=2024, lat0=-90, lat1=90)
-		x=collect(1:length(list.year))/365.25 .+ 1982
-		dy=Int(180/size(zm,1))
-		y=collect(-90+dy/2:dy:90-dy/2)
-		z=permutedims(zm)
-		levs=(-2.0:0.25:2.0)/5.0
-	
-		ClipToRange ? to_range!(z,levs) : nothing
-		fig1 = Figure(resolution = (900,400),markersize=0.1)
-		ax1 = Axis(fig1[1,1], title=ttl,
-		xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
-		hm1=contourf!(ax1,x[1:7:end],y,z[1:7:end,:],levels=levs,colormap=:curl)
-		Colorbar(fig1[1,2], hm1, height = Relative(0.65))
-		xlims!(ax1,year0,year1)
-		ylims!(ax1,lat0,lat1)
-		fig1
-	end
-	
-	#
-	
-	function lowres_scatter(kdf,fig=[],ax=[]; input=[])
-		(i,j)=([x.i for x in kdf],[x.j for x in kdf])
-		(ii,jj)=(10*i.-5,10*j.-95)
-		if isa(fig,Array)
-			f,a=scatter(ii,jj,color=input,markersize=10)
-			c=(:blue,:red)
+Render the Makie figure appropriate for `x.options.plot_type`.
+
+Dispatches on `string(x.options.plot_type)` to a method in `SST_plots`:
+
+| `plot_type`         | renders via                        |
+|:----------------------|:--------------------------------------|
+| `"map_base"`           | `SST_plots.map_base()` (figure only)  |
+| `"local_and_global"`   | `SST_plots.local_and_global(x)`       |
+| `"by_year"`            | `SST_plots.by_year(x)`                |
+| `"by_time"`            | `SST_plots.by_time(x)`                |
+| `"TimeLat"`            | `SST_plots.TimeLat(x)`                |
+| `"MHW"`                | `SST_plots.MHW(x)`                    |
+| `"map"`                | `SST_plots.plot_sst_map(x)`           |
+
+Throws an `ErrorException` if `x.options` is empty, or if `plot_type`
+matches none of the cases above.
+"""
+	function plot(x::SSTdiag)
+		isempty(x.options) && error("unknown options")
+		o = x.options
+		pt = string(o.plot_type)
+		if pt=="map_base"
+			fig,_,_ = SST_plots.map_base()
+			fig
+		elseif pt=="local_and_global"
+			SST_plots.local_and_global(x)
+		elseif pt=="by_year"
+			SST_plots.by_year(x)
+		elseif pt=="by_time"
+			SST_plots.by_time(x)
+		elseif pt=="TimeLat"
+			SST_plots.TimeLat(x)
+		elseif pt=="MHW"
+			SST_plots.MHW(x)
+		elseif pt=="map"
+			SST_plots.plot_sst_map(x)
 		else
-			(f,a)=(ax,fig)
-			c=(:skyblue,:pink)
+			error("unknown plot_type")
 		end
-		text!(a,ii.+1,jj,text=string.(i),fontsize=11,color=c[1])
-		text!(a,ii.+1,jj.-3,text=string.(j),fontsize=11,color=c[2])
-		f		
 	end
-	
-	#
-	
-	function local_and_global(ts,ts_global,kdf0)
-		tim=collect(1:length(ts.anom))/365.25 .+ 1982
-		fig,ax,li=lines(tim,ts.anom .-median(ts.anom),label="local")
-		lines!(tim,ts_global.anom .-median(ts_global.anom),label="global")
-		ax.title="local and global SST anomalies"
-		xlims!(1982,2024)
-		ylims!(-2.5,2.5)
-		axislegend(ax,position = :rb)
-		fig
-	end
-	
-	function map_base()
-		earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
-		"Blue_Marble_Next_Generation_+_topography_+_bathymetry.jpg") 
-		
-		earth_img=load(earth_jpg)
-		earth_img=reverse(permutedims(earth_img),dims=2)
-		earth_img=circshift(earth_img,(1800,0))
-	
-		#fig = Figure(resolution = (1200, 800)) #, backgroundcolor = :grey80)
-		fig=with_theme(Figure,theme_light())
-		ax = Axis(fig[1, 1])
-#		im=image!(ax, -0.05 .. 359.95, -89.95 .. 89.95, 0.5 .+0.5*Gray.(earth_img))
-		im=image!(ax, -0.05 .. 359.95, -89.95 .. 89.95, earth_img)
-		hidedecorations!(ax)
-	
-		fig,ax,im
-	end
-	
-	##
-	
-	function MHW(ts,ttl="SST anomaly with extreme warm periods in red")
-		x=ts.sst-ts.clim
-		y=fill(:blue,size(x))
-		y[findall(x.>=ts.high)].=:red
-		tim=collect(1:length(ts.sst))/365.25 .+ 1982
-		
-		fig,ax,li=lines(tim,x,color=y)
-		xlims!(1982,2024)
-		ax.title=ttl
-		fig
-	end
-	
-	function plot_sst_map(to_map)
-		fig=plot(SSTdiag(options=(plot_type=:map_base,)))
-		ax=current_axis()
-		hm=heatmap!(ax,to_map.lon,to_map.lat,to_map.field,colormap=to_map.colormap,colorrange=to_map.colorrange)
-		to_map.showgrid ? lowres_scatter(ax) : nothing
-		scatter!(ax,to_map.lon1,to_map.lat1,marker=:circle,color=:blue,markersize=30)
-		scatter!(ax,to_map.lon1,to_map.lat1,marker=:x,color=:yellow,markersize=15)
-		Colorbar(fig[1, 2],hm)
-		ax.title=to_map.title
-		fig
-	end
-	
+
+module SST_plots
+
+using Makie
+import Climatology: load, Statistics, SSTdiag
+import Climatology: MeshArrays, DataDeps
+import Statistics: median
+
+import Climatology: getopt
+import ClimatologyMakieExt: to_range!
+
+# unified title resolution: explicit SSTdiag.name wins, else caller-supplied default
+title_or(X::SSTdiag, default::AbstractString="") =
+    (X.name in ("", "unknown") ? default : X.name)
+
+#
+
+"""
+    SST_plots.by_time(X::SSTdiag)
+
+Plot the SST time series `X.options.timeseries`, optionally overlaid with
+its seasonal climatology and/or anomaly.
+
+Reads, via [`getopt`](@ref) (all optional, with the defaults shown):
+
+- `X.options.timeseries` — a `NamedTuple` with fields `sst`, `clim`,
+  `anom`, `title` (as produced by, e.g., `SST_timeseries.calc`)
+- `show_anom::Bool = true` — overlay `timeseries.anom` in red
+- `show_clim::Bool = true` — overlay `timeseries.clim` in orange
+- `period::Tuple = (1982,2024)` — x-axis limits
+
+The time axis assumes `timeseries.sst` is a daily series starting in
+1982 (`collect(1:length(ts.sst))/365.25 .+ 1982`), independent of
+`period`.
+"""
+function by_time(X::SSTdiag)
+    o = X.options
+    ts = o.timeseries
+    show_anom = getopt(o,:show_anom,true)
+    show_clim = getopt(o,:show_clim,true)
+    year0,year1 = getopt(o,:period,(1982,2024))
+
+    tim = collect(1:length(ts.sst))/365.25 .+ 1982
+    f,a = lines(tim,ts.sst,label="SST",linewidth=4)
+    show_clim ? lines!(a,tim,ts.clim,color=:orange,label="seasonal climatology",linewidth=1) : nothing
+    show_anom ? lines!(a,tim,ts.anom,color=:red,label="SST - seasonal cycle") : nothing
+    a.title = title_or(X, ts.title)
+    xlims!(year0,year1)
+    axislegend(a,position=:rb)
+    f
+end
+
+"""
+    SST_plots.by_year(X::SSTdiag)
+
+Plot the SST time series `X.options.timeseries.sst` as one overlaid line
+per calendar year, from 1982 through the most recent full year, using a
+fixed 365-day-per-year assumption (leap days are not separately handled).
+
+Color coding is hardcoded by year:
+- 1982–2020: gray
+- 2021–2022: blue
+- 2023: orange
+- 2024 onward: red (linewidth doubled)
+
+These year cutoffs are literal constants in the function body and will
+need updating in future years to keep highlighting the most recent data;
+they do not derive from `X.options` or the current date.
+"""
+function by_year(X::SSTdiag)
+    ts = X.options.timeseries
+    f,a,l = lines(ts.sst[1:365],color=:gray)
+    [lines!(ts.sst[ (1:365) .+ 365*(y-1)] ,color=:gray) for y in 2:length(1982:2022)]
+    lines!(ts.sst[ 365*(2023-1982):365*(2024-1982)],color=:orange)
+    lines!(ts.sst[ 365*(2024-1982):end],color=:red,linewidth=2)
+    for y in 2021:2022
+        tt1=vec(1:365) .+(y-1982)*365; lines!(ts.sst[tt1],color=:blue)
+    end
+    a.title = title_or(X,"SST year by year (red=2024, orange=2023, blue=2021:2022)")
+    f
+end
+
+#
+
+"""
+    SST_plots.TimeLat(X::SSTdiag)
+
+Plot a time-versus-latitude filled-contour anomaly diagram directly from
+`X.options`.
+
+Unlike the ECCO extension's [`TimeLat`](@ref) — which renders a
+`NamedTuple` precomputed by a separate `ECCO_procs.TimeLat` step — this
+method reads `X.options` directly, since SST currently has no
+`_procs`-equivalent precompute stage. Fields read (via [`getopt`](@ref)
+where optional):
+
+- `X.options.timeseries` — used only for `.year`'s length, to build the
+  time axis
+- `X.options.zonal_mean` — the raw latitude × time array to contour
+- `period::Tuple = (1982,2024)` — x-axis limits
+- `ylims::Tuple = (-90,90)` — y-axis (latitude) limits
+- `clip_to_range::Bool = true` — clip the field to the fixed contour
+  levels `(-2.0:0.25:2.0)/5` via `to_range!` before contouring
+
+Latitude bins are inferred from `size(zonal_mean,1)`, assuming they evenly
+tile `-90:90`. The time axis/field are subsampled by a factor of 7
+(`x[1:7:end]`, `z[1:7:end,:]`) for plotting performance.
+"""
+function TimeLat(X::SSTdiag)
+    o = X.options
+    list = o.timeseries
+    zm   = o.zonal_mean
+    year0,year1 = getopt(o,:period,(1982,2024))
+    lat0,lat1   = getopt(o,:ylims,(-90,90))
+    clip_to_range = getopt(o,:clip_to_range,true)
+
+    x = collect(1:length(list.year))/365.25 .+ 1982
+    dy = Int(180/size(zm,1))
+    y = collect(-90+dy/2:dy:90-dy/2)
+    z = permutedims(zm)
+    levs = (-2.0:0.25:2.0)/5.0
+
+    clip_to_range ? to_range!(z,levs) : nothing
+    fig1 = Figure(size = (900,400),markersize=0.1)
+    ax1 = Axis(fig1[1,1], title=title_or(X,"OISST anomaly"),
+        xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
+    hm1 = contourf!(ax1,x[1:7:end],y,z[1:7:end,:],levels=levs,colormap=:curl)
+    Colorbar(fig1[1,2], hm1, height = Relative(0.65))
+    xlims!(ax1,year0,year1)
+    ylims!(ax1,lat0,lat1)
+    fig1
+end
+
+#
+
+function lowres_scatter(kdf,fig=[],ax=[]; input=[])
+    (i,j) = ([x.i for x in kdf],[x.j for x in kdf])
+    (ii,jj) = (10*i.-5,10*j.-95)
+    if isa(fig,Array)
+        f,a = scatter(ii,jj,color=input,markersize=10)
+        c=(:blue,:red)
+    else
+        (f,a) = (ax,fig)
+        c=(:skyblue,:pink)
+    end
+    text!(a,ii.+1,jj,text=string.(i),fontsize=11,color=c[1])
+    text!(a,ii.+1,jj.-3,text=string.(j),fontsize=11,color=c[2])
+    f
+end
+
+function local_and_global(X::SSTdiag)
+    o = X.options
+    ts        = o.timeseries
+    ts_global = o.timeseries_global
+    year0,year1 = getopt(o,:period,(1982,2024))
+    ylim0,ylim1 = getopt(o,:ylims,(-2.5,2.5))
+
+    tim = collect(1:length(ts.anom))/365.25 .+ 1982
+    fig,ax,li = lines(tim,ts.anom .-median(ts.anom),label="local")
+    lines!(tim,ts_global.anom .-median(ts_global.anom),label="global")
+    ax.title = title_or(X,"local and global SST anomalies")
+    xlims!(year0,year1)
+    ylims!(ylim0,ylim1)
+    axislegend(ax,position = :rb)
+    fig
+end
+
+"""
+    SST_plots.map_base()
+
+Build a base `Figure`/`Axis` showing the Blue Marble Next Generation
+basemap image, for use as a background under subsequent `heatmap!`/
+`scatter!` calls (see [`plot_sst_map`](@ref)).
+
+Returns `(fig, ax, im)`.
+
+The image is fetched via `MeshArrays.mydatadep("basemap_jpg1")`, then
+`reverse`d, `permutedims`d, and `circshift`ed by `(1800,0)` pixels to
+align its native orientation and longitude origin with the `[0,360)`
+convention used elsewhere in this package (displayed on `-0.05 .. 359.95`
+in `x`, `-89.95 .. 89.95` in `y`). Axis decorations are hidden.
+"""
+function map_base()
+    earth_jpg = joinpath(MeshArrays.mydatadep("basemap_jpg1"),
+        "Blue_Marble_Next_Generation_+_topography_+_bathymetry.jpg")
+    earth_img = load(earth_jpg)
+    earth_img = reverse(permutedims(earth_img),dims=2)
+    earth_img = circshift(earth_img,(1800,0))
+
+    fig = with_theme(Figure,theme_light())
+    ax = Axis(fig[1, 1])
+    im = image!(ax, -0.05 .. 359.95, -89.95 .. 89.95, earth_img)
+    hidedecorations!(ax)
+    fig,ax,im
+end
+
+##
+
+"""
+    SST_plots.MHW(X::SSTdiag)
+
+Plot the SST anomaly time series (`X.options.timeseries.sst .-
+X.options.timeseries.clim`), highlighting marine heat wave (MHW) periods
+in red.
+
+A point is classified as an MHW day when the anomaly exceeds
+`X.options.timeseries.high` — the day-of-year 90th percentile threshold
+computed by `SST_timeseries.calc_quantile` (see that function for how
+`.high` is derived); all other points are blue. `period`, read via
+[`getopt`](@ref) with default `(1982,2024)`, sets the x-axis limits.
+"""
+function MHW(X::SSTdiag)
+    o = X.options
+    ts = o.timeseries
+    year0,year1 = getopt(o,:period,(1982,2024))
+
+    x = ts.sst-ts.clim
+    y = fill(:blue,size(x))
+    y[findall(x.>=ts.high)].=:red
+    tim = collect(1:length(ts.sst))/365.25 .+ 1982
+
+    fig,ax,li = lines(tim,x,color=y)
+    xlims!(year0,year1)
+    ax.title = title_or(X,"SST anomaly with extreme warm periods in red")
+    fig
+end
+
+"""
+    SST_plots.plot_sst_map(X::SSTdiag)
+
+Plot an SST (or anomaly) map over the [`map_base`](@ref) basemap, with an
+optional grid overlay and a highlighted point of interest.
+
+Reads `X.options.map_data`, a `NamedTuple` expected to provide: `lon`,
+`lat`, `field` (the gridded values to show via `heatmap!`), `colormap`,
+`colorrange`, `showgrid::Bool` (whether to overlay [`lowres_scatter`](@ref)'s
+coarse-grain grid-index labels), and `lon1`/`lat1` (coordinates of a
+single point, marked with both a blue circle and a yellow X — e.g. to
+indicate the location a companion time-series plot corresponds to).
+"""
+function plot_sst_map(X::SSTdiag)
+    md = X.options.map_data
+    fig,ax,_ = map_base()
+    hm = heatmap!(ax,md.lon,md.lat,md.field,colormap=md.colormap,colorrange=md.colorrange)
+    md.showgrid ? lowres_scatter(ax) : nothing
+    scatter!(ax,md.lon1,md.lat1,marker=:circle,color=:blue,markersize=30)
+    scatter!(ax,md.lon1,md.lat1,marker=:x,color=:yellow,markersize=15)
+    Colorbar(fig[1, 2],hm)
+    ax.title = title_or(X,"SST map")
+    fig
+end
+
 end

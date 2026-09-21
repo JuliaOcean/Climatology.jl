@@ -1,6 +1,34 @@
 ## Intro
 
-Climatologies are readily downloaded and accessed using the [Scratch.jl](https://github.com/JuliaPackaging/Scratch.jl#readme) artifact system as explained below. 
+Climatologies are downloaded and accessed lazily, via the artifact mechanisms 
+described in [Guide](@ref). This page lists the data-retrieval functions and 
+artifact paths for each supported data set, followed by full function reference.
+
+## Core Types
+
+```@autodocs
+Modules = [Climatology]
+Pages = ["types.jl"]
+```
+
+## GLM-Based Time Series Analysis
+
+```@docs
+fit_time_series
+simple_monthly_climatology
+```
+
+### GLM-Based Time Series Helpers
+
+```@docs
+Climatology.build_formula
+Climatology.datetime_to_years
+Climatology.years_to_datetime
+```
+
+### Options System Reference
+
+See [Guide](@ref) for how these fit together conceptually.
 
 ## Use Examples
 
@@ -63,6 +91,12 @@ withenv("DATADEPS_ALWAYS_ACCEPT"=>true) do
 end
 ```
 
+## Read Methods
+
+```@docs
+read_Dataset
+```
+
 ## Path Names
 
 Gridded fields are mostly retrieved from [Harvard Dataverse](https://dataverse.harvard.edu). These can be relatively large files, compared to the package codes, so they are handled `lazily` (only downloaded when needed). Precomputed diagnostics have also been archived on [zenodo.org](https://zenodo.org).
@@ -75,8 +109,8 @@ Gridded fields are mostly retrieved from [Harvard Dataverse](https://dataverse.h
 | `ScratchSpaces.OCCA`             | NetCDF              |lazy, by variable, [dataverse](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/RNXA2A) |
 | `datadep"CBIOMES-clim1"`             | NetCDF    | lazy, whole, [zenodo](https://zenodo.org/record/5598417#.YoW46C-B3MU) |
 
-## Functions Reference
+## Download Functions Reference
 
 ```@autodocs
-Modules = [Climatology.downloads]
+Modules = [Climatology.downloads,Climatology.ScratchSpaces]
 ```

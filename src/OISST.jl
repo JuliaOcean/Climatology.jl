@@ -63,7 +63,20 @@ function file_lists(;path=tempname())
     return fil1,fil2    
 end
 
+"""
+    SST_FILES.ersst_file_lists(; path=SST_demo_path)
 
+Build ERSST (Extended Reconstructed SST, monthly, 1854–present) file
+lists, mirroring [`file_lists`](@ref) (which targets daily OISST files
+instead): writes `"ersst_whole_file_list.csv"` (all months through the
+latest available) and `"ersst_to_get_file_list.csv"` (months not yet
+downloaded) to `path`.
+
+Source URL pattern:
+`https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/netcdf/ersst.v5.YYYYMM.nc`.
+
+Returns `(fil1, fil2)`, the paths to the whole-list and to-get-list CSVs.
+"""
 function ersst_file_lists(;path=SST_demo_path)
     url0="https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/netcdf/"
 
@@ -126,6 +139,16 @@ function ymd!(d::DataFrame)
 	d
 end
 
+"""
+    SST_FILES.monthlymean(gdf, m; path0=pwd(), varname="sst")
+
+Compute the mean of `varname` across all files in group `m` of grouped
+file list `gdf` (e.g. grouped by calendar month), reading each file
+relative to `path0`.
+
+Used by `SST_processing.monthly_climatology` to average all years' daily
+files for a given calendar month into one climatological monthly field.
+"""
 function monthlymean(gdf,m;path0=pwd(),varname="sst")
     list=joinpath.(path0,gdf[m].fil)
     ds=read_Dataset(list[1])
@@ -145,9 +168,23 @@ end
 ###
 
 """
-    read_map(;variable="anom",file="",file_climatology="")
+    SST_FILES.read_map(; variable="anom", file="", file_climatology="")
 
-variable can be "sst", "anom", or "anom_recompute"
+Read a single day's OISST field from `file` (falling back to
+`file[1:end-3]*"_preliminary.nc"` if `file` itself doesn't exist — OISST
+publishes near-real-time files under a `_preliminary` suffix before the
+finalized file is available).
+
+`variable` selects what to return:
+- `"sst"`: the raw SST field;
+- `"anom"` (default): the precomputed anomaly field as stored in `file`;
+- `"anom_recompute"`: SST minus the corresponding calendar month's field
+  from `file_climatology` (read at `file`'s own month, `mon_sst`, derived
+  from `file`'s date-stamped name) — i.e. an anomaly recomputed against a
+  caller-supplied climatology rather than using the file's own stored
+  anomaly.
+
+Returns the selected 2D field.
 """
 function read_map(;variable="anom",file="",file_climatology="")
 	(year_sst,mon_sst,day_sst)=ymd(file)	
@@ -180,11 +217,30 @@ module SST_coarse_grain
 using Statistics, DataFrames, CSV, Glob
 import Climatology: read_Dataset, SST_demo_path
 
+"""
+    SST_coarse_grain.areamean(arr, ii, jj, dnl)
+
+Mean of `arr` over the `dnl × dnl` block of native-resolution cells
+corresponding to coarse-grid cell `(ii,jj)`, skipping `missing` values.
+"""
 @inline areamean(arr,ii,jj,dnl) = 
     mean(skipmissing(
         arr[(ii-1)*dnl.+collect(1:dnl),(jj-1)*dnl.+collect(1:dnl)]
         ))
 
+
+"""
+    SST_coarse_grain.indices(list, dlon=10.0)
+
+Determine which coarse-grid cells (at `dlon`-degree resolution) contain
+valid (non-`NaN`) ocean data, using the first file in `list` as a
+representative sample.
+
+Returns `(i=ii[kk], j=jj[kk], k=kk)`: the coarse-grid `i`/`j` indices of
+valid cells, and their linear index `k` into the full coarse grid — used
+by [`calc_zm`](@ref) and `SST_processing.coarse_grain` to avoid computing
+or storing land/all-`NaN` cells.
+"""
 function indices(list,dlon=10.0)
     dnl=Int(dlon/0.25)
     nnl=Int(720/dnl)
@@ -247,17 +303,58 @@ end
 @inline nansum(x) = sum(filter(!isnan,x))
 @inline nansum(x,y) = mapslices(nansum,x,dims=y)
 
+"""
+    SST_coarse_grain.areaintegral(arr, i::Int, j::Int, G::NamedTuple, dnl)
+
+Area-weighted sum of `arr` over the `dnl × dnl` block of native-resolution
+cells corresponding to coarse-grid cell `(i,j)`, weighted by the native
+grid's mask `G.msk` and cell area `G.area`. Used by [`calc_zm`](@ref) to
+build per-latitude-band area weights.
+"""
 @inline areaintegral(arr,i::Int,j::Int,G::NamedTuple,dnl) = begin
     ii=(i-1)*dnl.+collect(1:dnl)
     jj=(j-1)*dnl.+collect(1:dnl)
     nansum(arr[ii,jj].*G.msk[ii,jj].*G.area[ii,jj])
 end
 
-function calc_zm(G::NamedTuple,df)
+"""
+    SST_coarse_grain.calc_zm(G::NamedTuple, df, dnl=missing)
+
+Compute a zonal-mean (latitude-band) time series from a coarse-grained,
+long-format SST table `df` (as produced by `SST_processing.coarse_grain`
++ `SST_coarse_grain.lowres_read`, with columns `i`, `j`, `t`, `sst` for
+coarse-grid longitude/latitude indices, time index, and SST value).
+
+`G` is the coarse grid `NamedTuple` from `grid` (`lon`, `lat`, `msk`,
+`area`). `dnl` is the coarse-graining factor in grid cells (e.g.
+`dlon/0.25` for a `dlon`-degree coarse cell); if not given, defaults to
+the equivalent of `dlon = 10.0`.
+
+For each coarse latitude-band index `k` (from `minimum(df.j)` to
+`maximum(df.j)`), computes the area-weighted mean SST across all
+longitude cells in that band, for every time step (grouped via
+`groupby(df, :t)`). Returns an `(nlat, ntime)` array `arr`, with rows for
+latitude bands outside `[minimum(df.j), maximum(df.j)]` left as `NaN`.
+
+!!! note
+    The local variable computed from `dnl` when it isn't given is
+    currently unused — `dnl` itself (`missing`, in that case) is passed
+    directly to `areaintegral` regardless. Worth checking the
+    `dnl=missing` default path actually behaves as intended.
+"""
+function calc_zm(G::NamedTuple,df,dnl=missing)
     gdf_tim=groupby(df, :t)
     arr=NaN*zeros(maximum(df.j),length(gdf_tim))
+
+    dn=if isempty(dnl)
+        dlon=10.0
+        Int(dlon/0.25)
+    else
+        dnl
+    end
+
     for k in minimum(df.j):maximum(df.j)
-        area_tmp=[areaintegral(G.msk,x.i,x.j,G) for x in eachrow(gdf_tim[1])]
+        area_tmp=[areaintegral(G.msk,x.i,x.j,G,dnl) for x in eachrow(gdf_tim[1])]
         area_tmp[gdf_tim[1].j.!==k].=0
         tmp1=[sum(tmp1.sst[:].*area_tmp)/sum(area_tmp) for tmp1 in gdf_tim]
         arr[k,:].=tmp1
@@ -301,6 +398,14 @@ function lowres_read(;path=SST_demo_path,fil="lowres_oisst_sst_10.0.csv")
     return (df,gdf,kdf)
 end
 
+"""
+    SST_coarse_grain.lowres_index(lon0, lat0, kdf)
+
+Find the index into grouped-keys `kdf` (coarse-grid `(i,j)` pairs) whose
+cell center is nearest to `(lon0,lat0)`.
+
+See also [`lowres_position`](@ref) (the inverse: index → coordinates).
+"""
 function lowres_index(lon0,lat0,kdf)
     (i,j)=([x.i for x in kdf],[x.j for x in kdf])
 	dx=Int(360/maximum(i))
@@ -309,6 +414,15 @@ function lowres_index(lon0,lat0,kdf)
     findall(d.==minimum(d))[1]
 end
 
+"""
+    SST_coarse_grain.lowres_position(ii, jj, kdf)
+
+Convert coarse-grid indices `ii`,`jj` (as found in `kdf`) to their cell-
+center `(longitude, latitude)` coordinates, given the coarse resolution
+implied by `kdf`'s index range (`dx = 360/maximum(i)`).
+
+See also [`lowres_index`](@ref) (the inverse: coordinates → index).
+"""
 lowres_position(ii,jj,kdf) = begin
     (i,j)=([x.i for x in kdf],[x.j for x in kdf])
 	dx=Int(360/maximum(i))
@@ -326,6 +440,27 @@ import Dataverse.downloads: Downloads
 import Climatology: SST_FILES, SST_coarse_grain, read_Dataset
 import Climatology: SST_demo_path, to_monthly_file, write_SST_climatology
 
+"""
+    SST_processing.download_files(; path=SST_demo_path, short_demo=false, verbose=false)
+
+Download the OISST daily NetCDF files listed by `SST_FILES.file_lists`/
+`SST_FILES.read_files_list`, distributing work across available Julia
+workers.
+
+If `path` doesn't exist, it's created. The file list is regenerated via
+`SST_FILES.file_lists(path=path)`; when `short_demo` is `true`, only the
+most recent 30 files are downloaded (for quick testing). Work is split
+evenly across `nworkers()` via `@distributed`; each missing file is
+downloaded via `Downloads.download`, falling back to a
+`"_preliminary.nc"`-suffixed URL/filename if the primary download fails
+(OISST publishes near-real-time files under a `_preliminary` suffix
+before the finalized file is available), and silently skipping (with an
+optional `verbose` message) if neither is found.
+
+Returns the list of successfully-available local file paths (preferring
+the finalized file over the preliminary one where both exist), excluding
+any still-missing entries.
+"""
 function download_files(;path=SST_demo_path,short_demo=false,verbose=false)
     !ispath(path) ? mkdir(path) : nothing
     fil,_=SST_FILES.file_lists(path=path)
@@ -381,6 +516,31 @@ end
 
 ## 
 
+"""
+    SST_processing.coarse_grain(; datname="oisst", varname="sst", dlon=10.0,
+                                  path=SST_demo_path, short_demo=false)
+
+Coarse-grain the downloaded OISST daily files (see
+[`download_files`](@ref)) onto a `dlon`-degree grid, writing one CSV per
+input file plus a single merged CSV of all coarse-grained values.
+
+Reads the file list `"\$(datname)_whole_file_list.csv"` from `path` (when
+`short_demo` is `true`, only the most recent 10 files); determines the
+sparse set of non-empty coarse cells once via
+`SST_coarse_grain.indices(list)` (reused for every file, since land/ocean
+geography doesn't change over time). Distributes files evenly across
+`nworkers()`: for each file, loads `varname` from the NetCDF (falling
+back to the `"_preliminary.nc"` filename if the primary is missing),
+computes the coarse-cell area means via `SST_coarse_grain.areamean`, and
+writes the result to its own CSV under
+`"\$(varname)_lowres_files/\$(varname)_lowres_<date>.csv"` (any pre-existing
+output directory for `varname` is moved aside via `mv` to a temp path
+before starting, rather than merged into).
+
+After all files are processed, calls `SST_coarse_grain.merge_files` to
+concatenate the per-file CSVs into a single
+`"lowres_oisst_\$(varname)_\$(dlon).csv"`.
+"""
 function coarse_grain(;datname="oisst",varname="sst",dlon=10.0,
        path=SST_demo_path,short_demo=false)
 
@@ -425,6 +585,31 @@ end
 
 ##
 
+"""
+    SST_processing.monthly_climatology(; datname="oisst", varname="sst", path=SST_demo_path)
+
+Compute the 1992–2011 monthly climatology (mean SST and mean anomaly, per
+calendar month) from the downloaded OISST daily files, and write it to a
+single climatology file via `write_SST_climatology`.
+
+Reads the file list `"\$(datname)_whole_file_list.csv"` from `path`,
+selects the 1992–2011 subset, and groups it by calendar month. For each
+of `"sst"` and `"anom"`, computes the across-years mean for each of the
+12 calendar months via `SST_FILES.monthlymean` (distributed across
+`nworkers()`), writing each month's mean field via `to_monthly_file` to a
+temporary output directory.
+
+Finally combines the 12 per-month files into the single climatology file
+via `write_SST_climatology(output_path, year0, year1, lon, lat)`
+(`year0=1992`, `year1=2011`), and returns that file's path.
+
+!!! note
+    The function's own `varname` keyword (default `"sst"`) is shadowed
+    by an internal loop variable of the same name iterating over
+    `("sst","anom")` — the keyword argument itself has no effect on the
+    computation; both `sst` and `anom` climatologies are always computed
+    regardless of what's passed in.
+"""
 function monthly_climatology(;datname="oisst",varname="sst",path=SST_demo_path)
     year0=1992; year1=2011
     list=SST_FILES.read_files_list(file="$(datname)_whole_file_list.csv",path=path,add_ymd=true)
@@ -461,6 +646,36 @@ module SST_timeseries
 
 using DataFrames, Statistics, Dates
 
+"""
+    SST_timeseries.calc(input, list; title="", gdf=nothing)
+
+Compute a full SST time-series diagnostic `NamedTuple` — raw values,
+day-of-year climatology, anomaly, and extreme-warm quantile bands —
+suitable for the Makie extension's `by_time`/`by_year`/`MHW`/
+`local_and_global` plots (via `X.options.timeseries`).
+
+`input` is either a raw SST vector, or a `DataFrames.GroupKey` into `gdf`
+(a grouped `DataFrame`, e.g. grouped by grid cell `(i,j)`) — in the
+latter case `gdf[input].sst` supplies the series. `list` is the full
+file/date list (as from `SST_FILES.read_files_list`), used to align
+`year`/`month`/`day` with each point in the series and to compute the
+climatology.
+
+Internally:
+1. `repeatclim` computes the 1992–2011 day-of-year climatology (via
+   `clim`/`gdf_clim`) and repeats it across the full series length,
+   giving `clim`.
+2. `anom` computes `sst - climatology`, re-centered to the climatology's
+   own median (so `anom`'s scale matches `sst`, not a zero-centered
+   anomaly).
+3. `calc_quantile` computes, for each day of year, the 10th/90th
+   percentile of the 1992–2011 anomaly (a ±2-day window around each
+   calendar day) — returned as `low`/`high`, used to flag extreme
+   warm/cool periods (e.g. the Makie extension's `MHW` plot).
+
+Returns `(sst, clim, anom, title, year, month, day, low, high)`. `title`
+defaults to `"SST time series"` unless overridden.
+"""
 function calc(input,list; title="", gdf=nothing)
 	if isa(input,DataFrames.GroupKey)
 		sst1=gdf[input].sst[:]

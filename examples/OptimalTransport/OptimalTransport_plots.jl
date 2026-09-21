@@ -8,7 +8,7 @@ pth_output=joinpath(tempdir(),"OptimalTransport_example")
 function EMD_plot(fil)
     d=load(fil)["d"];
     d[findall(d.==0.0)].=NaN;
-    fig = Mkie.Figure(resolution = (600,400), backgroundcolor = :grey95, fontsize=12)
+    fig = Mkie.Figure(size = (600,400), backgroundcolor = :grey95, fontsize=12)
     ax = Mkie.Axis(fig[1,1])
     hm=Mkie.heatmap!(d)
     Mkie.Colorbar(fig[1,2], hm, height = Mkie.Relative(0.65))
@@ -28,7 +28,7 @@ function EMD_plot_all(pth=pth_output)
     #cr=(0.07, 0.15)
     cr=(0.0, 10.0)
 
-    fig = Mkie.Figure(resolution = (600,400), backgroundcolor = :grey95, fontsize=12)
+    fig = Mkie.Figure(size = (600,400), backgroundcolor = :grey95, fontsize=12)
     ax = Mkie.Axis(fig[1,1])
     hm=Mkie.heatmap!(d1, colorrange = cr, colormap=:inferno)
     Mkie.ylims!(ax, (12.5, 0.5)); Mkie.xlims!(ax, (0.5,12.5))  
