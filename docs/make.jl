@@ -35,11 +35,11 @@ withenv(MeshArrays.interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
        "Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg")
 
-lst=("SSH/SatelliteAltimetry.jl",
-     "SurfaceFluxes/AirSeaHeatFlux.jl",
-     "OISST/sst_anomaly_notebook.jl","CBIOMES/CBIOMES_climatology_plot.jl",
-     "ECCO/ECCO_standard_plots.jl","NSLCT/NSLCT_notebook.jl",
+lst=("ECCO/ECCO_standard_plots.jl","OISST/sst_anomaly_notebook.jl",
+    "CBIOMES/CBIOMES_climatology_plot.jl",
+    "SSH/SatelliteAltimetry.jl","SurfaceFluxes/AirSeaHeatFlux.jl",     
      "OptimalTransport/OptimalTransport_demo.jl","HadIOD/HadIOD_viz.jl")
+#"NSLCT/NSLCT_notebook.jl",
 
 pth_out=joinpath(@__DIR__,"build", "examples")
 !isdir(pth_out) ? mkdir(pth_out) : nothing
