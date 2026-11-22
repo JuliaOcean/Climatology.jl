@@ -901,6 +901,7 @@ end
 module SST_timeseries
 
 using DataFrames, Statistics, Dates
+import Climatology: SST_coarse_grain
 
 """
     SST_timeseries.calc(input, list; title="", gdf=nothing)
@@ -1007,6 +1008,53 @@ end
 	end
 	
 	(low=ts_low[yearday],high=ts_high[yearday])
+end
+
+"""
+    SST_timeseries.global_mean(df, G, list; dnl=40, title="Global Mean SST")
+
+Global-mean SST time series from the coarse-grained table `df` (see
+`SST_coarse_grain.lowres_read`), passed through [`calc`](@ref) so the result
+has the same fields (`sst`, `clim`, `anom`, `year`, `month`, `day`, `low`,
+`high`, `title`) as a local series. `G` is `SST_coarse_grain.grid(file)`,
+`list` the file list (`SST_FILES.read_files_list`), and `dnl` the number of
+native 0.25 degree cells per coarse cell (`dlon/0.25`).
+
+!!! note
+    The area weights are computed once, from the rows of the **last day**,
+    and applied to every day. This assumes the table has the same cell order
+    on every day, as in `sst_anomaly_notebook.jl`. That assumption has not
+    been checked against the table.
+"""
+function global_mean(df,G::NamedTuple,list;dnl=40,title="Global Mean SST")
+    gdf1=groupby(df,:t)
+    last_day=gdf1[end]
+    area_tmp=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G,dnl) for x in eachrow(last_day)]
+    glmsst=[sum(g.sst[:].*area_tmp)/sum(area_tmp) for g in gdf1]
+    calc(glmsst,list,title=title)
+end
+
+"""
+    SST_timeseries.zonal_anomaly(G, df, dnl, list)
+
+Zonal-mean SST anomaly as an `(nlat, ntime)` array: `SST_coarse_grain.calc_zm(G,df,dnl)`
+with each latitude band (row) replaced by `sst - clim` from [`calc`](@ref)
+(the 1992-2011 day-of-year climatology). Rows without data stay `NaN`.
+This is the `zonal_mean` input of `plot(SSTdiag(...,:TimeLat))`.
+
+!!! note
+    Inherits the `dnl` behaviour of [`SST_coarse_grain.calc_zm`](@ref), which
+    passes `dnl` through even when it is `missing`.
+"""
+function zonal_anomaly(G::NamedTuple,df,dnl,list)
+    z=SST_coarse_grain.calc_zm(G,df,dnl)
+    for l in 1:size(z,1)
+        if !isnan(z[l,1])
+            tmp=calc(z[l,:],list,title="Zonal Mean SST")
+            z[l,:].=tmp.sst-tmp.clim
+        end
+    end
+    z
 end
 
 end
