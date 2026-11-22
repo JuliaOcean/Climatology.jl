@@ -51,6 +51,7 @@ import Climatology: MeshArrays, DataDeps
 import Statistics: median
 
 import Climatology: getopt
+import Climatology.Dates: Date, dayofyear, daysinyear
 import ClimatologyMakieExt: to_range!
 
 # unified title resolution: explicit SSTdiag.name wins, else caller-supplied default
@@ -58,6 +59,42 @@ title_or(X::SSTdiag, default::AbstractString="") =
     (X.name in ("", "unknown") ? default : X.name)
 
 #
+
+"""
+    SST_plots.decimal_years(ts, n)
+
+Decimal year (e.g. `2024.5`) of each of the first `n` time steps of `ts`,
+computed from `ts.year`, `ts.month` and `ts.day` (so it follows the actual
+calendar, including leap years, however long the series is). Falls back to
+a daily axis starting 1982-01-01 if `ts` has no date fields.
+"""
+function decimal_years(ts,n)
+    if hasproperty(ts,:year) && hasproperty(ts,:month) && hasproperty(ts,:day)
+        [y+(dayofyear(Date(y,m,d))-1)/daysinyear(y) for (y,m,d) in
+            zip(ts.year[1:n],ts.month[1:n],ts.day[1:n])]
+    else
+        collect(1:n)/365.25 .+ 1982
+    end
+end
+
+"""
+    SST_plots.time_limits(o, tim)
+
+x-axis limits `(year0, year1)` from option `period`; a `nothing` bound
+(the default for `year1`) is taken from the data `tim` (decimal years), so
+plots extend to the last available day.
+"""
+function time_limits(o,tim)
+    y0,y1 = getopt(o,:period,(nothing,nothing))
+    (isnothing(y0) ? floor(Int,tim[1]) : y0, isnothing(y1) ? tim[end] : y1)
+end
+
+"""
+    SST_plots.year_ticks(year0, year1; step=5)
+
+Tick positions at multiples of `step` years within `[year0, year1]`.
+"""
+year_ticks(year0,year1;step=5) = collect(ceil(Int,year0/step)*step : step : floor(Int,year1))
 
 """
     SST_plots.by_time(X::SSTdiag)
@@ -71,25 +108,26 @@ Reads, via [`getopt`](@ref) (all optional, with the defaults shown):
   `anom`, `title` (as produced by, e.g., `SST_timeseries.calc`)
 - `show_anom::Bool = true` — overlay `timeseries.anom` in red
 - `show_clim::Bool = true` — overlay `timeseries.clim` in orange
-- `period::Tuple = (1982,2024)` — x-axis limits
+- `period::Tuple = (1982,nothing)` — x-axis limits; a `nothing` end
+  (default) extends to the last available day
 
-The time axis assumes `timeseries.sst` is a daily series starting in
-1982 (`collect(1:length(ts.sst))/365.25 .+ 1982`), independent of
-`period`.
+The time axis comes from `timeseries.year/month/day` (see
+[`decimal_years`](@ref)); ticks are every 5 years.
 """
 function by_time(X::SSTdiag)
     o = X.options
     ts = o.timeseries
     show_anom = getopt(o,:show_anom,true)
     show_clim = getopt(o,:show_clim,true)
-    year0,year1 = getopt(o,:period,(1982,2024))
 
-    tim = collect(1:length(ts.sst))/365.25 .+ 1982
+    tim = decimal_years(ts,length(ts.sst))
+    year0,year1 = time_limits(o,tim)
     f,a = lines(tim,ts.sst,label="SST",linewidth=4)
     show_clim ? lines!(a,tim,ts.clim,color=:orange,label="seasonal climatology",linewidth=1) : nothing
     show_anom ? lines!(a,tim,ts.anom,color=:red,label="SST - seasonal cycle") : nothing
     a.title = title_or(X, ts.title)
-    xlims!(year0,year1)
+    a.xticks = year_ticks(year0,year1)
+    xlims!(a,year0,year1)
     axislegend(a,position=:rb)
     f
 end
@@ -97,30 +135,30 @@ end
 """
     SST_plots.by_year(X::SSTdiag)
 
-Plot the SST time series `X.options.timeseries.sst` as one overlaid line
-per calendar year, from 1982 through the most recent full year, using a
-fixed 365-day-per-year assumption (leap days are not separately handled).
+Plot `X.options.timeseries.sst` as one line per calendar year against day
+of year. Years are taken from `timeseries.year` (nothing is hardcoded), so the
+highlighting follows the data: with `y1` the last year present,
 
-Color coding is hardcoded by year:
-- 1982–2020: gray
-- 2021–2022: blue
-- 2023: orange
-- 2024 onward: red (linewidth doubled)
-
-These year cutoffs are literal constants in the function body and will
-need updating in future years to keep highlighting the most recent data;
-they do not derive from `X.options` or the current date.
+- `y1` and `y1-1` (current and previous year): red, thicker
+- `y1-4` to `y1-2` (the three years before that): blue
+- all earlier years: gray
 """
 function by_year(X::SSTdiag)
     ts = X.options.timeseries
-    f,a,l = lines(ts.sst[1:365],color=:gray)
-    [lines!(ts.sst[ (1:365) .+ 365*(y-1)] ,color=:gray) for y in 2:length(1982:2022)]
-    lines!(ts.sst[ 365*(2023-1982):365*(2024-1982)],color=:orange)
-    lines!(ts.sst[ 365*(2024-1982):end],color=:red,linewidth=2)
-    for y in 2021:2022
-        tt1=vec(1:365) .+(y-1982)*365; lines!(ts.sst[tt1],color=:blue)
+    n = length(ts.sst)
+    yr = ts.year[1:n]
+    doy = [dayofyear(Date(y,m,d)) for (y,m,d) in zip(yr,ts.month[1:n],ts.day[1:n])]
+    y1 = maximum(yr)
+
+    f = Figure()
+    a = Axis(f[1,1],xlabel="day of year")
+    for (sel,col,lw) in ( (y->y<y1-4,:gray,1), (y->y1-4<=y<=y1-2,:blue,1), (y->y>=y1-1,:red,2) )
+        for y in filter(sel,unique(yr))
+            ii = findall(yr.==y)
+            lines!(a,doy[ii],ts.sst[ii],color=col,linewidth=lw)
+        end
     end
-    a.title = title_or(X,"SST year by year (red=2024, orange=2023, blue=2021:2022)")
+    a.title = title_or(X,"SST year by year (red=$(y1-1),$(y1); blue=$(y1-4):$(y1-2))")
     f
 end
 
@@ -141,7 +179,7 @@ where optional):
 - `X.options.timeseries` — used only for `.year`'s length, to build the
   time axis
 - `X.options.zonal_mean` — the raw latitude × time array to contour
-- `period::Tuple = (1982,2024)` — x-axis limits
+- `period::Tuple = (1982,nothing)` — x-axis limits (`nothing` end: last day of `zonal_mean`)
 - `ylims::Tuple = (-90,90)` — y-axis (latitude) limits
 - `clip_to_range::Bool = true` — clip the field to the fixed contour
   levels `(-2.0:0.25:2.0)/5` via `to_range!` before contouring
@@ -154,11 +192,11 @@ function TimeLat(X::SSTdiag)
     o = X.options
     list = o.timeseries
     zm   = o.zonal_mean
-    year0,year1 = getopt(o,:period,(1982,2024))
     lat0,lat1   = getopt(o,:ylims,(-90,90))
     clip_to_range = getopt(o,:clip_to_range,true)
 
-    x = collect(1:length(list.year))/365.25 .+ 1982
+    x = decimal_years(list,size(zm,2))   # `list` may be longer than the zonal-mean table
+    year0,year1 = time_limits(o,x)
     dy = Int(180/size(zm,1))
     y = collect(-90+dy/2:dy:90-dy/2)
     z = permutedims(zm)
@@ -167,7 +205,7 @@ function TimeLat(X::SSTdiag)
     clip_to_range ? to_range!(z,levs) : nothing
     fig1 = Figure(size = (900,400),markersize=0.1)
     ax1 = Axis(fig1[1,1], title=title_or(X,"OISST anomaly"),
-        xticks=collect(year0:4:year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
+        xticks=year_ticks(year0,year1),yticks=collect(-90.0:20.0:90.0),ylabel="latitude")
     hm1 = contourf!(ax1,x[1:7:end],y,z[1:7:end,:],levels=levs,colormap=:curl)
     Colorbar(fig1[1,2], hm1, height = Relative(0.65))
     xlims!(ax1,year0,year1)
@@ -196,15 +234,16 @@ function local_and_global(X::SSTdiag)
     o = X.options
     ts        = o.timeseries
     ts_global = o.timeseries_global
-    year0,year1 = getopt(o,:period,(1982,2024))
     ylim0,ylim1 = getopt(o,:ylims,(-2.5,2.5))
 
-    tim = collect(1:length(ts.anom))/365.25 .+ 1982
+    tim = decimal_years(ts,length(ts.anom))
+    year0,year1 = time_limits(o,tim)
     fig,ax,li = lines(tim,ts.anom .-median(ts.anom),label="local")
     lines!(tim,ts_global.anom .-median(ts_global.anom),label="global")
     ax.title = title_or(X,"local and global SST anomalies")
-    xlims!(year0,year1)
-    ylims!(ylim0,ylim1)
+    ax.xticks = year_ticks(year0,year1)
+    xlims!(ax,year0,year1)
+    ylims!(ax,ylim0,ylim1)
     axislegend(ax,position = :rb)
     fig
 end
@@ -251,20 +290,22 @@ A point is classified as an MHW day when the anomaly exceeds
 `X.options.timeseries.high` — the day-of-year 90th percentile threshold
 computed by `SST_timeseries.calc_quantile` (see that function for how
 `.high` is derived); all other points are blue. `period`, read via
-[`getopt`](@ref) with default `(1982,2024)`, sets the x-axis limits.
+[`getopt`](@ref) with default `(1982,nothing)` (`nothing` end: last available
+day), sets the x-axis limits.
 """
 function MHW(X::SSTdiag)
     o = X.options
     ts = o.timeseries
-    year0,year1 = getopt(o,:period,(1982,2024))
 
     x = ts.sst-ts.clim
     y = fill(:blue,size(x))
     y[findall(x.>=ts.high)].=:red
-    tim = collect(1:length(ts.sst))/365.25 .+ 1982
+    tim = decimal_years(ts,length(ts.sst))
+    year0,year1 = time_limits(o,tim)
 
     fig,ax,li = lines(tim,x,color=y)
-    xlims!(year0,year1)
+    ax.xticks = year_ticks(year0,year1)
+    xlims!(ax,year0,year1)
     ax.title = title_or(X,"SST anomaly with extreme warm periods in red")
     fig
 end

@@ -1,6 +1,6 @@
 using Test, Climatology, Statistics, MITgcm, CairoMakie, Suppressor
 import NCDatasets, NetCDF, MeshArrays
-import Climatology.Dates: DateTime, Month
+import Climatology.Dates: DateTime, Month, Day
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
@@ -112,6 +112,28 @@ end
             lon=gr.lon,lat=gr.lat,lon1=lon1,lat1=lat1,showgrid=false)
     f7=plot(SSTdiag(input_path,"test",:map; map_data=to_map))
     @test isa(f7,Figure)
+
+    ## figure-free map data (SST_FILES.map_data) agrees with read_map / grid
+    for v in ("sst","anom","anom_recompute")
+        md=SST_FILES.map_data(variable=v,file=fil,file_climatology=file_climatology)
+        @test isequal(md.field,SST_FILES.read_map(variable=v,file=fil,file_climatology=file_climatology))
+        @test md.lon==gr.lon && md.lat==gr.lat
+        @test size(md.field)==(length(md.lon),length(md.lat))
+        @test isa(plot(SSTdiag(input_path,md.title,:map; map_data=merge(md,(lon1=lon1,lat1=lat1,showgrid=false)))),Figure)
+    end
+    @test_throws ErrorException SST_FILES.map_data(variable="bogus",file=fil)
+    @test_throws ErrorException SST_FILES.map_data(variable="anom_recompute",file=fil)
+
+    ## point lookup / series on the coarse-grained table (SST_coarse_grain.point_series)
+    c=SST_coarse_grain.lowres_cell(205,45,gdf)
+    @test (c.i,c.j)==(21,14)
+    @test SST_coarse_grain.lowres_cell(-155,45,gdf)==c    # longitude wraps
+    @test isnothing(SST_coarse_grain.lowres_cell(15,25,gdf))   # Sahara: no stored cell
+    @test isnothing(SST_coarse_grain.lowres_cell(0,95,gdf))
+    ps=SST_coarse_grain.point_series(205,45,gdf)
+    @test ps.cell==c && (ps.lon,ps.lat)==(205.0,45.0) && ps.time_axis==:multi_year
+    @test length(ps.time)==length(ps.sst) && all(diff(ps.time).==Day(1))
+    @test isnothing(SST_coarse_grain.point_series(15,25,gdf))
 
     ##
 
