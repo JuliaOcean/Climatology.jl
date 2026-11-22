@@ -1,6 +1,6 @@
 name = "Climatology"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["gaelforget <gforget@mit.edu>"]
 
 [deps]
@@ -39,7 +39,7 @@ ClimatologyNCDatasetsExt = ["NCDatasets"]
 
 [compat]
 AirSeaFluxes = "0.1"
-CSV = "1"
+CSV = "0.10, 1"
 DataDeps = "0.7, 1"
 DataFrames = "1"
 DataStructures = "0.18, 0.19"
