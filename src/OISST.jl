@@ -351,8 +351,6 @@ function ersst_map_data(t::Date;path)
                source="NOAA ERSST v5 monthly",variable="ssta"))
 end
 
-CG = parentmodule(@__MODULE__).SST_coarse_grain   # sibling module, looked up at run time
-
 """
     SST_FILES.resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
 
@@ -383,6 +381,7 @@ b.info.ncells
 ```
 """
 function resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
+    CG = parentmodule(@__MODULE__).SST_coarse_grain   # sibling module, looked up at run time
     request.product==:OISST || error("Only product :OISST is handled here; got $(repr(request.product)).")
     isdir(path) || error("path is not a directory: $(repr(path))")
 
