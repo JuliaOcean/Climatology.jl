@@ -143,6 +143,11 @@
     @test_throws ErrorException ECCO_procs.map_diagnostic(d; name="x")
     @test_throws ErrorException ECCO_procs.map_diagnostic(d; name=P.clim_longname[1], statistic="bad")
     @test_throws ErrorException ECCO_procs.map_diagnostic(d; name=P.clim_longname[1], month=13)
+    @test same(ECCO_procs.map_point_diagnostic(d; name=P.clim_longname[11], statistic="mon", month=3, lon=-30.0, lat=40.0),
+        ECCOdiag(pth_out, P.clim_longname[11], :ECCO_map_point; P=P, statistic="mon", time=3, lon=-30.0, lat=40.0))
+    @test_throws ErrorException ECCO_procs.map_point_diagnostic(d; name="x")
+    @test_throws ErrorException ECCO_procs.map_point_diagnostic(d; name=P.clim_longname[1], statistic="bad")
+    @test_throws ErrorException ECCO_procs.map_point_diagnostic(d; name=P.clim_longname[1], month=13)
     @test same(ECCO_procs.timelat_diagnostic(d; variable="THETA", level=2, ylims=(-50,50), colormap_factor=0.5),
         ECCOdiag(pth_out, "THETA_clim", :ECCO_TimeLat; P=P, period=(1992,2011), level=2, ylims=(-50,50), colormap_factor=0.5))
     @test same(ECCO_procs.timelat_anomaly_diagnostic(d; variable="THETA"),

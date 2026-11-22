@@ -1965,6 +1965,20 @@ function map_diagnostic(data; name::AbstractString, statistic::AbstractString="m
 end
 
 """
+    ECCO_procs.map_point_diagnostic(data; name, statistic="mean", month=1, lon=-30.0, lat=40.0)
+
+`ECCOdiag` for a climatology map with the seasonal cycle at the wet cell nearest to
+`(lon, lat)` (`:ECCO_map_point`). `name`, `statistic` and `month` are as in
+[`map_diagnostic`](@ref). Over land the rendered figure says so; this function does not error.
+"""
+function map_point_diagnostic(data; name::AbstractString, statistic::AbstractString="mean", month::Integer=1, lon::Real=-30.0, lat::Real=40.0)
+    name in data.P.clim_longname || error("Unknown map product: $(repr(name))")
+    statistic in ("mean","std","mon") || error("statistic must be one of \"mean\", \"std\", or \"mon\".")
+    1<=month<=12 || error("month must lie in 1:12.")
+    ECCOdiag(data.pth_out,name,:ECCO_map_point;P=data.P,statistic=statistic,time=month,lon=lon,lat=lat)
+end
+
+"""
     ECCO_procs.timelat_diagnostic(data; variable, level=1, ylims=(-90.0,90.0), colormap_factor=1.0)
 
 `ECCOdiag` for zonal mean versus time (`:ECCO_TimeLat`) of `variable*"_clim"`.
