@@ -5,7 +5,7 @@ SST_demo_path=joinpath(tempdir(),"demo_OISST")
 module SST_FILES
 
 using Printf, DataFrames, CSV, Dates, Glob
-import Climatology: read_Dataset, SST_demo_path, SST_coarse_grain
+import Climatology: read_Dataset, SST_demo_path
 
 read_files_list(;path=SST_demo_path,file="oisst_whole_file_list.csv",add_ymd=true) = begin
     if add_ymd
@@ -351,6 +351,8 @@ function ersst_map_data(t::Date;path)
                source="NOAA ERSST v5 monthly",variable="ssta"))
 end
 
+CG = parentmodule(@__MODULE__).SST_coarse_grain   # sibling module, looked up at run time
+
 """
     SST_FILES.resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
 
@@ -388,11 +390,11 @@ function resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
     isempty(days.dates) && error("No oisst-avhrr-v02r01.YYYYMMDD.nc files under $(path)/YYYYMM/")
     isfile(joinpath(path,fil)) || error("Coarse table not found: $(joinpath(path,fil))")
 
-    (df,gdf,kdf)=SST_coarse_grain.lowres_read(path=path,fil=fil)
+    (df,gdf,kdf)=CG.lowres_read(path=path,fil=fil)
     list=read_files_list(path=path)
     newest=last(days.dates)
-    info=SST_coarse_grain.table_info(df; list=list, newest=newest)
-    G=SST_coarse_grain.grid(last(days.actual))
+    info=CG.table_info(df; list=list, newest=newest)
+    G=CG.grid(last(days.actual))
 
     (path=path,days=days,df=df,gdf=gdf,kdf=kdf,list=list,G=G,info=info,
      metadata=(product=:OISST,source="NOAA OISST daily",path=path,
