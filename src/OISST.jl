@@ -64,31 +64,38 @@ function file_lists(;path=tempname())
 end
 
 """
-    SST_FILES.ersst_file_lists(; path=SST_demo_path)
+    SST_FILES.ersst_file_lists(; path=SST_demo_path, dir=joinpath(path,"files_ersst"), last_month=nothing)
 
 Build ERSST (Extended Reconstructed SST, monthly, 1854–present) file
 lists, mirroring [`file_lists`](@ref) (which targets daily OISST files
-instead): writes `"ersst_whole_file_list.csv"` (all months through the
-latest available) and `"ersst_to_get_file_list.csv"` (months not yet
-downloaded) to `path`.
+instead): writes `"ersst_whole_file_list.csv"` (all months through
+`last_month`) and `"ersst_to_get_file_list.csv"` (months not yet
+downloaded) to `path`. The listed local file names are `dir/ersst.v5.YYYYMM.nc`.
+
+ERSST is monthly and a month is published only after it ends (there are no
+`_preliminary` files, unlike OISST). By default `last_month` is the previous
+calendar month; pass any `Date` in the desired last month to override.
+If that month is not yet online, [`SST_processing.download_ersst_files`](@ref)
+skips it and it stays in the to-get list.
 
 Source URL pattern:
 `https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/netcdf/ersst.v5.YYYYMM.nc`.
 
 Returns `(fil1, fil2)`, the paths to the whole-list and to-get-list CSVs.
 """
-function ersst_file_lists(;path=SST_demo_path)
+function ersst_file_lists(;path=SST_demo_path,dir=joinpath(path,"files_ersst"),last_month=nothing)
     url0="https://www.ncei.noaa.gov/pub/data/cmb/ersst/v5/netcdf/"
 
-    nmonths=(2023-1854)*12+7
+    # ERSST is monthly and published after month end (no preliminary files):
+    # by default list through the previous calendar month.
+    last_month = isnothing(last_month) ? firstdayofmonth(today())-Dates.Month(1) : firstdayofmonth(last_month)
+
     file_list=DataFrame(fil=String[],url=String[],todo=Bool[])
-    for t in 1:nmonths
-        dd=Date(1854,1,1)+Dates.Month(t-1)
+    for dd in Date(1854,1,1):Dates.Month(1):last_month
         y=year(dd)
         m=month(dd)
-        d=day(dd)
         url=@sprintf "%s%s%04i%02i.nc" url0 "ersst.v5." y m
-        fil=@sprintf "files_ersst/ersst.v5.%04i%02i.nc" y m
+        fil=joinpath(dir,@sprintf("ersst.v5.%04i%02i.nc",y,m))
         push!(file_list,(fil=fil,url=url,todo=!isfile(fil)))
     end
 
@@ -207,14 +214,200 @@ function read_map(;variable="anom",file="",file_climatology="")
 	x
 end
 
-end 
+"""
+    SST_FILES.map_data(; variable="anom", file="", file_climatology="")
+
+Figure-free accessor for an OISST map: reads one daily field (via
+[`read_map`](@ref)) together with its coordinates and default display
+settings, without constructing a Figure.
+
+`variable` is one of `"sst"`, `"anom"` (NCEI anomaly stored in `file`) or
+`"anom_recompute"` (anomaly against `file_climatology`, which is then
+required). Any other value throws an error (unlike `read_map`, which treats
+unknown values as `"sst"`).
+
+Returns a `NamedTuple` with:
+
+- `field`: 2D array (`lon` × `lat`, `Union{Missing,Float32}`, `missing` over land/ice)
+- `lon`, `lat`: coordinate vectors (regular 0.25° grid, `lon` in `[0,360)`)
+- `colorrange`, `colormap`: default display settings for `variable`
+- `title`: default title (same wording as the SST notebook)
+- `metadata`: `(variable, date, file, units, source, climatology)`
+
+`plot(SSTdiag(path, title, :map; map_data=...))` additionally expects
+`lon1`, `lat1` (marked point) and `showgrid`; add them with `merge`:
+
+```julia
+md = SST_FILES.map_data(variable="sst", file=fil)
+plot(SSTdiag("", md.title, :map; map_data=merge(md, (lon1=205.0, lat1=45.0, showgrid=false))))
+```
+"""
+function map_data(;variable="anom",file="",file_climatology="")
+    variable in ("sst","anom","anom_recompute") ||
+        error("unknown variable \"$(variable)\" (use \"sst\", \"anom\" or \"anom_recompute\")")
+    variable=="anom_recompute" && isempty(file_climatology) &&
+        error("variable=\"anom_recompute\" requires file_climatology")
+
+    (y,m,d)=ymd(file)
+    ymd_str=@sprintf "%04i%02i%02i" y m d
+    fil=(isfile(file) ? file : file[1:end-3]*"_preliminary.nc")
+
+    field=read_map(variable=variable,file=file,file_climatology=file_climatology)
+    lon,lat=read_lon_lat(fil)
+
+    (colorrange,colormap,title)=if variable=="anom"
+        (4 .*(-1.0,1.0),:curl,"SST anomaly (NCEI) for time "*ymd_str)
+    elseif variable=="anom_recompute"
+        (4 .*(-1.0,1.0),:curl,"SST anomaly (recomputed) for $(y) / $(m) / $(d)")
+    else
+        ((-1.0,31.0),:thermal,"SST for time "*ymd_str)
+    end
+
+    metadata=(variable=variable,date=Date(y,m,d),file=fil,units="degC",
+        source="NOAA OISST v2.1 AVHRR daily, 0.25 degree",
+        climatology=(variable=="anom_recompute" ? file_climatology : nothing))
+
+    (field=field,lon=lon,lat=lat,colorrange=colorrange,colormap=colormap,title=title,metadata=metadata)
+end
+
+"""
+    SST_FILES.local_days(path)
+
+Read-only scan of the daily OISST files that exist under `path`, laid out as
+`path/YYYYMM/oisst-avhrr-v02r01.YYYYMMDD[_preliminary].nc`. Nothing is
+downloaded or written, and names that do not match (other folders, stray
+files) are ignored. Errors if `path` does not exist.
+
+Returns a `NamedTuple` with one entry per day on disk, sorted by date:
+
+- `dates`: `Vector{Date}`
+- `files`: the *nominal final* file name of each day (`path/YYYYMM/oisst-avhrr-v02r01.YYYYMMDD.nc`),
+  which may not exist; [`map_data`](@ref) falls back to `_preliminary` by itself
+- `actual`: a file that does exist (the final one if both exist)
+- `preliminary`: `true` where only a `_preliminary` file exists
+
+```julia
+d = SST_FILES.local_days("/path/to/OISST/files")
+SST_FILES.map_data(variable="sst", file=d.files[end])
+```
+"""
+function local_days(path)
+    final=Dict{Date,String}(); prelim=Dict{Date,String}()
+    for d in readdir(path)
+        occursin(r"^\d{6}$",d) || continue
+        dd=joinpath(path,d)
+        isdir(dd) || continue
+        for f in readdir(dd)
+            m=match(r"^oisst-avhrr-v02r01\.(\d{8})(_preliminary)?\.nc$",f)
+            m===nothing && continue
+            t=Date(m.captures[1],dateformat"yyyymmdd")
+            (m.captures[2]===nothing ? final : prelim)[t]=joinpath(dd,f)
+        end
+    end
+    dates=sort!(collect(union(keys(final),keys(prelim))))
+    nominal=[joinpath(path,Dates.format(t,"yyyymm"),
+             "oisst-avhrr-v02r01.$(Dates.format(t,"yyyymmdd")).nc") for t in dates]
+    actual=[haskey(final,t) ? final[t] : prelim[t] for t in dates]
+    (dates=dates,files=nominal,actual=actual,preliminary=[!haskey(final,t) for t in dates])
+end
+
+"""
+    SST_FILES.ersst_map_data(t::Date; path)
+
+Figure-free data for the ERSST v5 monthly `ssta` map of the month of `t`.
+Reads `path/ersst.v5.YYYYMM.nc` (see [`SST_FILES.ersst_file_lists`](@ref)).
+
+If that month is not on disk, the newest local month at or before it is used
+(ERSST months appear only after they end, so a month newer than the newest file
+maps to the newest file). `metadata.fallback` is then `true` and `title` says
+so. A month older than the first file on disk maps to the first file.
+Nothing is downloaded or written. Errors if `path` has no `ersst.v5.YYYYMM.nc`
+files.
+
+Returns a `NamedTuple` with `field` (`lon` × `lat`, `Float64`, `NaN` where
+missing), `lon`, `lat`, `colorrange`, `colormap`, `title` and `metadata`
+(`requested`, `file`, `fallback`, `units`, `source`, `variable`).
+
+```julia
+md = SST_FILES.ersst_map_data(Date(2020,6,15); path="/path/to/OISST/files_ersst")
+plot(SSTdiag(path="", name=md.title, options=(plot_type=:ersst_map, map_data=md)))
+```
+"""
+function ersst_map_data(t::Date;path)
+    want="ersst.v5.$(Dates.format(t,"yyyymm")).nc"
+    avail=sort(filter(f->occursin(r"^ersst\.v5\.\d{6}\.nc$",f),readdir(path)))
+    isempty(avail) && error("No ersst.v5.YYYYMM.nc files in $(path)")
+    fil=avail[max(searchsortedlast(avail,want),1)]    # newest file at or before `want`, else the first one
+
+    ds=read_Dataset(joinpath(path,fil))
+    lon=ds["lon"][:]; lat=ds["lat"][:]
+    a=ds["ssta"][:,:,1,1]
+    close(ds)
+    field=[ismissing(v) ? NaN : Float64(v) for v in a]
+
+    (field=field,lon=lon,lat=lat,colorrange=4 .*(-1.0,1.0),colormap=:curl,
+     title=(fil==want ? fil : "$(fil) (requested $(want) not on disk)"),
+     metadata=(requested=t,file=joinpath(path,fil),fallback=(fil!=want),units="degC",
+               source="NOAA ERSST v5 monthly",variable="ssta"))
+end
+
+"""
+    SST_FILES.resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
+
+Resolve `request = (product=:OISST,)` into the data bundle the OISST explorer
+needs, reading only: the daily file list under `path` (see
+[`SST_FILES.local_days`](@ref)), the coarse-grained table `fil` (see
+[`SST_coarse_grain.lowres_read`](@ref)), the file list CSV
+(see [`SST_FILES.read_files_list`](@ref)) and the coarse grid of the newest
+day (see [`SST_coarse_grain.grid`](@ref)). Nothing is downloaded or written.
+Errors if `path` has no OISST daily files, or if `fil` is missing.
+
+The product is `:OISST` only. The ERSST month lookup is `SST_FILES.ersst_map_data`
+and `SST_FILES.resolve_request` is not needed for it.
+
+Returns a `NamedTuple`:
+
+- `path`: the folder given
+- `days`: the `local_days` result (`dates`, `files`, `actual`, `preliminary`)
+- `df`, `gdf`, `kdf`: the coarse table, its groups by `(i,j)`, and their keys
+- `list`: the file list (`read_files_list`, read only)
+- `G`: the coarse grid from the newest day on disk
+- `info`: the `table_info(df; list, newest)` summary
+- `metadata`: `product`, `source`, `path`, `table` (file name), `newest` (`Date`)
+
+```julia
+b = SST_FILES.resolve_request((product=:OISST,); path=oisst_files)
+b.info.ncells
+```
+"""
+function resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
+    CG = parentmodule(@__MODULE__).SST_coarse_grain   # sibling module, looked up at run time
+    request.product==:OISST || error("Only product :OISST is handled here; got $(repr(request.product)).")
+    isdir(path) || error("path is not a directory: $(repr(path))")
+
+    days=local_days(path)
+    isempty(days.dates) && error("No oisst-avhrr-v02r01.YYYYMMDD.nc files under $(path)/YYYYMM/")
+    isfile(joinpath(path,fil)) || error("Coarse table not found: $(joinpath(path,fil))")
+
+    (df,gdf,kdf)=CG.lowres_read(path=path,fil=fil)
+    list=read_files_list(path=path)
+    newest=last(days.dates)
+    info=CG.table_info(df; list=list, newest=newest)
+    G=CG.grid(last(days.actual))
+
+    (path=path,days=days,df=df,gdf=gdf,kdf=kdf,list=list,G=G,info=info,
+     metadata=(product=:OISST,source="NOAA OISST daily",path=path,
+               table=fil,newest=newest))
+end
+
+end
 
 
 ## 
 
 module SST_coarse_grain
 
-using Statistics, DataFrames, CSV, Glob
+using Statistics, DataFrames, CSV, Glob, Dates
 import Climatology: read_Dataset, SST_demo_path
 
 """
@@ -429,6 +622,112 @@ lowres_position(ii,jj,kdf) = begin
 	(dx*ii.-dx/2,dx*jj.-dx/2 .-90)
 end
 
+"""
+    SST_coarse_grain.lowres_cell(lon0, lat0, gdf)
+
+Find the coarse-grid cell of the grouped table `gdf` (from
+[`lowres_read`](@ref)) that **contains** `(lon0,lat0)`.
+
+Returns the `GroupKey` `(i,j)` of that cell, or `nothing` if the point lies
+over land / in a cell absent from the table (cells with no valid ocean data
+in the first file are never stored), or if `lat0` is outside `[-90,90]`.
+
+Differs from [`lowres_index`](@ref), which returns the *nearest stored cell
+center* (so a land point silently maps to a distant ocean cell) and does
+not wrap longitude. Here `lon0` is wrapped modulo 360, so `-155` and `205`
+are equivalent. Cell width `dx` is inferred as in `lowres_index`
+(`dx = 360/maximum(i)`), i.e. 10° for the standard table.
+
+The returned key is opaque and specific to this table; pass it to
+[`lowres_series`](@ref) or `gdf[key]`.
+"""
+function lowres_cell(lon0,lat0,gdf)
+    (-90 <= lat0 <= 90) || return nothing
+    dx=Int(360/maximum(k.i for k in keys(gdf)))
+    i=floor(Int,mod(lon0,360)/dx)+1
+    j=min(floor(Int,(lat0+90)/dx)+1, Int(180/dx))
+    haskey(gdf,(i=i,j=j)) ? keys(gdf)[findfirst(k->k.i==i&&k.j==j,keys(gdf))] : nothing
+end
+
+"""
+    SST_coarse_grain.lowres_series(gdf, cell)
+
+Daily time series of the coarse-grained cell `cell` (a `GroupKey` from
+[`lowres_cell`](@ref)). Returns `(time, sst)`: `time` is a `Vector{Date}`
+decoded from the table's `YYYYMMDD` integer column `t`, and `sst` the
+area-mean sea surface temperature (degC) over the cell's ocean points
+(`SST_coarse_grain.areamean` of the raw OISST `sst` variable, i.e. **not**
+an anomaly).
+"""
+function lowres_series(gdf,cell)
+    g=gdf[cell]
+    time=[Date(t÷10000,(t÷100)%100,t%100) for t in g.t]
+    (time=time,sst=g.sst)
+end
+
+"""
+    SST_coarse_grain.point_series(lon0, lat0, gdf)
+
+Daily coarse-grained SST series at `(lon0,lat0)`; the SST counterpart of
+`ECCO_procs.ECCO_map_point` (figure-free). Returns `nothing` over land or
+outside the table (see [`lowres_cell`](@ref)), otherwise a `NamedTuple`:
+
+- `time`, `sst`: see [`lowres_series`](@ref) (daily, gap-free in the standard table)
+- `cell`: opaque `GroupKey` identifying the coarse cell
+- `lon`, `lat`: center of that cell, from [`lowres_position`](@ref)
+- `requested`: `(lon=lon0, lat=lat0)` as given
+- `time_axis`: `:multi_year` (contrast with ECCO's `:seasonal`)
+- `metadata`: `(variable, units, dlon, source)`
+
+!!! note
+    The values are the mean over a whole `dlon`×`dlon` box (10°×10°), not
+    the value at the requested point.
+"""
+function point_series(lon0,lat0,gdf)
+    cell=lowres_cell(lon0,lat0,gdf)
+    isnothing(cell) && return nothing
+    s=lowres_series(gdf,cell)
+    (lon,lat)=lowres_position(cell.i,cell.j,keys(gdf))
+    dlon=Float64(360/maximum(k.i for k in keys(gdf)))
+    (time=s.time,sst=s.sst,cell=cell,lon=lon,lat=lat,
+     requested=(lon=lon0,lat=lat0),time_axis=:multi_year,
+     metadata=(variable="sst",units="degC",dlon=dlon,
+       source="NOAA OISST v2.1 AVHRR daily, coarse-grained (area mean of 0.25 degree cells)"))
+end
+
+"""
+    SST_coarse_grain.table_info(df; list=nothing, newest=nothing)
+
+Summary and consistency checks for a coarse-grained table `df` (the first
+output of [`lowres_read`](@ref); long format with columns `i`, `j`, `t`,
+`sst`, where `t` is an integer `YYYYMMDD`). Returns a `NamedTuple`:
+
+- `t0`, `t1`: first and last date in the table
+- `ndays`: number of distinct days
+- `gap_free`: `true` if `ndays` equals the number of calendar days from `t0` to `t1`
+- `ncells`: number of coarse cells `(i,j)`
+- `list_rows`, `list_ok`: if a file `list` is given (e.g. from `SST_FILES.read_files_list`),
+  its number of rows and whether it covers the table (`rows >= ndays`; see
+  `SST_timeseries.calc`, which aligns the table to the list by position); else `nothing`
+- `lag_days`: if `newest` (a `Date`, e.g. the last daily file on disk) is given,
+  the number of days by which the table ends before it (`0` if up to date); else `nothing`
+
+```julia
+d = SST_FILES.local_days(path)
+info = SST_coarse_grain.table_info(df; list=list, newest=last(d.dates))
+info.lag_days > 0 && @warn "table is stale; rerun SST_processing.coarse_grain"
+```
+"""
+function table_info(df;list=nothing,newest=nothing)
+    d=Date.(string.(sort!(unique(df.t))),dateformat"yyyymmdd")
+    expected=Dates.value(d[end]-d[1])+1
+    (t0=d[1],t1=d[end],ndays=length(d),gap_free=length(d)==expected,
+     ncells=nrow(unique(df[!,[:i,:j]])),
+     list_rows=isnothing(list) ? nothing : size(list,1),
+     list_ok=isnothing(list) ? nothing : size(list,1)>=length(d),
+     lag_days=isnothing(newest) ? nothing : Dates.value(newest-d[end]))
+end
+
 end
 
 ##
@@ -439,6 +738,52 @@ using Distributed, Dataverse, DataFrames
 import Dataverse.downloads: Downloads
 import Climatology: SST_FILES, SST_coarse_grain, read_Dataset
 import Climatology: SST_demo_path, to_monthly_file, write_SST_climatology
+
+"""
+    SST_processing.download_ersst_files(; path=SST_demo_path, dir=joinpath(path,"files_ersst"),
+                                          last_month=nothing, ntasks=8, verbose=false)
+
+Download the monthly ERSST v5 NetCDF files that are not yet in `dir`
+(created if needed). The file lists are regenerated first via
+[`SST_FILES.ersst_file_lists`](@ref), which also defines `last_month` (default:
+previous calendar month; ERSST has no preliminary files, so a month appears
+online only after it ends).
+
+Existing files are never re-downloaded. Each file is downloaded to a
+`.part` temporary name and renamed on success, so an interrupted download
+cannot leave a truncated `.nc` that later looks complete. Downloads run as
+`ntasks` concurrent tasks in the current process (the files are small; no
+`Distributed` workers are needed). Months that are not online are skipped
+(reported if `verbose`) and remain in `ersst_to_get_file_list.csv`.
+
+Returns the local paths of all months now available.
+"""
+function download_ersst_files(;path=SST_demo_path,dir=joinpath(path,"files_ersst"),
+        last_month=nothing,ntasks=8,verbose=false)
+    mkpath(dir)
+    SST_FILES.ersst_file_lists(path=path,dir=dir,last_month=last_month)
+    list=SST_FILES.CSV.read(joinpath(path,"ersst_whole_file_list.csv"),DataFrame)
+
+    todo=list[list.todo.==true,:]
+    verbose && println("$(nrow(todo)) of $(nrow(list)) months to download")
+
+    asyncmap(eachrow(todo);ntasks=ntasks) do r
+        tmp=r.fil*".part"
+        try
+            Downloads.download(r.url,tmp)
+            mv(tmp,r.fil;force=true)
+        catch
+            rm(tmp;force=true)
+            verbose && println("not available online : "*basename(r.fil))
+        end
+    end
+
+    # refresh the to-get list so it reflects what is still missing
+    list.todo=[!isfile(f) for f in list.fil]
+    SST_FILES.CSV.write(joinpath(path,"ersst_to_get_file_list.csv"),list[list.todo,:])
+
+    list.fil[.!list.todo]
+end
 
 """
     SST_processing.download_files(; path=SST_demo_path, short_demo=false, verbose=false)
@@ -645,6 +990,7 @@ end
 module SST_timeseries
 
 using DataFrames, Statistics, Dates
+import Climatology: SST_coarse_grain
 
 """
     SST_timeseries.calc(input, list; title="", gdf=nothing)
@@ -751,6 +1097,53 @@ end
 	end
 	
 	(low=ts_low[yearday],high=ts_high[yearday])
+end
+
+"""
+    SST_timeseries.global_mean(df, G, list; dnl=40, title="Global Mean SST")
+
+Global-mean SST time series from the coarse-grained table `df` (see
+`SST_coarse_grain.lowres_read`), passed through [`calc`](@ref) so the result
+has the same fields (`sst`, `clim`, `anom`, `year`, `month`, `day`, `low`,
+`high`, `title`) as a local series. `G` is `SST_coarse_grain.grid(file)`,
+`list` the file list (`SST_FILES.read_files_list`), and `dnl` the number of
+native 0.25 degree cells per coarse cell (`dlon/0.25`).
+
+!!! note
+    The area weights are computed once, from the rows of the **last day**,
+    and applied to every day. This assumes the table has the same cell order
+    on every day, as in `sst_anomaly_notebook.jl`. That assumption has not
+    been checked against the table.
+"""
+function global_mean(df,G::NamedTuple,list;dnl=40,title="Global Mean SST")
+    gdf1=groupby(df,:t)
+    last_day=gdf1[end]
+    area_tmp=[SST_coarse_grain.areaintegral(G.msk,x.i,x.j,G,dnl) for x in eachrow(last_day)]
+    glmsst=[sum(g.sst[:].*area_tmp)/sum(area_tmp) for g in gdf1]
+    calc(glmsst,list,title=title)
+end
+
+"""
+    SST_timeseries.zonal_anomaly(G, df, dnl, list)
+
+Zonal-mean SST anomaly as an `(nlat, ntime)` array: `SST_coarse_grain.calc_zm(G,df,dnl)`
+with each latitude band (row) replaced by `sst - clim` from [`calc`](@ref)
+(the 1992-2011 day-of-year climatology). Rows without data stay `NaN`.
+This is the `zonal_mean` input of `plot(SSTdiag(...,:TimeLat))`.
+
+!!! note
+    Inherits the `dnl` behaviour of [`SST_coarse_grain.calc_zm`](@ref), which
+    passes `dnl` through even when it is `missing`.
+"""
+function zonal_anomaly(G::NamedTuple,df,dnl,list)
+    z=SST_coarse_grain.calc_zm(G,df,dnl)
+    for l in 1:size(z,1)
+        if !isnan(z[l,1])
+            tmp=calc(z[l,:],list,title="Zonal Mean SST")
+            z[l,:].=tmp.sst-tmp.clim
+        end
+    end
+    z
 end
 
 end

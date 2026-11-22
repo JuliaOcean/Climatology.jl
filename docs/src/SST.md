@@ -18,6 +18,8 @@ NOAA's OISST sea surface temperature product.
 | `:TimeLat` | time-latitude Hovmöller-style section |
 | `:by_year` | year-by-year comparison |
 | `:map_base` / `:map` | map view |
+| `:ersst_map` | ERSST monthly anomaly map (data from `SST_FILES.ersst_map_data`) |
+| `:map_point` | daily map with a 10° box marker, plus the box series beside it (`map_data`, `point`, `timeseries`, `lon`, `lat`, `show_anom`) |
 
 ## I/O and Diagnostics Reference
 

@@ -66,12 +66,14 @@ default_options(::Val{T}) where T = (plot_type=T,)
 
 ## SSTdiag
 default_options(::Val{:by_year})          = (plot_type=:by_year,)
-default_options(::Val{:by_time})          = (plot_type=:by_time, period=(1982,2024), show_anom=true, show_clim=true)
-default_options(::Val{:MHW})              = (plot_type=:MHW, period=(1982,2024))
-default_options(::Val{:local_and_global}) = (plot_type=:local_and_global, period=(1982,2024), ylims=(-2.5,2.5))
+default_options(::Val{:by_time})          = (plot_type=:by_time, period=(1982,nothing), show_anom=true, show_clim=true)
+default_options(::Val{:MHW})              = (plot_type=:MHW, period=(1982,nothing))
+default_options(::Val{:local_and_global}) = (plot_type=:local_and_global, period=(1982,nothing), ylims=(-2.5,2.5))
 default_options(::Val{:map_base})         = (plot_type=:map_base,)
 default_options(::Val{:map})              = (plot_type=:map,)
-default_options(::Val{:TimeLat})          = (plot_type=:TimeLat, period=(1982,2024), ylims=(-90,90), clip_to_range=true)
+default_options(::Val{:ersst_map})        = (plot_type=:ersst_map,)
+default_options(::Val{:map_point})        = (plot_type=:map_point, lon=205.0, lat=25.0, show_anom=false)
+default_options(::Val{:TimeLat})          = (plot_type=:TimeLat, period=(1982,nothing), ylims=(-90,90), clip_to_range=true)
 
 """
     default_options(::Val{T}) where T
