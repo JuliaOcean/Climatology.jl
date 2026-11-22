@@ -103,6 +103,7 @@ default_options(::Val{:ECCO_TimeLatAnom}) =
     merge(default_options(Val(:ECCO_TimeLat)), (plot_type=:ECCO_TimeLatAnom, select_method=1))
 default_options(::Val{:ECCO_GlobalMean}) = (plot_type=:ECCO_GlobalMean, level=0, period=(1992,2011), years_to_display=nothing)
 default_options(::Val{:ECCO_map}) = (plot_type=:ECCO_map, statistic="mean", time=1)
+default_options(::Val{:ECCO_map_point}) = (plot_type=:ECCO_map_point, statistic="mean", time=1, lon=-30.0, lat=40.0)
 default_options(::Val{:ECCO_DepthTime}) = (
     plot_type=:ECCO_DepthTime, period=(1992,2011), factor=1,
     level=1, klims=(1,50), years_to_display=nothing,

@@ -12,6 +12,7 @@ combined for a few plot types with `x.name`:
 | `plot_type`          | requires `x.name ==` | renders via                                              |
 |:----------------------|:-----------------------|:-------------------------------------------------------------|
 | `:ECCO_map`            |                         | [`ECCO_map`](@ref) applied to `ECCO_procs.ECCO_map(x)`        |
+| `:ECCO_map_point`      |                         | [`ECCO_map_point`](@ref) applied to `ECCO_procs.ECCO_map_point(x)` |
 | `:ECCO_TimeLat`        |                         | [`TimeLat`](@ref) applied to `ECCO_procs.TimeLat(x)`          |
 | `:ECCO_TimeLatAnom`    |                         | [`TimeLat`](@ref) applied to `ECCO_procs.TimeLat(x)`          |
 | `:ECCO_DepthTime`      |                         | [`DepthTime`](@ref) applied to `ECCO_procs.DepthTime(x)`      |
@@ -40,6 +41,8 @@ function plot(x::ECCOdiag)
 		pt=string(o.plot_type)
 		if pt=="ECCO_map"
 			ECCO_map(ECCO_procs.ECCO_map(x))			
+		elseif pt=="ECCO_map_point"
+			ECCO_map_point(ECCO_procs.ECCO_map_point(x))
 		elseif pt in ("ECCO_TimeLat","ECCO_TimeLatAnom")
     		TimeLat(ECCO_procs.TimeLat(x))
 		elseif pt=="ECCO_DepthTime"
@@ -409,4 +412,52 @@ function ECCO_map(X; ClipToRange=true)
 	hm1=contourf!(ax,X.λ.lon[:,1],X.λ.lat[1,:],X.field,levels=X.levels,colormap=:turbo)
 	Colorbar(fig[1,2], hm1, height = Relative(0.65))
 	fig	
+end
+
+"""
+    ECCO_map_point(X)
+
+Render the map with the 12-month climatology at a selected cell.
+
+`X` is the `NamedTuple` returned by `ECCO_procs.ECCO_map_point` (`map`, `cell`,
+`series`, `requested`), not an `ECCOdiag`. The left panel shows the map with a
+cross at the requested point and a circle on the resolved native wet cell; the
+right panel shows the monthly climatology at that cell (a seasonal cycle, not a
+multi-year history) with the stored mean as a dashed line. If the point has no
+wet cell nearby (`X.cell === nothing`) the right panel says so.
+"""
+function ECCO_map_point(X)
+	d=X.map
+	(lo,hi)=extrema(d.levels)
+
+	fig=Figure(size=(1200,520),backgroundcolor=:grey95)
+	ax1=Axis(fig[1,1];title=d.title,xlabel="longitude",ylabel="latitude")
+	hm=heatmap!(ax1,d.λ.lon[:,1],d.λ.lat[1,:],d.field;colormap=:turbo,colorrange=(lo,hi))
+	Colorbar(fig[1,2],hm;height=Relative(0.65))
+	scatter!(ax1,[X.requested.lon],[X.requested.lat];marker=:xcross,color=:black,markersize=12)
+
+	ax2=Axis(fig[1,3];xlabel="month",
+		xticks=(1:12,["J","F","M","A","M","J","J","A","S","O","N","D"]))
+	xlims!(ax2,0.5,12.5)
+
+	if isnothing(X.cell)
+		ax2.title="Land point: no wet ECCO cell nearby"
+		hideydecorations!(ax2)
+		text!(ax2,0.5,0.5;text="choose another\nlongitude / latitude",
+			space=:relative,align=(:center,:center))
+	else
+		c=X.cell; s=X.series
+		scatter!(ax1,[c.lon],[c.lat];marker=:circle,color=:transparent,
+			strokecolor=:white,strokewidth=3,markersize=22)
+		ax2.title="Monthly climatology at cell (face $(c.f), i=$(c.i), j=$(c.j))\n"*
+			"$(round(c.lon;digits=2))°E, $(round(c.lat;digits=2))°N"
+		hlines!(ax2,[s.mean];color=:grey50,linestyle=:dash,label="mean")
+		lines!(ax2,s.month,s.values;color=:steelblue,linewidth=3)
+		scatter!(ax2,s.month,s.values;color=:steelblue,markersize=9)
+		axislegend(ax2;position=:rt)
+	end
+
+	colsize!(fig.layout,1,Auto(2.0))
+	colsize!(fig.layout,3,Auto(1.0))
+	fig
 end

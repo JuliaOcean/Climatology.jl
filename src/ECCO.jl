@@ -1313,14 +1313,24 @@ end
 
 ##
 
+"""
+    ECCO_procs.years_min_max(sol)
+
+First and last year `(year0,year1)` of the monthly diagnostics for solution `sol`.
+
+Matches both naming conventions, case-insensitively: `"ECCOv4r3"` / `"ECCO4R3"`
+(also `r4`, `r5`), `"OCCA2HR1"`, `"OCCA2HR2"`. Anything else, including
+`"ECCO4R1"` and `"ECCO4R2"`, gets `(1992,2011)`.
+"""
 function years_min_max(sol)
 	year0=1992
 	year1=2011
-	if occursin("ECCOv4r3",sol)
+	s=lowercase(sol)
+	if occursin("4r3",s)
 		year1=2015
-	elseif occursin("ECCOv4r4",sol)
+	elseif occursin("4r4",s)
 		year1=2017
-	elseif occursin("ECCOv4r5",sol)
+	elseif occursin("4r5",s)
 		year1=2019
 	elseif occursin("OCCA2HR1",sol)
 		year0=1980
@@ -1335,7 +1345,7 @@ end
 ##
 
 """
-    ECCO_procs.parameters()
+    ECCO_procs.parameters(; path=nothing)
 
 Assemble the shared `NamedTuple` of grid, masking, interpolation, and
 metadata needed by the `ECCO_procs` plot-data functions ([`glo`](@ref),
@@ -1360,13 +1370,19 @@ Returns a `NamedTuple` with fields `γ`, `Γ`, `λ`, `μ`, `list_trsp`,
 `clim_longname`.
 
 !!! note
-    This hardcodes `"OCCA2HR1"` as the diagnostics source for
-    `list_trsp`/climatology metadata, regardless of which solution the
-    resulting plots ultimately display data from — the underlying data
-    values plotted via `glo`/`TimeLat`/etc. come from each `ECCOdiag`'s
-    own `path`, not from this function.
+    By default (`path=nothing`) this uses `"OCCA2HR1"` as the diagnostics
+    source for `list_trsp`/climatology metadata, regardless of which
+    solution the resulting plots ultimately display data from — the
+    underlying data values plotted via `glo`/`TimeLat`/etc. come from each
+    `ECCOdiag`'s own `path`. All standard releases list the same climatology
+    files and transport sections, so this is harmless for them, but it
+    downloads OCCA2HR1 and may not match a custom directory. Pass
+    `path=<diagnostics directory>` to take them from that directory instead;
+    `list_trsp` is then empty if it has no `trsp/trsp.jld2`. Colour ranges
+    (`clim_colors1/2`) always come from the package's own `examples/ECCO`
+    TOML files, so a custom product needs an entry there to be mapped.
 """
-function parameters()
+function parameters(; path=nothing)
 
 	γ=GridSpec(ID=:LLC90)
 	Γ=GridLoad(γ;option="full")
@@ -1374,12 +1390,16 @@ function parameters()
 
 	μ = land_mask(Γ)
     λ = interpolation_setup()
-	path0=ECCOdiags_add("OCCA2HR1")
+	path0=(isnothing(path) ? ECCOdiags_add("OCCA2HR1") : path)
 
-    tmp=load(ECCOdiag(path=path0,name="trsp"))
-	ntr=length(tmp)
-	list_trsp=[vec(tmp)[i].nam for i in 1:ntr] 
-	list_trsp=[i[1:end-5] for i in list_trsp]
+	if isfile(joinpath(path0,"trsp","trsp.jld2"))
+		tmp=load(ECCOdiag(path=path0,name="trsp"))
+		ntr=length(tmp)
+		list_trsp=[vec(tmp)[i].nam for i in 1:ntr] 
+		list_trsp=[i[1:end-5] for i in list_trsp]
+	else
+		list_trsp=String[]
+	end
 
 	pth_colors=joinpath(dirname(pathof(Climatology)),"..","examples","ECCO")	
 	clim_colors1=TOML.parsefile(joinpath(pth_colors,"clim_colors1.toml"))
@@ -1565,6 +1585,27 @@ function nearest_wet_cell(P,lon::Real,lat::Real)
         end
     end
     best
+end
+
+"""
+    ECCO_procs.ECCO_map_point(X::ECCOdiag)
+
+Data for `X.options.plot_type == :ECCO_map_point`: the map of
+[`ECCO_map_data`](@ref) plus the monthly climatology at the wet native cell
+nearest to `(X.options.lon, X.options.lat)`.
+
+Returns `(map, cell, series, requested)`, where `map` is the result of
+`ECCO_map_data`, `cell` is from [`nearest_wet_cell`](@ref) and `series` from
+[`map_point_series`](@ref). `cell` and `series` are `nothing` when the point has
+no wet cell nearby (land); no error is thrown. `requested` is `(lon,lat)`.
+No figure is created.
+"""
+function ECCO_map_point(X::ECCOdiag)
+    o=X.options
+    map=ECCO_map_data(X)
+    cell=nearest_wet_cell(o.P,o.lon,o.lat)
+    series=isnothing(cell) ? nothing : map_point_series(X,cell)
+    (map=map,cell=cell,series=series,requested=(lon=Float64(o.lon),lat=Float64(o.lat)))
 end
 
 """
@@ -1813,6 +1854,183 @@ function DepthTime(X::ECCOdiag)
     (x=x,y=y,z=z,levels=factor*levs,title=ttl,
      ylims=(P.Γ.RC[k1],P.Γ.RC[k0]),year0=year0,year1=year1,
      years_to_display=years_to_display)
+end
+
+##
+## Request / resolution helpers (no plotting and no UI dependency).
+## Shared by notebooks, scripts and, later, other front ends.
+##
+
+"""
+    ECCO_procs.solutions()
+
+Names of the ECCO solutions handled by [`resolve_request`](@ref): the five
+standard releases (diagnostics obtained via `ECCOdiags_add`) and `"custom"`
+(a user-supplied diagnostics directory).
+"""
+solutions() = ["ECCO4R1","ECCO4R2","ECCO4R3","ECCO4R4","ECCO4R5","custom"]
+
+"""
+    ECCO_procs.available_period(solution)
+
+Year range `(year0,year1)` available for `solution` (see [`years_min_max`](@ref)).
+
+For `"custom"` this is only the conventional range `(1992,2027)`; it is not read
+from the custom product.
+"""
+function available_period(solution::AbstractString)
+    solution=="custom" && return (1992,2027)
+    solution in solutions() || error("Unknown ECCO solution: $(repr(solution))")
+    years_min_max(solution)
+end
+
+"""
+    ECCO_procs.diagnostic_path(solution; custom_path=nothing)
+
+Directory holding the precomputed diagnostics of `solution`.
+
+Standard releases are obtained through `ECCOdiags_add` (DataDeps). For
+`"custom"`, `custom_path` must be an existing directory.
+"""
+function diagnostic_path(solution::AbstractString; custom_path=nothing)
+    if solution=="custom"
+        isnothing(custom_path) && error("""
+            A custom ECCO solution was selected, but no `custom_path` was given.
+            Example: diagnostic_path("custom"; custom_path="/path/to/ECCO/diagnostics")
+            """)
+        isdir(custom_path) || error("custom_path is not a directory: $(repr(custom_path))")
+        return custom_path
+    end
+    solution in solutions() || error("Unknown ECCO solution: $(repr(solution))")
+    ECCOdiags_add(solution)
+end
+
+"""
+    ECCO_procs.resolve_request(request; P=parameters(), custom_path=nothing)
+
+Resolve `request = (product=:ECCO, solution, period=(year0,year1))` into
+a diagnostics directory, grid, period and metadata. No figure is created.
+
+Unless `P` is given, it is built by `parameters(path=pth_out)`, i.e. from the
+selected solution's own diagnostics rather than from OCCA2HR1.
+
+Returns `(request, P, grid, pth_out, period, metadata)`; this `data` object is
+what the `*_diagnostic` constructors below take. `metadata` records the
+product, source (`:Climatology_DataDeps` or `:local`), solution, path,
+available and selected periods, and the available map products and transport
+sections taken from `P`.
+
+Throws an error for an unknown solution or a period outside
+[`available_period`](@ref).
+"""
+function resolve_request(request; P=nothing, custom_path=nothing)
+    solution=request.solution
+    period=request.period
+    avail=available_period(solution)
+    (year0,year1)=period
+
+    year0<=year1 || error("Invalid requested period: $(year0) > $(year1).")
+    year0>=avail[1] || error("Requested start year $(year0) precedes the available range $(avail) for $(solution).")
+    year1<=avail[2] || error("Requested end year $(year1) exceeds the available range $(avail) for $(solution).")
+
+    pth_out=diagnostic_path(solution;custom_path=custom_path)
+    isnothing(P) && (P=parameters(path=pth_out))
+
+    metadata=(product=:ECCO,
+        source=(solution=="custom" ? :local : :Climatology_DataDeps),
+        solution=solution,diagnostic_path=pth_out,
+        available_period=avail,selected_period=period,
+        available_map_products=copy(P.clim_longname),
+        available_transports=copy(P.list_trsp))
+
+    (request=request,P=P,grid=P.Γ,pth_out=pth_out,period=period,metadata=metadata)
+end
+
+"""
+    ECCO_procs.map_diagnostic(data; name, statistic="mean", month=1)
+
+`ECCOdiag` for a climatology map (`:ECCO_map`). `name` is one of
+`data.P.clim_longname`; `statistic` is `"mean"`, `"std"` or `"mon"`
+(then `month` in `1:12` selects the calendar month).
+
+The `*_diagnostic` functions below build the same `ECCOdiag` objects as the
+standard notebook (`examples/ECCO/ECCO_standard_plots.jl`) from a `data`
+object returned by [`resolve_request`](@ref).
+"""
+function map_diagnostic(data; name::AbstractString, statistic::AbstractString="mean", month::Integer=1)
+    name in data.P.clim_longname || error("Unknown map product: $(repr(name))")
+    statistic in ("mean","std","mon") || error("statistic must be one of \"mean\", \"std\", or \"mon\".")
+    1<=month<=12 || error("month must lie in 1:12.")
+    ECCOdiag(data.pth_out,name,:ECCO_map;P=data.P,statistic=statistic,time=month)
+end
+
+"""
+    ECCO_procs.timelat_diagnostic(data; variable, level=1, ylims=(-90.0,90.0), colormap_factor=1.0)
+
+`ECCOdiag` for zonal mean versus time (`:ECCO_TimeLat`) of `variable*"_clim"`.
+"""
+timelat_diagnostic(data; variable::AbstractString, level::Integer=1,
+    ylims::Tuple{<:Real,<:Real}=(-90.0,90.0), colormap_factor::Real=1.0) =
+    ECCOdiag(data.pth_out,variable*"_clim",:ECCO_TimeLat;P=data.P,period=data.period,
+        level=level,ylims=ylims,colormap_factor=colormap_factor)
+
+"""
+    ECCO_procs.timelat_anomaly_diagnostic(data; variable, level=1, ylims=(-90.0,90.0), colormap_factor=1.0)
+
+`ECCOdiag` for zonal-mean anomaly versus time (`:ECCO_TimeLatAnom`).
+"""
+timelat_anomaly_diagnostic(data; variable::AbstractString, level::Integer=1,
+    ylims::Tuple{<:Real,<:Real}=(-90.0,90.0), colormap_factor::Real=1.0) =
+    ECCOdiag(data.pth_out,variable*"_clim",:ECCO_TimeLatAnom;P=data.P,period=data.period,
+        level=level,ylims=ylims,colormap_factor=colormap_factor)
+
+"""
+    ECCO_procs.depthtime_diagnostic(data; variable, latitude_index, depth_limits=(1,30), factor=1.0)
+
+`ECCOdiag` for depth versus time anomaly (`:ECCO_DepthTime`).
+"""
+depthtime_diagnostic(data; variable::AbstractString, latitude_index::Integer,
+    depth_limits::Tuple{<:Integer,<:Integer}=(1,30), factor::Real=1.0) =
+    ECCOdiag(data.pth_out,variable*"_clim",:ECCO_DepthTime;P=data.P,period=data.period,
+        factor=factor,level=latitude_index,klims=depth_limits)
+
+"""
+    ECCO_procs.global_mean_diagnostic(data; variable, level=0)
+
+`ECCOdiag` for a global-mean time series (`:ECCO_GlobalMean`). `level=0` is a
+volume average; `level>0` is an area average at that vertical level.
+"""
+global_mean_diagnostic(data; variable::AbstractString, level::Integer=0) =
+    ECCOdiag(data.pth_out,variable,:ECCO_GlobalMean;level=level,period=data.period)
+
+"""
+    ECCO_procs.overturning_mean_diagnostic(data)
+
+`ECCOdiag` for the mean overturning streamfunction (`:ECCO_Overturn2`).
+"""
+overturning_mean_diagnostic(data) =
+    ECCOdiag(data.pth_out,"overturn",:ECCO_Overturn2;grid=data.grid)
+
+"""
+    ECCO_procs.overturning_time_diagnostic(data; level=29, low1="auto")
+
+`ECCOdiag` for overturning versus time (`:ECCO_Overturn1`).
+"""
+overturning_time_diagnostic(data; level::Integer=29, low1="auto") =
+    ECCOdiag(data.pth_out,"overturn",:ECCO_Overturn1;level=level,low1=low1,period=data.period)
+
+"""
+    ECCO_procs.transports_diagnostic(data; names)
+
+`ECCOdiag` for the named transport sections `names` (`:ECCO_Transports`), laid
+out in `floor(sqrt(length(names)))` columns. Each name must be in `data.P.list_trsp`.
+"""
+function transports_diagnostic(data; names::AbstractVector{<:AbstractString})
+    isempty(names) && error("Select at least one transport section.")
+    all(n -> n in data.P.list_trsp, names) || error("At least one selected transport is not recognized.")
+    ncols=max(1,Int(floor(sqrt(length(names)))))
+    ECCOdiag(data.pth_out,"trsp",:ECCO_Transports;namtrs=names,ncols=ncols,
+        list_trsp=data.P.list_trsp,period=data.period)
 end
 
 end #module ECCO_procs
