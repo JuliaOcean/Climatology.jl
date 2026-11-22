@@ -57,6 +57,53 @@ _datadep_cached(name,file) = isfile(joinpath(Climatology.DataDeps.determine_save
     @test all(isfile,ld.actual)
     @test isempty(SST_FILES.local_days(mktempdir()).dates)
 
+    ## A2. ERSST map data from synthetic monthly files (no downloads)
+
+    erd=mktempdir()
+    for (fname,val) in (("ersst.v5.202001.nc",1.5f0),("ersst.v5.202002.nc",-2.0f0))
+        ds=NCDatasets.Dataset(joinpath(erd,fname),"c")
+        NCDatasets.defDim(ds,"lon",4); NCDatasets.defDim(ds,"lat",3)
+        NCDatasets.defDim(ds,"lev",1); NCDatasets.defDim(ds,"time",1)
+        NCDatasets.defVar(ds,"lon",Float32.(0:3),("lon",))
+        NCDatasets.defVar(ds,"lat",Float32.(-1:1),("lat",))
+        v=NCDatasets.defVar(ds,"ssta",Float32,("lon","lat","lev","time");fillvalue=Float32(-9999))
+        arr=Array{Union{Missing,Float32}}(fill(val,4,3,1,1)); arr[1,1,1,1]=missing
+        v[:,:,:,:]=arr
+        close(ds)
+    end
+
+    md=SST_FILES.ersst_map_data(Date(2020,1,15);path=erd)
+    @test md.metadata.fallback==false
+    @test md.title=="ersst.v5.202001.nc"
+    @test md.metadata.file==joinpath(erd,"ersst.v5.202001.nc")
+    @test isnan(md.field[1,1]) && md.field[2,2]==1.5
+    @test size(md.field)==(4,3)
+
+    md2=SST_FILES.ersst_map_data(Date(2020,5,1);path=erd)
+    @test md2.metadata.fallback==true
+    @test md2.metadata.file==joinpath(erd,"ersst.v5.202002.nc")
+    @test occursin("not on disk",md2.title)
+
+    md3=SST_FILES.ersst_map_data(Date(2019,1,1);path=erd)
+    @test md3.metadata.file==joinpath(erd,"ersst.v5.202001.nc")
+
+    @test_throws ErrorException SST_FILES.ersst_map_data(Date(2020,1,1);path=mktempdir())
+
+    if !_SKIP_DOWNLOADS
+        @test isa(plot(SSTdiag("",md.title,:ersst_map;map_data=md)),Figure)
+    end
+
+    ## A3. map_point: land (no series) and decimal years (no downloads, no basemap)
+
+    mpl=(field=Union{Missing,Float64}[1.0 missing; -1.0 0.5],lon=[205.0,206.0],lat=[44.0,45.0],
+         colorrange=(-4.0,4.0),colormap=:curl,title="synthetic",metadata=(units="degC",))
+    @test isa(plot(SSTdiag("","x",:map_point;map_data=mpl,point=nothing,timeseries=nothing,lon=15.0,lat=25.0)),Figure)
+    @test isa(plot(SSTdiag("","x",:map_point;map_data=mpl,point=nothing,timeseries=nothing,lon=15.0,lat=25.0,show_anom=true)),Figure)
+
+    SP=Base.get_extension(Climatology,:ClimatologyMakieExt).SST_plots
+    @test SP.decimal_years([Date(2024,2,29)])[1]==2024+59/366
+    @test SP.decimal_years([Date(2023,1,1),Date(2023,12,31)])==[2023.0,2023+364/365]
+
     ## B. downloaded daily files
 
     if have_files
@@ -111,6 +158,13 @@ _datadep_cached(name,file) = isfile(joinpath(Climatology.DataDeps.determine_save
         @test ps.cell==c && (ps.lon,ps.lat)==(205.0,45.0) && ps.time_axis==:multi_year
         @test length(ps.time)==length(ps.sst) && all(diff(ps.time).==Day(1))
         @test isnothing(SST_coarse_grain.point_series(15,25,gdf))
+
+        ## map_point: map plus 10° box series, ocean (both anomaly settings) and land
+        mpm=(field=Union{Missing,Float64}[1.0 missing; -1.0 0.5],lon=[205.0,206.0],lat=[44.0,45.0],
+             colorrange=(-4.0,4.0),colormap=:curl,title="synthetic",metadata=(units="degC",))
+        tsp=SST_timeseries.calc(ps.cell,list,gdf=gdf)
+        @test isa(plot(SSTdiag("",mpm.title,:map_point;map_data=mpm,point=ps,timeseries=tsp,lon=205.0,lat=45.0,show_anom=true)),Figure)
+        @test isa(plot(SSTdiag("",mpm.title,:map_point;map_data=mpm,point=ps,timeseries=tsp,lon=205.0,lat=45.0,show_anom=false)),Figure)
 
         ## table checks (Zenodo table)
         info=SST_coarse_grain.table_info(df)

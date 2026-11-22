@@ -15,6 +15,8 @@ Dispatches on `string(x.options.plot_type)` to a method in `SST_plots`:
 | `"TimeLat"`            | `SST_plots.TimeLat(x)`                |
 | `"MHW"`                | `SST_plots.MHW(x)`                    |
 | `"map"`                | `SST_plots.plot_sst_map(x)`           |
+| `"ersst_map"`          | `SST_plots.ersst_map(x)`              |
+| `"map_point"`          | `SST_plots.map_point(x)`              |
 
 Throws an `ErrorException` if `x.options` is empty, or if `plot_type`
 matches none of the cases above.
@@ -38,6 +40,10 @@ matches none of the cases above.
 			SST_plots.MHW(x)
 		elseif pt=="map"
 			SST_plots.plot_sst_map(x)
+		elseif pt=="ersst_map"
+			SST_plots.ersst_map(x)
+		elseif pt=="map_point"
+			SST_plots.map_point(x)
 		else
 			error("unknown plot_type")
 		end
@@ -51,7 +57,7 @@ import Climatology: MeshArrays, DataDeps
 import Statistics: median
 
 import Climatology: getopt
-import Climatology.Dates: Date, dayofyear, daysinyear
+import Climatology.Dates: Date, year, dayofyear, daysinyear
 import ClimatologyMakieExt: to_range!
 
 # unified title resolution: explicit SSTdiag.name wins, else caller-supplied default
@@ -76,6 +82,16 @@ function decimal_years(ts,n)
         collect(1:n)/365.25 .+ 1982
     end
 end
+
+"""
+    SST_plots.decimal_years(t::AbstractVector{<:Date})
+
+Decimal year of each date in `t`: `year(t) + (dayofyear(t) - 1) / daysinyear(t)`,
+so `2024-02-29` gives `2024 + 59/366`. Same values as the explorer's
+`decimal_year`. The two-argument [`decimal_years`](@ref) is unchanged.
+"""
+decimal_years(t::AbstractVector{<:Date}) =
+    [year(d) + (dayofyear(d)-1)/daysinyear(d) for d in t]
 
 """
     SST_plots.time_limits(o, tim)
@@ -332,6 +348,78 @@ function plot_sst_map(X::SSTdiag)
     scatter!(ax,md.lon1,md.lat1,marker=:x,color=:yellow,markersize=15)
     Colorbar(fig[1, 2],hm)
     ax.title = title_or(X,"SST map")
+    fig
+end
+
+"""
+    SST_plots.ersst_map(X::SSTdiag)
+
+Plot an ERSST monthly anomaly map over the [`map_base`](@ref) basemap, from
+`X.options.map_data` as returned by [`SST_FILES.ersst_map_data`](@ref). Unlike
+[`plot_sst_map`](@ref), it draws no point marker and no grid overlay, so it
+needs only `field`, `lon`, `lat`, `colorrange`, `colormap` and `title`.
+The title is `X.name` when set, else `map_data.title`.
+"""
+function ersst_map(X::SSTdiag)
+    md = X.options.map_data
+    fig,ax,_ = map_base()
+    hm = heatmap!(ax,md.lon,md.lat,md.field,colormap=md.colormap,colorrange=md.colorrange)
+    ax.title = title_or(X,md.title)
+    Colorbar(fig[1, 2],hm)
+    fig
+end
+
+"""
+    SST_plots.map_point(X::SSTdiag)
+
+Map from `X.options.map_data` (as in [`plot_sst_map`](@ref), but with its own
+colour settings and no grid overlay) next to the 10° box series for a point.
+
+Options: `point` (from [`SST_coarse_grain.point_series`](@ref), or `nothing` over
+land), `timeseries` (from `SST_timeseries.calc`, or `nothing`), `lon`, `lat`
+(requested point, shown as a black cross), `show_anom` (plot `sst - clim` instead
+of `sst`). Over land the right panel says so instead of drawing a series.
+The left title is `X.name` when set, else `map_data.title`.
+"""
+function map_point(X::SSTdiag)
+    o = X.options
+    m = o.map_data
+    ps = getopt(o,:point,nothing)
+    ts = getopt(o,:timeseries,nothing)
+    lon_req = getopt(o,:lon,205.0)
+    lat_req = getopt(o,:lat,25.0)
+    show_anom = getopt(o,:show_anom,false)
+
+    fig = Figure(size = (1300, 480))
+    ax1 = Axis(fig[1, 1]; title = title_or(X,m.title), xlabel = "longitude (°E)",
+               ylabel = "latitude (°N)", aspect = DataAspect())
+    z = [ismissing(v) ? NaN32 : Float32(v) for v in m.field]
+    hm = heatmap!(ax1, m.lon, m.lat, z; colorrange = m.colorrange, colormap = m.colormap,
+                  nan_color = :gray80)
+    Colorbar(fig[1, 2], hm; label = m.metadata.units)
+    limits!(ax1, 0, 360, -90, 90)
+    scatter!(ax1, [Float64(lon_req)], [Float64(lat_req)]; marker = :xcross, color = :black, markersize = 14)
+
+    ax2 = Axis(fig[1, 3]; xlabel = "year")
+    if ps === nothing
+        ax2.title = "No ocean cell at ($(lon_req)°E, $(lat_req)°N)"
+        hidedecorations!(ax2)
+    else
+        h = ps.metadata.dlon / 2
+        lines!(ax1, ps.lon .+ h .* [-1, 1, 1, -1, -1], ps.lat .+ h .* [-1, -1, 1, 1, -1];
+               color = :black, linewidth = 2)
+        x = decimal_years(ps.time)
+        if show_anom && ts !== nothing && length(ts.sst) == length(x)
+            lines!(ax2, x, ts.sst .- ts.clim; linewidth = 0.5)
+            hlines!(ax2, 0; color = :gray50)
+            ax2.ylabel = "SST anomaly (degC, vs 1992–2011)"
+        else
+            lines!(ax2, x, ps.sst; linewidth = 0.5)
+            ax2.ylabel = "SST (degC)"
+        end
+        ax2.title = "$(ps.metadata.dlon)°×$(ps.metadata.dlon)° box mean, centre ($(ps.lon)°E, $(ps.lat)°N)"
+    end
+    colsize!(fig.layout, 3, Relative(0.4))
     fig
 end
 

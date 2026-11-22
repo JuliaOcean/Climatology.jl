@@ -71,6 +71,8 @@ default_options(::Val{:MHW})              = (plot_type=:MHW, period=(1982,nothin
 default_options(::Val{:local_and_global}) = (plot_type=:local_and_global, period=(1982,nothing), ylims=(-2.5,2.5))
 default_options(::Val{:map_base})         = (plot_type=:map_base,)
 default_options(::Val{:map})              = (plot_type=:map,)
+default_options(::Val{:ersst_map})        = (plot_type=:ersst_map,)
+default_options(::Val{:map_point})        = (plot_type=:map_point, lon=205.0, lat=25.0, show_anom=false)
 default_options(::Val{:TimeLat})          = (plot_type=:TimeLat, period=(1982,nothing), ylims=(-90,90), clip_to_range=true)
 
 """

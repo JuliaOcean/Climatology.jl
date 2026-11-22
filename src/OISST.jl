@@ -311,6 +311,46 @@ function local_days(path)
     (dates=dates,files=nominal,actual=actual,preliminary=[!haskey(final,t) for t in dates])
 end
 
+"""
+    SST_FILES.ersst_map_data(t::Date; path)
+
+Figure-free data for the ERSST v5 monthly `ssta` map of the month of `t`.
+Reads `path/ersst.v5.YYYYMM.nc` (see [`SST_FILES.ersst_file_lists`](@ref)).
+
+If that month is not on disk, the newest local month at or before it is used
+(ERSST months appear only after they end, so a month newer than the newest file
+maps to the newest file). `metadata.fallback` is then `true` and `title` says
+so. A month older than the first file on disk maps to the first file.
+Nothing is downloaded or written. Errors if `path` has no `ersst.v5.YYYYMM.nc`
+files.
+
+Returns a `NamedTuple` with `field` (`lon` × `lat`, `Float64`, `NaN` where
+missing), `lon`, `lat`, `colorrange`, `colormap`, `title` and `metadata`
+(`requested`, `file`, `fallback`, `units`, `source`, `variable`).
+
+```julia
+md = SST_FILES.ersst_map_data(Date(2020,6,15); path="/path/to/OISST/files_ersst")
+plot(SSTdiag(path="", name=md.title, options=(plot_type=:ersst_map, map_data=md)))
+```
+"""
+function ersst_map_data(t::Date;path)
+    want="ersst.v5.$(Dates.format(t,"yyyymm")).nc"
+    avail=sort(filter(f->occursin(r"^ersst\.v5\.\d{6}\.nc$",f),readdir(path)))
+    isempty(avail) && error("No ersst.v5.YYYYMM.nc files in $(path)")
+    fil=avail[max(searchsortedlast(avail,want),1)]    # newest file at or before `want`, else the first one
+
+    ds=read_Dataset(joinpath(path,fil))
+    lon=ds["lon"][:]; lat=ds["lat"][:]
+    a=ds["ssta"][:,:,1,1]
+    close(ds)
+    field=[ismissing(v) ? NaN : Float64(v) for v in a]
+
+    (field=field,lon=lon,lat=lat,colorrange=4 .*(-1.0,1.0),colormap=:curl,
+     title=(fil==want ? fil : "$(fil) (requested $(want) not on disk)"),
+     metadata=(requested=t,file=joinpath(path,fil),fallback=(fil!=want),units="degC",
+               source="NOAA ERSST v5 monthly",variable="ssta"))
+end
+
 end
 
 
