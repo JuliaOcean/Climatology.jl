@@ -1,6 +1,6 @@
 using Test, Climatology, Statistics, MITgcm, CairoMakie, Suppressor
 import NCDatasets, NetCDF, MeshArrays
-import Climatology.Dates: DateTime, Month, Day
+import Climatology.Dates: Date, DateTime, Month, Day
 
 ENV["DATADEPS_ALWAYS_ACCEPT"]=true
 
@@ -134,6 +134,32 @@ end
     @test ps.cell==c && (ps.lon,ps.lat)==(205.0,45.0) && ps.time_axis==:multi_year
     @test length(ps.time)==length(ps.sst) && all(diff(ps.time).==Day(1))
     @test isnothing(SST_coarse_grain.point_series(15,25,gdf))
+
+    ## table checks (Zenodo table) and read-only file discovery (placeholder files)
+    info=SST_coarse_grain.table_info(df)
+    @test (info.t0,info.t1,info.ndays)==(Date(1982,1,1),Date(2024,9,6),15590)
+    @test info.gap_free && info.ncells==546==length(kdf)
+    @test isnothing(info.list_rows) && isnothing(info.list_ok) && isnothing(info.lag_days)
+    info=SST_coarse_grain.table_info(df;list=list,newest=Date(2024,9,10))
+    @test info.list_rows==size(list,1) && info.list_ok==(size(list,1)>=info.ndays)
+    @test info.lag_days==4
+
+    pld=mktempdir()
+    for f in ("198201/oisst-avhrr-v02r01.19820101.nc",                 # final only
+              "202611/oisst-avhrr-v02r01.20261114.nc",                 # both final and preliminary
+              "202611/oisst-avhrr-v02r01.20261114_preliminary.nc",
+              "202611/oisst-avhrr-v02r01.20261115_preliminary.nc",     # preliminary only
+              "202611/notes.txt","202611/oisst-avhrr-v02r01.2026111.nc",   # stray names
+              "other/oisst-avhrr-v02r01.20200101.nc")                  # not a YYYYMM folder
+        mkpath(dirname(joinpath(pld,f))); touch(joinpath(pld,f))
+    end
+    ld=SST_FILES.local_days(pld)
+    @test ld.dates==[Date(1982,1,1),Date(2026,11,14),Date(2026,11,15)]
+    @test ld.preliminary==[false,false,true]
+    @test ld.files[3]==joinpath(pld,"202611","oisst-avhrr-v02r01.20261115.nc") && !isfile(ld.files[3])
+    @test ld.actual[2]==ld.files[2] && ld.actual[3]==ld.files[3][1:end-3]*"_preliminary.nc"
+    @test all(isfile,ld.actual)
+    @test isempty(SST_FILES.local_days(mktempdir()).dates)
 
     ##
 

@@ -270,6 +270,47 @@ function map_data(;variable="anom",file="",file_climatology="")
     (field=field,lon=lon,lat=lat,colorrange=colorrange,colormap=colormap,title=title,metadata=metadata)
 end
 
+"""
+    SST_FILES.local_days(path)
+
+Read-only scan of the daily OISST files that exist under `path`, laid out as
+`path/YYYYMM/oisst-avhrr-v02r01.YYYYMMDD[_preliminary].nc`. Nothing is
+downloaded or written, and names that do not match (other folders, stray
+files) are ignored. Errors if `path` does not exist.
+
+Returns a `NamedTuple` with one entry per day on disk, sorted by date:
+
+- `dates`: `Vector{Date}`
+- `files`: the *nominal final* file name of each day (`path/YYYYMM/oisst-avhrr-v02r01.YYYYMMDD.nc`),
+  which may not exist; [`map_data`](@ref) falls back to `_preliminary` by itself
+- `actual`: a file that does exist (the final one if both exist)
+- `preliminary`: `true` where only a `_preliminary` file exists
+
+```julia
+d = SST_FILES.local_days("/path/to/OISST/files")
+SST_FILES.map_data(variable="sst", file=d.files[end])
+```
+"""
+function local_days(path)
+    final=Dict{Date,String}(); prelim=Dict{Date,String}()
+    for d in readdir(path)
+        occursin(r"^\d{6}$",d) || continue
+        dd=joinpath(path,d)
+        isdir(dd) || continue
+        for f in readdir(dd)
+            m=match(r"^oisst-avhrr-v02r01\.(\d{8})(_preliminary)?\.nc$",f)
+            m===nothing && continue
+            t=Date(m.captures[1],dateformat"yyyymmdd")
+            (m.captures[2]===nothing ? final : prelim)[t]=joinpath(dd,f)
+        end
+    end
+    dates=sort!(collect(union(keys(final),keys(prelim))))
+    nominal=[joinpath(path,Dates.format(t,"yyyymm"),
+             "oisst-avhrr-v02r01.$(Dates.format(t,"yyyymmdd")).nc") for t in dates]
+    actual=[haskey(final,t) ? final[t] : prelim[t] for t in dates]
+    (dates=dates,files=nominal,actual=actual,preliminary=[!haskey(final,t) for t in dates])
+end
+
 end
 
 
@@ -563,6 +604,39 @@ function point_series(lon0,lat0,gdf)
      requested=(lon=lon0,lat=lat0),time_axis=:multi_year,
      metadata=(variable="sst",units="degC",dlon=dlon,
        source="NOAA OISST v2.1 AVHRR daily, coarse-grained (area mean of 0.25 degree cells)"))
+end
+
+"""
+    SST_coarse_grain.table_info(df; list=nothing, newest=nothing)
+
+Summary and consistency checks for a coarse-grained table `df` (the first
+output of [`lowres_read`](@ref); long format with columns `i`, `j`, `t`,
+`sst`, where `t` is an integer `YYYYMMDD`). Returns a `NamedTuple`:
+
+- `t0`, `t1`: first and last date in the table
+- `ndays`: number of distinct days
+- `gap_free`: `true` if `ndays` equals the number of calendar days from `t0` to `t1`
+- `ncells`: number of coarse cells `(i,j)`
+- `list_rows`, `list_ok`: if a file `list` is given (e.g. from `SST_FILES.read_files_list`),
+  its number of rows and whether it covers the table (`rows >= ndays`; see
+  `SST_timeseries.calc`, which aligns the table to the list by position); else `nothing`
+- `lag_days`: if `newest` (a `Date`, e.g. the last daily file on disk) is given,
+  the number of days by which the table ends before it (`0` if up to date); else `nothing`
+
+```julia
+d = SST_FILES.local_days(path)
+info = SST_coarse_grain.table_info(df; list=list, newest=last(d.dates))
+info.lag_days > 0 && @warn "table is stale; rerun SST_processing.coarse_grain"
+```
+"""
+function table_info(df;list=nothing,newest=nothing)
+    d=Date.(string.(sort!(unique(df.t))),dateformat"yyyymmdd")
+    expected=Dates.value(d[end]-d[1])+1
+    (t0=d[1],t1=d[end],ndays=length(d),gap_free=length(d)==expected,
+     ncells=nrow(unique(df[!,[:i,:j]])),
+     list_rows=isnothing(list) ? nothing : size(list,1),
+     list_ok=isnothing(list) ? nothing : size(list,1)>=length(d),
+     lag_days=isnothing(newest) ? nothing : Dates.value(newest-d[end]))
 end
 
 end
