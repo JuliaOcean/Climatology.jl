@@ -1470,15 +1470,56 @@ via `Interpolate`, land-masked by `X.options.P.μ`. Color levels are drawn
 from `X.options.P.clim_colors1` (for `"mean"`/`"mon"`) or `clim_colors2`
 (for `"std"`).
 
-Returns `(λ, field, levels, title)`.
+Returns `(λ, field, levels, title)`. This is a thin wrapper around
+[`ECCO_map_data`](@ref), which returns the same content plus the native-grid
+field and metadata.
 """
 function ECCO_map(X::ECCOdiag)
+    d=ECCO_map_data(X)
+    (λ=d.λ,field=d.field,levels=d.levels,title=d.title)
+end
+
+"""
+    ECCO_procs.map_product(X::ECCOdiag)
+
+Resolve the climatology product named `X.name` (a long name from
+`X.options.P.clim_longname`) to `(index, short_name, file, directory)`, where
+`file` is e.g. `"THETA_k01.jld2"` and `directory` is e.g. `"THETA_clim"`
+(relative to `X.path`). Throws an error for an unknown name.
+"""
+function map_product(X::ECCOdiag)
+    P=X.options.P
+    ii=findfirst(==(X.name),P.clim_longname)
+    isnothing(ii) && error("Unknown map product: $(repr(X.name))")
+    nam=P.clim_name[ii]
+    (ii,nam,nam*".jld2",split(nam,"_")[1]*"_clim")
+end
+
+"""
+    ECCO_procs.ECCO_map_data(X::ECCOdiag)
+
+Read and prepare the map data for `X` (`X.options.plot_type == :ECCO_map`)
+without creating any figure, and without any UI or plotting dependency.
+This is the data-level accessor underlying [`ECCO_map`](@ref); see that
+function for how `X.name`, `X.options.statistic` and `X.options.time` select
+the field.
+
+Returns a `NamedTuple` with:
+
+- `native`: the field on the native grid (a `MeshArray`) as read from the
+  climatology file; the accessor applies no additional masking to it;
+- `field`: `native` land-masked and interpolated to the regular lon/lat grid
+  `λ` (a `Matrix`, `NaN` over land); this is a newly allocated array;
+- `λ`: interpolation coefficients (`lon`, `lat`, `f`, `i`, `j`, `w`);
+- `grid`: native grid (`X.options.P.Γ`) and `location` (`:C`);
+- `levels`, `title`: default contour levels and long name, as used for plotting;
+- `metadata`: `(name, short_name, file, statistic, time, path)`, where
+  `time` is `nothing` unless `statistic == "mon"`.
+"""
+function ECCO_map_data(X::ECCOdiag)
     o=X.options
     P=o.P
-    name=X.name
-    ii=findall(P.clim_longname.==name)[1]
-    nam=P.clim_name[ii]; file=nam*".jld2"
-    nam_full=split(nam,"_")[1]*"_clim"
+    (ii,nam,file,nam_full)=map_product(X)
     tmp=load(ECCOdiag(path=X.path,name=nam_full),file=file,variable=o.statistic)
     tmp=(o.statistic!=="mon" ? tmp : tmp[:,o.time])
 
@@ -1487,7 +1528,84 @@ function ECCO_map(X::ECCOdiag)
     rng = o.statistic=="std" ? P.clim_colors2[nam] : P.clim_colors1[nam]
     levs=rng[1] .+collect(0.0:0.05:1.0)*(rng[2]-rng[1])
 
-    (λ=P.λ,field=DD,levels=levs,title=P.clim_longname[ii])
+    metadata=(name=X.name,short_name=String(nam),file=file,statistic=o.statistic,
+        time=(o.statistic=="mon" ? o.time : nothing),path=X.path)
+
+    (native=tmp,field=DD,λ=P.λ,grid=P.Γ,location=:C,levels=levs,
+        title=P.clim_longname[ii],metadata=metadata)
+end
+
+"""
+    ECCO_procs.nearest_wet_cell(P, lon, lat)
+
+Map a geographic point to a native-grid cell using the interpolation
+coefficients `P.λ` and the land mask `P.μ`.
+
+Finds the nearest point of the regular lon/lat grid `P.λ.lon, P.λ.lat`
+(longitude wrapped to [-180,180)), then returns the wet source cell with the
+largest interpolation weight among that point's four native-grid neighbors.
+Returns `nothing` if all four are land.
+
+Returns `(f, i, j, lon, lat, weight)` where `(f,i,j)` is the face and indices
+of the native cell (location `:C`), and `lon, lat` are the cell-center
+coordinates `P.Γ.XC[f][i,j]`, `P.Γ.YC[f][i,j]`.
+"""
+function nearest_wet_cell(P,lon::Real,lat::Real)
+    lon=mod(lon+180.0,360.0)-180.0
+    Λ=P.λ
+    ix=argmin(abs.(Λ.lon[:,1].-lon))
+    iy=argmin(abs.(Λ.lat[1,:].-lat))
+    n=LinearIndices(Λ.lon)[ix,iy]
+    best=nothing
+    for c in 1:size(Λ.f,2)
+        f,i,j,w=Λ.f[n,c],Λ.i[n,c],Λ.j[n,c],Λ.w[n,c]
+        (f<1||isnan(P.μ[f][i,j])) && continue
+        if isnothing(best)||w>best.weight
+            best=(f=f,i=i,j=j,lon=P.Γ.XC[f][i,j],lat=P.Γ.YC[f][i,j],weight=w)
+        end
+    end
+    best
+end
+
+"""
+    ECCO_procs.map_point_series(X::ECCOdiag, cell)
+
+Monthly climatology of the map product `X` (`X.options.plot_type == :ECCO_map`)
+at one native-grid cell `cell`, e.g. as returned by [`nearest_wet_cell`](@ref)
+(only `cell.f, cell.i, cell.j` are used).
+
+This always reads the 12-month climatology (`"mon"`), whatever
+`X.options.statistic` is. It is a seasonal cycle, *not* a multi-year history:
+the standard diagnostics hold no per-cell time axis.
+
+Returns `(month, values, mean, std, cell, metadata)`:
+
+- `month`: `1:12`; `values`: the 12 monthly values at the cell;
+- `mean`, `std`: the stored `"mean"` and `"std"` at the cell. `mean` equals
+  the average of `values`; `std` is the standard deviation of the underlying
+  full-length series, so it does *not* equal `std(values)`;
+- `cell`: `(f, i, j)` plus `lon, lat` of the cell center;
+- `metadata`: `(name, short_name, file, path)`.
+
+Throws an error if the cell is out of bounds or is a land (`NaN`) cell.
+"""
+function map_point_series(X::ECCOdiag,cell)
+    P=X.options.P
+    (f,i,j)=(cell.f,cell.i,cell.j)
+    (1<=f<=length(P.Γ.XC.fSize))||error("Invalid face index: $f")
+    (1<=i<=P.Γ.XC.fSize[f][1] && 1<=j<=P.Γ.XC.fSize[f][2])||
+        error("Cell ($f,$i,$j) is outside the grid.")
+    isnan(P.μ[f][i,j])&&error("Cell ($f,$i,$j) is a land cell.")
+
+    (ii,nam,file,nam_full)=map_product(X)
+    ld(v)=load(ECCOdiag(path=X.path,name=nam_full),file=file,variable=v)
+    mon=ld("mon")
+    vals=[mon[f,t][i,j] for t in 1:size(mon,2)]
+
+    (month=1:length(vals),values=vals,
+        mean=ld("mean")[f][i,j],std=ld("std")[f][i,j],
+        cell=(f=f,i=i,j=j,lon=P.Γ.XC[f][i,j],lat=P.Γ.YC[f][i,j]),
+        metadata=(name=X.name,short_name=String(nam),file=file,path=X.path))
 end
 
 function TimeLat_parameters(namzm; anomaly=false)

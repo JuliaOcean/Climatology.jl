@@ -195,7 +195,40 @@ end
     timemap=1
 
     plot(ECCOdiag(pth_out, nammap, :ECCO_map; P=P, statistic=statmap, time=timemap))
-    
+
+    # data-level accessor: no Figure, native field retained, wrapper unchanged
+    dmap=ECCO_procs.ECCO_map_data(ECCOdiag(pth_out, nammap, :ECCO_map; P=P, statistic=statmap, time=timemap))
+    wmap=ECCO_procs.ECCO_map(ECCOdiag(pth_out, nammap, :ECCO_map; P=P, statistic=statmap, time=timemap))
+    @test keys(wmap)==(:λ,:field,:levels,:title)
+    @test isequal(dmap.field,wmap.field) && dmap.levels==wmap.levels && dmap.title==wmap.title
+    @test isa(dmap.native,MeshArrays.AbstractMeshArray) && dmap.location==:C
+    @test size(dmap.field)==size(P.λ.lon)
+    @test any(isnan,dmap.field) && any(!isnan,dmap.field)
+    @test sum(count(isnan,dmap.native[f]) for f in 1:5)==sum(count(isnan,(P.μ*dmap.native)[f]) for f in 1:5) #accessor adds no masking to native
+    dmon=ECCO_procs.ECCO_map_data(ECCOdiag(pth_out, nammap, :ECCO_map; P=P, statistic="mon", time=3))
+    @test dmon.metadata.time==3 && dmap.metadata.time===nothing
+    @test_throws ErrorException ECCO_procs.ECCO_map_data(ECCOdiag(pth_out, "not a product", :ECCO_map; P=P))
+
+    # lon/lat -> native wet cell
+    c=ECCO_procs.nearest_wet_cell(P,-30.0,40.0)
+    @test !isnothing(c) && !isnan(P.μ[c.f][c.i,c.j])
+    @test abs(c.lon+30.0)<3.0 && abs(c.lat-40.0)<3.0
+    @test c==ECCO_procs.nearest_wet_cell(P,330.0,40.0) #longitude wrapping
+    # cell -> monthly climatology at that cell
+    Xmap=ECCOdiag(pth_out, P.clim_longname[11], :ECCO_map; P=P)
+    ps=ECCO_procs.map_point_series(Xmap,c)
+    @test length(ps.values)==12 && ps.month==1:12 && all(!isnan,ps.values)
+    @test isapprox(sum(ps.values)/12,ps.mean) #stored mean = average of the 12 months
+    @test ps.std>0 && (ps.cell.f,ps.cell.i,ps.cell.j)==(c.f,c.i,c.j)
+    dnat=ECCO_procs.ECCO_map_data(Xmap)
+    @test ps.mean==dnat.native[c.f][c.i,c.j] #consistent with the map accessor
+    @test_throws ErrorException ECCO_procs.map_point_series(Xmap,(f=1,i=0,j=1))
+    @test_throws ErrorException ECCO_procs.map_point_series(Xmap,(f=9,i=1,j=1))
+    iland=findfirst(isnan,P.μ[1]) #first land cell of face 1
+    @test_throws ErrorException ECCO_procs.map_point_series(Xmap,(f=1,i=iland[1],j=iland[2]))
+    @test isnothing(ECCO_procs.nearest_wet_cell(P,10.0,25.0)) #Sahara: all four neighbors are land
+    @test isnothing(ECCO_procs.nearest_wet_cell(P,0.0,-89.75)) #Antarctica
+
     l0=1; l1=90
 
     plot(ECCOdiag(pth_out, "THETA_clim", :ECCO_TimeLat;
