@@ -5,7 +5,7 @@ SST_demo_path=joinpath(tempdir(),"demo_OISST")
 module SST_FILES
 
 using Printf, DataFrames, CSV, Dates, Glob
-import Climatology: read_Dataset, SST_demo_path
+import Climatology: read_Dataset, SST_demo_path, SST_coarse_grain
 
 read_files_list(;path=SST_demo_path,file="oisst_whole_file_list.csv",add_ymd=true) = begin
     if add_ymd
@@ -349,6 +349,54 @@ function ersst_map_data(t::Date;path)
      title=(fil==want ? fil : "$(fil) (requested $(want) not on disk)"),
      metadata=(requested=t,file=joinpath(path,fil),fallback=(fil!=want),units="degC",
                source="NOAA ERSST v5 monthly",variable="ssta"))
+end
+
+"""
+    SST_FILES.resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
+
+Resolve `request = (product=:OISST,)` into the data bundle the OISST explorer
+needs, reading only: the daily file list under `path` (see
+[`SST_FILES.local_days`](@ref)), the coarse-grained table `fil` (see
+[`SST_coarse_grain.lowres_read`](@ref)), the file list CSV
+(see [`SST_FILES.read_files_list`](@ref)) and the coarse grid of the newest
+day (see [`SST_coarse_grain.grid`](@ref)). Nothing is downloaded or written.
+Errors if `path` has no OISST daily files, or if `fil` is missing.
+
+The product is `:OISST` only. The ERSST month lookup is `SST_FILES.ersst_map_data`
+and `SST_FILES.resolve_request` is not needed for it.
+
+Returns a `NamedTuple`:
+
+- `path`: the folder given
+- `days`: the `local_days` result (`dates`, `files`, `actual`, `preliminary`)
+- `df`, `gdf`, `kdf`: the coarse table, its groups by `(i,j)`, and their keys
+- `list`: the file list (`read_files_list`, read only)
+- `G`: the coarse grid from the newest day on disk
+- `info`: the `table_info(df; list, newest)` summary
+- `metadata`: `product`, `source`, `path`, `table` (file name), `newest` (`Date`)
+
+```julia
+b = SST_FILES.resolve_request((product=:OISST,); path=oisst_files)
+b.info.ncells
+```
+"""
+function resolve_request(request; path, fil="lowres_oisst_sst_10.0.csv")
+    request.product==:OISST || error("Only product :OISST is handled here; got $(repr(request.product)).")
+    isdir(path) || error("path is not a directory: $(repr(path))")
+
+    days=local_days(path)
+    isempty(days.dates) && error("No oisst-avhrr-v02r01.YYYYMMDD.nc files under $(path)/YYYYMM/")
+    isfile(joinpath(path,fil)) || error("Coarse table not found: $(joinpath(path,fil))")
+
+    (df,gdf,kdf)=SST_coarse_grain.lowres_read(path=path,fil=fil)
+    list=read_files_list(path=path)
+    newest=last(days.dates)
+    info=SST_coarse_grain.table_info(df; list=list, newest=newest)
+    G=SST_coarse_grain.grid(last(days.actual))
+
+    (path=path,days=days,df=df,gdf=gdf,kdf=kdf,list=list,G=G,info=info,
+     metadata=(product=:OISST,source="NOAA OISST daily",path=path,
+               table=fil,newest=newest))
 end
 
 end

@@ -89,6 +89,42 @@ _datadep_cached(name,file) = isfile(joinpath(Climatology.DataDeps.determine_save
 
     @test_throws ErrorException SST_FILES.ersst_map_data(Date(2020,1,1);path=mktempdir())
 
+    ## A2b. resolve_request (OISST bundle): synthetic folder, read only, no download
+
+    rd=mktempdir()
+    mkpath(joinpath(rd,"202601"))
+    for day in (5,6)   # two final daily files, 2026-01-05 and 2026-01-06
+        ds=NCDatasets.Dataset(joinpath(rd,"202601","oisst-avhrr-v02r01.202601$(lpad(day,2,'0')).nc"),"c")
+        NCDatasets.defDim(ds,"lon",4); NCDatasets.defDim(ds,"lat",3)
+        NCDatasets.defVar(ds,"lon",Float32.(0:3),("lon",))
+        NCDatasets.defVar(ds,"lat",Float32.(-1:1),("lat",))
+        v=NCDatasets.defVar(ds,"sst",Float32,("lon","lat");fillvalue=Float32(-9999))
+        v[:,:]=fill(20f0,4,3)
+        close(ds)
+    end
+    # coarse table: cells (1,1) and (2,1), days 20260105 and 20260106 (integer yyyymmdd)
+    SST_FILES.CSV.write(joinpath(rd,"lowres_oisst_sst_10.0.csv"),
+        SST_FILES.DataFrame(i=[1,1,2,2],j=[1,1,1,1],t=[20260105,20260106,20260105,20260106],
+                            sst=Float32[20,21,19,18]))
+    SST_FILES.CSV.write(joinpath(rd,"oisst_whole_file_list.csv"),
+        SST_FILES.DataFrame(fil=["oisst-avhrr-v02r01.20260105.nc","oisst-avhrr-v02r01.20260106.nc"],
+                            url=["u","u"],todo=[false,false]))
+
+    b=SST_FILES.resolve_request((product=:OISST,); path=rd)
+    @test b.path==rd && b.days.dates==[Date(2026,1,5),Date(2026,1,6)]
+    @test size(b.df,1)==4 && length(b.kdf)==2 && length(b.gdf)==2
+    @test b.info.ncells==2 && b.info.gap_free && b.info.ndays==2
+    @test b.info.lag_days==0            # newest table day equals newest file day
+    @test size(b.list,1)==2
+    @test b.G.lon==SST_coarse_grain.grid(last(b.days.actual)).lon
+    @test b.metadata.table=="lowres_oisst_sst_10.0.csv" && b.metadata.newest==Date(2026,1,6)
+    @test b.metadata.product==:OISST
+
+    @test_throws ErrorException SST_FILES.resolve_request((product=:ERSST,); path=rd)
+    @test_throws ErrorException SST_FILES.resolve_request((product=:OISST,); path=joinpath(rd,"nope"))
+    @test_throws ErrorException SST_FILES.resolve_request((product=:OISST,); path=mktempdir())
+    @test_throws ErrorException SST_FILES.resolve_request((product=:OISST,); path=rd, fil="missing.csv")
+
     if !_SKIP_DOWNLOADS
         @test isa(plot(SSTdiag("",md.title,:ersst_map;map_data=md)),Figure)
     end
