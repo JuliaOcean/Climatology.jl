@@ -686,7 +686,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "a5bfb9bcb236e7b9794db17a8443729745fc12b8"
+project_hash = "143df5010320a94370eea3f60727461a343c423b"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -914,9 +914,9 @@ version = "1.0.0"
 
 [[deps.Climatology]]
 deps = ["AirSeaFluxes", "CSV", "DataDeps", "DataFrames", "DataStructures", "Dataverse", "Dates", "Distributed", "GLM", "Glob", "Interpolations", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "StatsModels", "TOML", "URIs"]
-git-tree-sha1 = "8a2b9bdc69739e9be8e9cc902fa99a00d74627df"
+git-tree-sha1 = "2458b212513b8b25d578a03f6b2ea4ff39c92880"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-version = "0.6.2"
+version = "0.6.3"
 
     [deps.Climatology.extensions]
     ClimatologyMITgcmExt = ["MITgcm"]
