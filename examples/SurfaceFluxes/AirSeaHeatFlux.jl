@@ -16,15 +16,6 @@ macro bind(def, element)
     #! format: on
 end
 
-# ╔═╡ 49b7cc51-cb72-417c-8d4a-ffc6ad3da3b5
-begin
-	using PlutoUI, CairoMakie, Climatology
-    import Climatology.ERA5: interpolate_sst, surface_balance, read_sample
-
-	"done with packages"
-
-end
-
 # ╔═╡ cb3043b0-7d05-4ce7-853e-1c2097c4a910
 md"""# Air-Sea Fluxes
 
@@ -89,6 +80,15 @@ md"""## Appendix
 ### Julia packages and functions 
 """
 
+# ╔═╡ 49b7cc51-cb72-417c-8d4a-ffc6ad3da3b5
+begin
+	using PlutoUI, CairoMakie, Climatology
+    import Climatology.ERA5: interpolate_sst, surface_balance, read_sample
+
+	"done with packages"
+
+end
+
 # ╔═╡ 162f656b-e824-4ef6-b00b-06883c14db8d
 md"""The ERA5 was created on engaging using `Climatology.jl` (see Appendix)
 
@@ -125,7 +125,6 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 
 [compat]
 CairoMakie = "~0.15.12"
-Climatology = "~0.5.19"
 PlutoUI = "~0.7.83"
 """
 
@@ -135,7 +134,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "ba9b9387016280b1822c58967579ea9adf3bbec9"
+project_hash = "2ece2927ac53c4e6f5e52dedc786512aa1c1e94b"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -350,10 +349,10 @@ uuid = "55437552-ac27-4d47-9aa3-63184e8fd398"
 version = "1.0.0"
 
 [[deps.Climatology]]
-deps = ["AirSeaFluxes", "CSV", "DataDeps", "DataFrames", "DataStructures", "Dataverse", "Dates", "Distributed", "GLM", "Glob", "Interpolations", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "STAC", "Scratch", "SharedArrays", "Statistics", "StatsModels", "TOML", "URIs"]
-git-tree-sha1 = "8be6c54f138fddafb2521803f60826a46be35531"
+deps = ["AirSeaFluxes", "CSV", "DataDeps", "DataFrames", "DataStructures", "Dataverse", "Dates", "Distributed", "GLM", "Glob", "Interpolations", "JLD2", "MeshArrays", "Pkg", "Printf", "RollingFunctions", "Scratch", "SharedArrays", "Statistics", "StatsModels", "TOML", "URIs"]
+git-tree-sha1 = "2458b212513b8b25d578a03f6b2ea4ff39c92880"
 uuid = "9e9a4d37-2d2e-41e3-8b85-f7978328d9c7"
-version = "0.5.22"
+version = "0.6.3"
 
     [deps.Climatology.extensions]
     ClimatologyMITgcmExt = ["MITgcm"]
@@ -789,20 +788,6 @@ version = "1.6.2"
     Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
     RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
-[[deps.GeoJSON]]
-deps = ["Extents", "GeoFormatTypes", "GeoInterface", "JSON3", "StructTypes", "Tables"]
-git-tree-sha1 = "ce64817b826c36b30493b31be2ce53c55a277835"
-uuid = "61d90e0f-e114-555e-ac52-39dfb47a3ef9"
-version = "0.8.4"
-
-    [deps.GeoJSON.extensions]
-    GeoJSONMakieExt = "Makie"
-    GeoJSONRecipesBaseExt = "RecipesBase"
-
-    [deps.GeoJSON.weakdeps]
-    Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-    RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-
 [[deps.GeometryBasics]]
 deps = ["EarCut_jll", "LinearAlgebra", "PrecompileTools", "Random", "StaticArrays"]
 git-tree-sha1 = "ec46c5825710fa1a15d468acb2d93cc939a7a5fe"
@@ -1104,18 +1089,6 @@ version = "1.13.4"
     ArrowTypes = "31f734f8-188a-4ce0-8406-c8a06bd891cd"
     Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
-[[deps.JSON3]]
-deps = ["Dates", "Mmap", "Parsers", "PrecompileTools", "StructTypes", "UUIDs"]
-git-tree-sha1 = "34a52631602d7233eb1dca1a358ae82b656f9f2a"
-uuid = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
-version = "1.14.4"
-
-    [deps.JSON3.extensions]
-    JSON3ArrowExt = ["ArrowTypes"]
-
-    [deps.JSON3.weakdeps]
-    ArrowTypes = "31f734f8-188a-4ce0-8406-c8a06bd891cd"
-
 [[deps.JpegTurbo]]
 deps = ["CEnum", "FileIO", "ImageCore", "JpegTurbo_jll", "TOML"]
 git-tree-sha1 = "9496de8fb52c224a2e3f9ff403947674517317d9"
@@ -1161,15 +1134,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "e5b100780d4d30d63b4618d7930d48af409c1772"
 uuid = "1d63c593-3942-5779-bab2-d838dc0a180e"
 version = "23.1.1+0"
-
-[[deps.LRUCache]]
-git-tree-sha1 = "5519b95a490ff5fe629c4a7aa3b3dfc9160498b3"
-uuid = "8ac3fa9e-de4c-5943-b1dc-09c6b5f20637"
-version = "1.6.2"
-weakdeps = ["Serialization"]
-
-    [deps.LRUCache.extensions]
-    SerializationExt = ["Serialization"]
 
 [[deps.LaTeXStrings]]
 git-tree-sha1 = "f88f3ccef05a6a72a0cf0ed417c8fd68530f4ab2"
@@ -1736,12 +1700,6 @@ git-tree-sha1 = "0651e0ac84b2027c5f227c058d37f81b5be373bd"
 uuid = "fdea26ae-647d-5447-a871-4b548cad5224"
 version = "3.8.2"
 
-[[deps.STAC]]
-deps = ["DataStructures", "Dates", "GeoJSON", "HTTP", "JSON", "LRUCache", "Preferences", "Printf", "URIs"]
-git-tree-sha1 = "216a2ea2f03315720418ef9fa95786e42203a1d1"
-uuid = "08e62803-e111-4f53-be9b-274ff296e9da"
-version = "0.1.7"
-
 [[deps.ScopedValues]]
 deps = ["HashArrayMappedTries", "Logging"]
 git-tree-sha1 = "67a144433c4ce877ee6d1ada69a124d6b1ecf7be"
@@ -1911,12 +1869,6 @@ version = "0.7.4"
     LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
     SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
     StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
-
-[[deps.StructTypes]]
-deps = ["Dates", "UUIDs"]
-git-tree-sha1 = "fd6a55e88450cb4256e49103a5a243f065c7b781"
-uuid = "856f2bd8-1eba-4b0a-8007-ebc267875bd4"
-version = "1.11.1"
 
 [[deps.StructUtils]]
 deps = ["Dates", "UUIDs"]
