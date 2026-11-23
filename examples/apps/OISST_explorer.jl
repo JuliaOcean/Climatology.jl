@@ -42,6 +42,7 @@ PlutoUI.TableOfContents()
 # ╔═╡ 0a5e0000-0000-4000-8000-000000000006
 begin
     input_path = get(ENV, "OISST_PATH", "files")
+    files_list=SST_processing.download_files(path=input_path,short_demo=true)
     input_path_ersst = get(ENV, "ERSST_PATH", "files_ersst")
     file_climatology = joinpath(input_path, "OISST_mean_monthly_1992_2011.nc")
     output_directory = joinpath(pwd(), "OISST_explorer_output")
