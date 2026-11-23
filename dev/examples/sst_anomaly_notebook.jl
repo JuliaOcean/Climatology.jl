@@ -52,16 +52,6 @@ TableOfContents()
 # ╔═╡ ad758a95-5a23-4a84-afbf-2228f5938904
 md"""## OISST Anomaly Map"""
 
-# ╔═╡ 3b7f039f-5dcc-4f17-b1f2-2ea27e54a2eb
-begin
-	b_fil_delta = @bind fil_del Select([1,3,7,30,365],default=1)	
-	md"""- \# of days in between maps? $(b_fil_delta)
-	"""
-end
-
-# ╔═╡ 68d367ba-ea7f-4870-8317-f777edaefd4d
-md"""## Regional SST timeseries"""
-
 # ╔═╡ 47f1f04b-d40e-4570-8112-1c38bca794a3
 begin
 	b_lon0 = @bind lon0 Select(5:10:360,default=205)
@@ -71,6 +61,16 @@ begin
 	- latitude = $(b_lat0)
 	"""
 end
+
+# ╔═╡ 3b7f039f-5dcc-4f17-b1f2-2ea27e54a2eb
+begin
+	b_fil_delta = @bind fil_del Select([1,3,7,30,365],default=1)	
+	md"""- \# of days in between maps? $(b_fil_delta)
+	"""
+end
+
+# ╔═╡ 68d367ba-ea7f-4870-8317-f777edaefd4d
+md"""## Regional SST timeseries"""
 
 # ╔═╡ 24487624-d4f8-4b35-8512-f3753b2025de
 begin
@@ -204,7 +204,10 @@ Extended Reconstructed Sea Surface Temperature (ERSST) is a global monthly analy
 """
 
 # ╔═╡ f7d8e391-53e7-438f-a237-cf65e57af950
-do_ERSST_map=false
+begin
+    do_ERSST_map=false
+    short_demo=true
+end
 
 # ╔═╡ cfd95718-7e1e-4b0c-931c-9dce8a3faea0
 begin
@@ -278,10 +281,9 @@ end
 
 # ╔═╡ 180471c5-528e-4afb-b26c-89ca7501d78e
 begin
-	#    input_path=Climatology.SST_demo_path
     input_path=tempname(); mkdir(input_path)
     input_path_ersst="files_ersst"
-	path_OISST_stats=Climatology.downloads.OISST_stats_download()
+    path_OISST_stats=Climatology.downloads.OISST_stats_download()
 end
 
 # ╔═╡ b548be7e-a0d6-4051-b3bd-2834cdd01ce4
@@ -302,7 +304,7 @@ end
 begin
     (fil1,fil2)=SST_FILES.file_lists(path=input_path)
 	list=SST_FILES.read_files_list(path=input_path)
-    files_list=SST_processing.download_files(path=input_path,short_demo=true)
+    files_list=SST_processing.download_files(path=input_path,short_demo=short_demo)
 	display([input_path;basename.(files_list)])
 end
 
@@ -321,70 +323,15 @@ begin
 	"""
 end
 
-# ╔═╡ 0468be31-8bff-4606-902a-474d4225d108
-ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
-
-# ╔═╡ d6d3e960-c150-40fd-81fd-36bd0a9f8f40
-let
-    f3b = plot(SSTdiag(input_path,"",:by_year; timeseries=ts))
-	save_fig(f3b,doSave,file="sst_local_by_year.png")
-end
-
-# ╔═╡ cd786d83-1b65-4e3d-8e1f-46a9994a827b
-let
-    options=(plot_type=:by_time,ts=ts,show_anom=show_anom,show_clim=show_clim)
-    f4 = plot(SSTdiag(input_path,"",:by_time; timeseries=ts,show_anom=show_anom,show_clim=show_clim))
-	save_fig(f4,doSave,file="sst_local.png")
-end
-
-# ╔═╡ 0fd9ae44-89cb-468a-9921-5fe8c16093b7
-if do_plot_WHOTS
-	using Dates, Statistics
-	runmean(x,n1)=[mean(x[i:i-1+n1]) for i in 1:length(x)-n1]
-	TEMP=runmean(WHOTS.TEMP,5*24)
-	TIM=[1992 .+ (t-DateTime("1992-01-01","yyyy-mm-dd")).value/86400000/365 for t in WHOTS.TIME]
-	TIM=runmean(TIM,5*24)
-
-    f4 = plot(SSTdiag(input_path,"",:by_time; timeseries=ts,show_anom=show_anom,show_clim=show_clim))
-	lines!(TIM,TEMP)
-	limits!(2003,2019,20,28)
-	f4
-end
-
-# ╔═╡ e87d0817-827d-4b44-a8b6-f566b61391c2
-let
-    f3 = plot(SSTdiag(input_path,"",:MHW; timeseries=ts))
-	save_fig(f3,doSave,file="sst_local_MHW.png")
-end
-
-# ╔═╡ c925f69f-6ecc-428e-aae1-0a2446baddb8
-G=SST_coarse_grain.grid(files_list[end])
-
 # ╔═╡ 9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
 begin
 	file_climatology=joinpath(path_OISST_stats,"OISST_mean_monthly_1992_2011.nc")
 	(year_sst,mon_sst,day_sst)=SST_FILES.ymd(fil_sst)	
 
-	if ano_ncei
-		v_map="anom"
-		ttl="SST anomaly (NCEI) for time "*fil_sst[end-10:end-3]
-		cr_map=4 .*(-1.0,1.0)
-		cm_map=:curl
-	elseif ano_sst
-		v_map="anom_recompute"
-		ttl="SST anomaly (recomputed) for $(year_sst) / $(mon_sst) / $(day_sst)"
-		cr_map=4 .*(-1.0,1.0)
-		cm_map=:curl
-	else
-		v_map="sst"
-		ttl="SST for time "*fil_sst[end-10:end-3]
-		cr_map=(-1.0,31.0)
-		cm_map=:thermal
-	end
-
-    to_map = (field=SST_FILES.read_map(variable=v_map,file=fil_sst,file_climatology=file_climatology),
-            colorrange=cr_map,colormap=cm_map,
-            lon=G.lon,lat=G.lat,lon1=lon1,lat1=lat1,showgrid=false)
+	v_map = ano_ncei ? "anom" : (ano_sst ? "anom_recompute" : "sst")
+	map_md = SST_FILES.map_data(variable=v_map,file=fil_sst,file_climatology=file_climatology)
+	ttl = map_md.title
+	to_map = merge(map_md,(lon1=lon1,lat1=lat1,showgrid=false))
 end
 
 # ╔═╡ 1bed0676-4984-4909-a6af-4d25d894aa69
@@ -528,8 +475,10 @@ end
 if do_ERSST_map
 	function ERSST_map(year_sst,mon_sst;path=Climatology.SST_demo_path)
 		ersst_fil=SST_FILES.@sprintf "ersst.v5.%i%02i.nc" year_sst mon_sst
-		(year_sst==2023&&mon_sst>7)||(year_sst>2023) ? ersst_fil="ersst.v5.202307.nc" : nothing
-	
+		latest=sort(filter(f->occursin(r"^ersst\.v5\.\d{6}\.nc$",f),readdir(path)))[end]
+		# months after the newest local file fall back to it; a missing earlier month still errors
+		ersst_fil>latest ? ersst_fil=latest : nothing
+
 		ersst=Dataset(joinpath(path,ersst_fil))
 		ersst_ssta=fill(NaN,(180,89))
 		tmp1=ersst[:ssta][:,:]
@@ -554,6 +503,45 @@ if do_future_projection
 	offset=SST_scenarios.calc_offset(year_sst,ny,scenario)
 	"SST offset = $(offset)"
 end
+
+# ╔═╡ 0468be31-8bff-4606-902a-474d4225d108
+ts=SST_timeseries.calc(kdf0,list,gdf=gdf)
+
+# ╔═╡ d6d3e960-c150-40fd-81fd-36bd0a9f8f40
+let
+    f3b = plot(SSTdiag(input_path,"",:by_year; timeseries=ts))
+	save_fig(f3b,doSave,file="sst_local_by_year.png")
+end
+
+# ╔═╡ cd786d83-1b65-4e3d-8e1f-46a9994a827b
+let
+    options=(plot_type=:by_time,ts=ts,show_anom=show_anom,show_clim=show_clim)
+    f4 = plot(SSTdiag(input_path,"",:by_time; timeseries=ts,show_anom=show_anom,show_clim=show_clim))
+	save_fig(f4,doSave,file="sst_local.png")
+end
+
+# ╔═╡ 0fd9ae44-89cb-468a-9921-5fe8c16093b7
+if do_plot_WHOTS
+	using Dates, Statistics
+	runmean(x,n1)=[mean(x[i:i-1+n1]) for i in 1:length(x)-n1]
+	TEMP=runmean(WHOTS.TEMP,5*24)
+	TIM=[1992 .+ (t-DateTime("1992-01-01","yyyy-mm-dd")).value/86400000/365 for t in WHOTS.TIME]
+	TIM=runmean(TIM,5*24)
+
+    f4 = plot(SSTdiag(input_path,"",:by_time; timeseries=ts,show_anom=show_anom,show_clim=show_clim))
+	lines!(TIM,TEMP)
+	limits!(2003,2019,20,28)
+	f4
+end
+
+# ╔═╡ e87d0817-827d-4b44-a8b6-f566b61391c2
+let
+    f3 = plot(SSTdiag(input_path,"",:MHW; timeseries=ts))
+	save_fig(f3,doSave,file="sst_local_MHW.png")
+end
+
+# ╔═╡ c925f69f-6ecc-428e-aae1-0a2446baddb8
+G=SST_coarse_grain.grid(files_list[end])
 
 # ╔═╡ 9f7d8596-1576-4d96-803f-21d9b5c53aa4
 if do_zonal_mean
@@ -698,7 +686,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "143df5010320a94370eea3f60727461a343c423b"
+project_hash = "a5bfb9bcb236e7b9794db17a8443729745fc12b8"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -3075,12 +3063,12 @@ version = "4.1.0+0"
 # ╟─714b333f-c35a-4035-9a57-8d3de33a87a2
 # ╟─2f945738-a4ba-46a7-be41-58261b939d17
 # ╟─ad758a95-5a23-4a84-afbf-2228f5938904
+# ╟─47f1f04b-d40e-4570-8112-1c38bca794a3
 # ╟─1bed0676-4984-4909-a6af-4d25d894aa69
 # ╟─1632750d-0908-4b06-98dc-861101449fef
 # ╟─3b7f039f-5dcc-4f17-b1f2-2ea27e54a2eb
 # ╟─9ecb8f63-e8ac-4e5b-9078-356f7f434f2c
 # ╟─68d367ba-ea7f-4870-8317-f777edaefd4d
-# ╟─47f1f04b-d40e-4570-8112-1c38bca794a3
 # ╟─679faf60-95db-40bc-a07d-672f7510e8fb
 # ╟─27c6c10b-93f0-4b3c-910c-a52c9b30ddf3
 # ╟─0468be31-8bff-4606-902a-474d4225d108
