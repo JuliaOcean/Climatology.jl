@@ -13,12 +13,12 @@ _It is in early development stage; breaking changes remain likely._
 
 | Data set | Description | Status |
 |---|---|---|
-| [OISST](@ref Physical-Oceanography) | NOAA sea surface temperature, incl. anomalies & marine heat wave detection | most developed |
-| [ECCO](@ref Physical-Oceanography) | ocean state estimate: transports, climate indices, sub-surface temperature, etc. | most developed |
+| [OISST](examples/sst_anomaly_notebook.html) | NOAA sea surface temperature, incl. anomalies & marine heat wave detection | most developed |
+| [ECCO](examples/ECCO_standard_plots.html) | ocean state estimate: transports, climate indices, sub-surface temperature, etc. | most developed |
 | OCCA (1 & 2) | ocean state estimates or climatologies | supported |
-| [CBIOMES](@ref Marine-Ecosystems) | ocean color & biogeochemistry from Darwin3 | supported |
+| [CBIOMES](examples/CBIOMES_climatology_plot.html) | ocean color & biogeochemistry from Darwin3 | supported |
 | MITprof | in-situ temperature/salinity profile climatology | supported |
-| [HadIOD](@ref Other-Notebooks) | in-situ T/S observational database | supported |
+| [HadIOD](examples/HadIOD.html) | in-situ T/S observational database | supported |
 | Satellite altimetry / SSH | sea level anomaly maps (NASA/PODAAC, CMEMS) | supported |
 
 ## Design
