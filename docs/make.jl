@@ -35,7 +35,6 @@ withenv(MeshArrays.interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
        "Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg")
 fil=Climatology.MeshArrays.demo.download_polygons("countries.geojson")
-pol=Climatology.MeshArrays.read_polygons(fil)
 
 ENV["OISST_PATH"]=joinpath(tempdir(),"OISST_PATH")
 input_path = get(ENV, "OISST_PATH", "files")
@@ -52,6 +51,7 @@ lst=("ECCO/ECCO_standard_plots.jl","OISST/sst_anomaly_notebook.jl",
 pth_out=joinpath(@__DIR__,"build", "examples")
 !isdir(pth_out) ? mkdir(pth_out) : nothing
 
+#lst=lst[3:4]
 #lst=[]
 for i in lst
     println("PlutoSliderServer($i) started")
