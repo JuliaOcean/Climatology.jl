@@ -281,7 +281,9 @@ end
 
 # ╔═╡ 180471c5-528e-4afb-b26c-89ca7501d78e
 begin
-    input_path=tempname(); mkdir(input_path)
+    input_path = get(ENV, "OISST_PATH", tempname())
+    !isdir(input_path) ? mkdir(input_path) : nothing
+
     input_path_ersst="files_ersst"
     path_OISST_stats=Climatology.downloads.OISST_stats_download()
 end
@@ -678,6 +680,18 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 Proj = "c94c279d-25a6-4763-9509-64d165bea63e"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[compat]
+CairoMakie = "~0.15.17"
+Climatology = "~0.6.3"
+GeoFormatTypes = "~0.4.5"
+GeoInterface = "~1.6.2"
+GeoMakie = "~0.7.18"
+GeometryOps = "~0.1.47"
+Glob = "~1.5.0"
+NCDatasets = "~0.14.15"
+PlutoUI = "~0.7.84"
+Proj = "~1.9.0"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -686,7 +700,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.12.6"
 manifest_format = "2.0"
-project_hash = "143df5010320a94370eea3f60727461a343c423b"
+project_hash = "e487ce4eef58d05be2fbe611c1789d39b3563b0f"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]

@@ -30,10 +30,17 @@ authors="JuliaOcean <gforget@mit.edu>",
 Climatology.CBIOMESclim_download()
 Climatology.ECCOdiags_add("release2")
 Climatology.ECCOdiags_add("OCCA2HR1")
-withenv(MeshArrays.interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 
+withenv(MeshArrays.interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
        "Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg")
+fil=Climatology.MeshArrays.demo.download_polygons("countries.geojson")
+pol=Climatology.MeshArrays.read_polygons(fil)
+
+ENV["OISST_PATH"]=joinpath(tempdir(),"OISST_PATH")
+input_path = get(ENV, "OISST_PATH", "files")
+files_list=SST_processing.download_files(path=input_path,short_demo=true)
+path_OISST_stats=Climatology.downloads.OISST_stats_download()
 
 lst=("ECCO/ECCO_standard_plots.jl","OISST/sst_anomaly_notebook.jl",
     "apps/ECCO_explorer.jl","apps/OISST_explorer.jl",

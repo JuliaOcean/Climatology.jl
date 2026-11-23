@@ -44,7 +44,10 @@ begin
     input_path = get(ENV, "OISST_PATH", "files")
     files_list=SST_processing.download_files(path=input_path,short_demo=true)
     input_path_ersst = get(ENV, "ERSST_PATH", "files_ersst")
-    file_climatology = joinpath(input_path, "OISST_mean_monthly_1992_2011.nc")
+
+    path_OISST_stats=Climatology.downloads.OISST_stats_download()
+    file_climatology = joinpath(path_OISST_stats, "OISST_mean_monthly_1992_2011.nc")
+
     output_directory = joinpath(pwd(), "OISST_explorer_output")
 
     isdir(input_path) || @warn "OISST folder not found: $(input_path)"
@@ -90,7 +93,7 @@ end
 begin
     dlon = 10.0
     dnl = Int(dlon / 0.25)
-    (df, gdf, kdf) = SST_coarse_grain.lowres_read(fil = "lowres_oisst_sst_$(dlon).csv", path = input_path)
+    (df, gdf, kdf) = SST_coarse_grain.lowres_read(fil = "lowres_oisst_sst_$(dlon).csv", path = path_OISST_stats)
     "Coarse-grained table: $(size(df, 1)) rows, $(length(kdf)) cells"
 end
 
