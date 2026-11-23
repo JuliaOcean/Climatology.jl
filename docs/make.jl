@@ -35,12 +35,6 @@ withenv(MeshArrays.interpolation_setup,"DATADEPS_ALWAYS_ACCEPT"=>true)
 earth_jpg=joinpath(MeshArrays.mydatadep("basemap_jpg1"),
        "Blue_Marble_Next_Generation_%2B_topography_%2B_bathymetry.jpg")
 
-Climatology.jl % ls -1 examples/apps
-ECCO_explorer.jl
-files
-files_ersst
-OISST_explorer.jl
-
 lst=("apps/ECCO_explorer.jl","apps/OISST_explorer.jl",
     "ECCO/ECCO_standard_plots.jl","OISST/sst_anomaly_notebook.jl",
     "CBIOMES/CBIOMES_climatology_plot.jl",
